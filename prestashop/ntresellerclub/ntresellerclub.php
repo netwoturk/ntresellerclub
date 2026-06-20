@@ -121,6 +121,7 @@ class Ntresellerclub extends Module
 
     public function hookDisplayCustomerAccount($params)
     {
-        return '';
+        $url = $this->context->link->getModuleLink($this->name, 'services');
+        return '<a class="col-lg-4 col-md-6 col-sm-6 col-xs-12" href="' . $url . '"><span class="link-item"><i class="material-icons">dns</i>' . $this->l('Hizmetlerim') . '</span></a>';
     }
 }
