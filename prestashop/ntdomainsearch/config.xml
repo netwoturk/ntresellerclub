@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<module>
+  <name>ntdomainsearch</name>
+  <displayName>NetwoTurk Domain Search</displayName>
+  <version>0.1.0</version>
+  <author>NetwoTurk</author>
+  <tab>front_office_features</tab>
+  <description>ResellerClub API destekli ana sayfa domain arama modulu.</description>
+</module>
