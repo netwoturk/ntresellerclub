@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<module>
+  <name>ntresellerclub</name>
+  <displayName>NetwoTurk RC Panel</displayName>
+  <version>0.1.0</version>
+  <author>NetwoTurk</author>
+  <tab>administration</tab>
+  <description>PrestaShop automation module.</description>
+</module>
