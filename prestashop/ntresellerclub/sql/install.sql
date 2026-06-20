@@ -20,3 +20,13 @@ CREATE TABLE IF NOT EXISTS `PREFIX_ntresellerclub_service` (
   `created_at` DATETIME NOT NULL,
   PRIMARY KEY (`id_ntresellerclub_service`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `PREFIX_ntresellerclub_cart_domain` (
+  `id_ntresellerclub_cart_domain` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `id_cart` INT UNSIGNED NOT NULL,
+  `domain_name` VARCHAR(255) NOT NULL,
+  `years` INT UNSIGNED DEFAULT 1,
+  `created_at` DATETIME NOT NULL,
+  PRIMARY KEY (`id_ntresellerclub_cart_domain`),
+  KEY `idx_id_cart` (`id_cart`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
