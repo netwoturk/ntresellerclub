@@ -5,6 +5,7 @@ if (!defined('_PS_VERSION_')) {
 
 require_once __DIR__ . '/classes/NtRcApiClient.php';
 require_once __DIR__ . '/classes/NtRcLicense.php';
+require_once __DIR__ . '/classes/NtRcProvisioning.php';
 
 class Ntresellerclub extends Module
 {
@@ -117,6 +118,14 @@ class Ntresellerclub extends Module
 
     public function hookActionValidateOrder($params)
     {
+        if (!isset($params['order']) || !Validate::isLoadedObject($params['order'])) {
+            return;
+        }
+        if (!NtRcLicense::isActive()) {
+            return;
+        }
+        $engine = new NtRcProvisioning($this);
+        $engine->processOrder((int)$params['order']->id);
     }
 
     public function hookDisplayCustomerAccount($params)
