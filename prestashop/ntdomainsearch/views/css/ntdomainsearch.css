@@ -1,0 +1,78 @@
+/* NetwoTurk Domain Search */
+.nt-domain-search-box {
+  padding: 40px 20px;
+  background: #111;
+  color: #fff;
+  border-radius: 18px;
+  margin: 20px 0;
+}
+.nt-domain-search-inner {
+  max-width: 960px;
+  margin: 0 auto;
+  text-align: center;
+}
+.nt-domain-search-box h2 {
+  font-size: 34px;
+  margin-bottom: 8px;
+}
+.nt-domain-search-box form {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 22px;
+}
+.nt-domain-search-box input[type=text] {
+  min-width: 320px;
+  padding: 14px 16px;
+  border-radius: 8px;
+  border: 1px solid #333;
+}
+.nt-tlds {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.nt-tlds label {
+  background: #222;
+  padding: 10px 12px;
+  border-radius: 8px;
+}
+.nt-domain-search-box button {
+  padding: 14px 22px;
+  border-radius: 8px;
+  border: 0;
+  background: #e11;
+  color: #fff;
+  font-weight: 700;
+}
+.nt-results {
+  margin-top: 20px;
+  display: grid;
+  gap: 10px;
+}
+.nt-result {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #1d1d1d;
+  padding: 14px;
+  border-radius: 8px;
+}
+.nt-status-available {
+  border-left: 4px solid #3bc56b;
+}
+.nt-status-regthroughothers,
+.nt-status-unknown {
+  border-left: 4px solid #e1aa11;
+}
+.nt-error {
+  background: #4b1111;
+  padding: 14px;
+  border-radius: 8px;
+  margin-top: 20px;
+}
+.nt-loading {
+  margin-top: 20px;
+}
