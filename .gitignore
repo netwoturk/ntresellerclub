@@ -1,0 +1,29 @@
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Dependencies
+vendor/
+node_modules/
+
+# Logs and caches
+*.log
+.cache/
+.tmp/
+tmp/
+
+# PrestaShop local config examples
+config/settings.inc.php
+config/parameters.php
+
+# Build packages
+*.zip
+*.tar.gz
+
+# Secrets
+.env
+.env.*
+*.key
+*.pem
