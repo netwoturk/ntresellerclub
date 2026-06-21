@@ -1,0 +1,9 @@
+Merhaba {firstname} {lastname},
+
+{domain_name} hizmetinizin bitiş tarihine {days_before} gün kaldı.
+
+Bitiş tarihi: {expiry_date}
+
+Hizmetinizin kesintiye uğramaması için müşteri panelinizden yenileme işlemini başlatabilirsiniz.
+
+NetwoTürk
