@@ -18,14 +18,14 @@ class NtRcRenewalManager
             $expiry = new DateTime($service['expiry_date']);
             $days = (int)$today->diff($expiry)->format('%r%a');
             if (in_array($days, $this->noticeDays)) {
-                $results[] = $this->markNotice($service, $days);
+                $results[] = $this->sendNotice($service, $days);
             }
         }
 
         return $results;
     }
 
-    protected function markNotice(array $service, $days)
+    protected function sendNotice(array $service, $days)
     {
         $idService = (int)$service['id_ntresellerclub_service'];
         $exists = Db::getInstance()->getValue(
@@ -33,7 +33,39 @@ class NtRcRenewalManager
         );
 
         if ($exists) {
-            return array('service_id' => $idService, 'days' => $days, 'status' => 'already_marked');
+            return array('service_id' => $idService, 'days' => $days, 'status' => 'already_sent');
+        }
+
+        $customer = new Customer((int)$service['id_customer']);
+        if (!Validate::isLoadedObject($customer)) {
+            return array('service_id' => $idService, 'days' => $days, 'status' => 'customer_not_found');
+        }
+
+        $idLang = (int)$customer->id_lang ?: (int)Configuration::get('PS_LANG_DEFAULT');
+        $templateVars = array(
+            '{firstname}' => $customer->firstname,
+            '{lastname}' => $customer->lastname,
+            '{domain_name}' => $service['domain_name'],
+            '{days_before}' => (int)$days,
+            '{expiry_date}' => $service['expiry_date'],
+        );
+
+        $sent = Mail::Send(
+            $idLang,
+            'renewal_reminder',
+            'Hizmet yenileme hatırlatması',
+            $templateVars,
+            $customer->email,
+            $customer->firstname . ' ' . $customer->lastname,
+            null,
+            null,
+            null,
+            null,
+            _PS_MODULE_DIR_ . 'ntresellerclub/mails/'
+        );
+
+        if (!$sent) {
+            return array('service_id' => $idService, 'days' => $days, 'status' => 'mail_failed');
         }
 
         Db::getInstance()->insert('ntresellerclub_notice', array(
@@ -43,6 +75,6 @@ class NtRcRenewalManager
             'sent_at' => date('Y-m-d H:i:s'),
         ));
 
-        return array('service_id' => $idService, 'days' => $days, 'status' => 'marked');
+        return array('service_id' => $idService, 'days' => $days, 'status' => 'sent');
     }
 }
