@@ -1,0 +1,9 @@
+Hello {firstname} {lastname},
+
+Your service {domain_name} will expire in {days_before} days.
+
+Expiry date: {expiry_date}
+
+Please renew from your customer panel to avoid service interruption.
+
+NetwoTurk
