@@ -14,6 +14,7 @@ class Ntresellerclub extends Module
     const CFG_API_KEY = 'NTRC_API_KEY';
     const CFG_LANG_PREF = 'NTRC_LANG_PREF';
     const CFG_LICENSE_KEY = 'NTRC_LICENSE_KEY';
+    const CFG_CRON_TOKEN = 'NTRC_CRON_TOKEN';
 
     public function __construct()
     {
@@ -37,6 +38,7 @@ class Ntresellerclub extends Module
             && Configuration::updateValue(self::CFG_API_KEY, '')
             && Configuration::updateValue(self::CFG_LANG_PREF, 'en')
             && Configuration::updateValue(self::CFG_LICENSE_KEY, '')
+            && Configuration::updateValue(self::CFG_CRON_TOKEN, Tools::passwdGen(32))
             && $this->registerHook('actionValidateOrder')
             && $this->registerHook('displayCustomerAccount');
     }
@@ -48,6 +50,7 @@ class Ntresellerclub extends Module
         Configuration::deleteByName(self::CFG_API_KEY);
         Configuration::deleteByName(self::CFG_LANG_PREF);
         Configuration::deleteByName(self::CFG_LICENSE_KEY);
+        Configuration::deleteByName(self::CFG_CRON_TOKEN);
         return parent::uninstall();
     }
 
@@ -85,6 +88,7 @@ class Ntresellerclub extends Module
 
     protected function renderForm()
     {
+        $cronUrl = $this->context->link->getModuleLink($this->name, 'cron', array('token' => Configuration::get(self::CFG_CRON_TOKEN)));
         $fields = array('form' => array(
             'legend' => array('title' => $this->l('ResellerClub API Ayarları')),
             'input' => array(
@@ -96,6 +100,7 @@ class Ntresellerclub extends Module
                 array('type' => 'password', 'label' => $this->l('API Key'), 'name' => self::CFG_API_KEY, 'required' => true),
                 array('type' => 'text', 'label' => $this->l('Dil'), 'name' => self::CFG_LANG_PREF),
                 array('type' => 'text', 'label' => $this->l('Yıllık Lisans Anahtarı'), 'name' => self::CFG_LICENSE_KEY),
+                array('type' => 'text', 'label' => $this->l('Cron URL'), 'name' => 'NTRC_CRON_URL', 'readonly' => true),
             ),
             'submit' => array('title' => $this->l('Kaydet'), 'name' => 'submitNtRcSettings'),
             'buttons' => array(array('title' => $this->l('API Test Et'), 'name' => 'testNtRcApi', 'type' => 'submit', 'class' => 'btn btn-default pull-right')),
@@ -112,6 +117,7 @@ class Ntresellerclub extends Module
             self::CFG_API_KEY => Configuration::get(self::CFG_API_KEY),
             self::CFG_LANG_PREF => Configuration::get(self::CFG_LANG_PREF),
             self::CFG_LICENSE_KEY => Configuration::get(self::CFG_LICENSE_KEY),
+            'NTRC_CRON_URL' => $cronUrl,
         );
         return $helper->generateForm(array($fields));
     }
