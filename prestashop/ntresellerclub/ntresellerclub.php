@@ -7,6 +7,7 @@ require_once __DIR__ . '/classes/NtRcApiClient.php';
 require_once __DIR__ . '/classes/NtRcLicense.php';
 require_once __DIR__ . '/classes/NtRcProvisioning.php';
 require_once __DIR__ . '/classes/NtRcFeature.php';
+require_once __DIR__ . '/classes/NtRcInstaller.php';
 
 class Ntresellerclub extends Module
 {
@@ -41,6 +42,7 @@ class Ntresellerclub extends Module
     public function install()
     {
         return parent::install()
+            && NtRcInstaller::installSql()
             && Configuration::updateValue(self::CFG_LIVE_MODE, 1)
             && Configuration::updateValue(self::CFG_RESELLER_ID, '')
             && Configuration::updateValue(self::CFG_API_KEY, '')
