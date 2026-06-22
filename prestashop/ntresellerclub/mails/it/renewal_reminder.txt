@@ -1,0 +1,9 @@
+Ciao {firstname} {lastname},
+
+Il tuo servizio {domain_name} scadrà tra {days_before} giorni.
+
+Data di scadenza: {expiry_date}
+
+Rinnova il servizio dal pannello cliente per evitare interruzioni.
+
+NetwoTurk
