@@ -1,3 +1,47 @@
+CREATE TABLE IF NOT EXISTS `PREFIX_ntresellerclub_provider` (
+  `id_ntresellerclub_provider` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `provider_code` VARCHAR(64) NOT NULL,
+  `provider_name` VARCHAR(128) NOT NULL,
+  `provider_type` VARCHAR(50) DEFAULT 'mixed',
+  `is_enabled` TINYINT(1) DEFAULT 0,
+  `is_licensed` TINYINT(1) DEFAULT 0,
+  `version` VARCHAR(32) DEFAULT NULL,
+  `config_json` MEDIUMTEXT DEFAULT NULL,
+  `created_at` DATETIME NOT NULL,
+  `updated_at` DATETIME DEFAULT NULL,
+  PRIMARY KEY (`id_ntresellerclub_provider`),
+  UNIQUE KEY `uniq_provider_code` (`provider_code`),
+  KEY `idx_provider_enabled` (`is_enabled`),
+  KEY `idx_provider_licensed` (`is_licensed`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT IGNORE INTO `PREFIX_ntresellerclub_provider` (`provider_code`, `provider_name`, `provider_type`, `is_enabled`, `is_licensed`, `version`, `created_at`) VALUES
+('resellerclub', 'ResellerClub', 'mixed', 1, 1, '1.0.0', NOW()),
+('domainnameapi', 'DomainNameAPI', 'domain', 0, 0, '1.0.0', NOW());
+
+CREATE TABLE IF NOT EXISTS `PREFIX_ntresellerclub_tld_route` (
+  `id_ntresellerclub_tld_route` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `tld` VARCHAR(64) NOT NULL,
+  `provider_code` VARCHAR(64) NOT NULL,
+  `is_enabled` TINYINT(1) DEFAULT 1,
+  `priority` INT UNSIGNED DEFAULT 10,
+  `created_at` DATETIME NOT NULL,
+  `updated_at` DATETIME DEFAULT NULL,
+  PRIMARY KEY (`id_ntresellerclub_tld_route`),
+  UNIQUE KEY `uniq_tld_provider` (`tld`, `provider_code`),
+  KEY `idx_tld_route_tld` (`tld`),
+  KEY `idx_tld_route_provider` (`provider_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT IGNORE INTO `PREFIX_ntresellerclub_tld_route` (`tld`, `provider_code`, `is_enabled`, `priority`, `created_at`) VALUES
+('com', 'resellerclub', 1, 10, NOW()),
+('net', 'resellerclub', 1, 10, NOW()),
+('org', 'resellerclub', 1, 10, NOW()),
+('tr', 'domainnameapi', 1, 10, NOW()),
+('com.tr', 'domainnameapi', 1, 10, NOW()),
+('net.tr', 'domainnameapi', 1, 10, NOW()),
+('org.tr', 'domainnameapi', 1, 10, NOW());
+
 CREATE TABLE IF NOT EXISTS `PREFIX_ntresellerclub_customer` (
   `id_ntresellerclub_customer` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `id_customer` INT UNSIGNED NOT NULL,
