@@ -1,0 +1,11 @@
+DROP TABLE IF EXISTS `PREFIX_ntresellerclub_license`;
+DROP TABLE IF EXISTS `PREFIX_ntresellerclub_log`;
+DROP TABLE IF EXISTS `PREFIX_ntresellerclub_notice`;
+DROP TABLE IF EXISTS `PREFIX_ntresellerclub_price`;
+DROP TABLE IF EXISTS `PREFIX_ntresellerclub_cart_domain`;
+DROP TABLE IF EXISTS `PREFIX_ntresellerclub_service`;
+DROP TABLE IF EXISTS `PREFIX_ntresellerclub_contact`;
+DROP TABLE IF EXISTS `PREFIX_ntresellerclub_provider_customer`;
+DROP TABLE IF EXISTS `PREFIX_ntresellerclub_customer`;
+DROP TABLE IF EXISTS `PREFIX_ntresellerclub_tld_route`;
+DROP TABLE IF EXISTS `PREFIX_ntresellerclub_provider`;
