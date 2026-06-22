@@ -14,10 +14,18 @@ class NtresellerclubCronModuleFrontController extends ModuleFrontController
         }
 
         require_once _PS_MODULE_DIR_ . 'ntresellerclub/classes/NtRcRenewalManager.php';
+        require_once _PS_MODULE_DIR_ . 'ntresellerclub/classes/NtRcPendingProvisioning.php';
 
-        $manager = new NtRcRenewalManager();
-        $result = $manager->scan();
+        $renewalManager = new NtRcRenewalManager();
+        $renewalResult = $renewalManager->scan();
 
-        die(json_encode(array('success' => true, 'result' => $result)));
+        $pendingManager = new NtRcPendingProvisioning();
+        $pendingResult = $pendingManager->process(10);
+
+        die(json_encode(array(
+            'success' => true,
+            'renewals' => $renewalResult,
+            'pending_provisioning' => $pendingResult,
+        )));
     }
 }
