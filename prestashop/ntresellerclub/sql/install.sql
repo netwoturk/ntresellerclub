@@ -149,6 +149,24 @@ CREATE TABLE IF NOT EXISTS `PREFIX_ntresellerclub_price` (
   UNIQUE KEY `uniq_price_code` (`provider_code`, `product_type`, `code`, `years`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE IF NOT EXISTS `PREFIX_ntresellerclub_operation` (
+  `id_ntresellerclub_operation` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `id_service` INT UNSIGNED NOT NULL,
+  `provider_code` VARCHAR(64) NOT NULL,
+  `domain_name` VARCHAR(255) DEFAULT NULL,
+  `action` VARCHAR(64) NOT NULL,
+  `payload_json` MEDIUMTEXT DEFAULT NULL,
+  `response_json` MEDIUMTEXT DEFAULT NULL,
+  `status` VARCHAR(50) DEFAULT 'pending',
+  `created_at` DATETIME NOT NULL,
+  `processed_at` DATETIME DEFAULT NULL,
+  `updated_at` DATETIME DEFAULT NULL,
+  PRIMARY KEY (`id_ntresellerclub_operation`),
+  KEY `idx_operation_service` (`id_service`),
+  KEY `idx_operation_provider` (`provider_code`),
+  KEY `idx_operation_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE IF NOT EXISTS `PREFIX_ntresellerclub_notice` (
   `id_ntresellerclub_notice` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `id_service` INT UNSIGNED NOT NULL,
