@@ -30,7 +30,10 @@ class Ntdomainsearch extends Module
     {
         $this->context->controller->registerStylesheet('ntdomainsearch-css', 'modules/' . $this->name . '/views/css/ntdomainsearch.css');
         $this->context->controller->registerJavascript('ntdomainsearch-js', 'modules/' . $this->name . '/views/js/ntdomainsearch.js', array('position' => 'bottom', 'priority' => 150));
-        Media::addJsDef(array('ntDomainSearchAjax' => $this->context->link->getModuleLink($this->name, 'search')));
+        Media::addJsDef(array(
+            'ntDomainSearchAjax' => $this->context->link->getModuleLink($this->name, 'search'),
+            'ntDomainAddToCartAjax' => $this->context->link->getModuleLink($this->name, 'addtocart')
+        ));
     }
 
     public function hookDisplayHome($params)
