@@ -5,6 +5,7 @@ if (!defined('_PS_VERSION_')) {
 
 require_once __DIR__ . '/providers/NtRcProviderFactory.php';
 require_once __DIR__ . '/NtRcLog.php';
+require_once __DIR__ . '/NtRcProvisioningMode.php';
 
 class NtRcPendingProvisioning
 {
@@ -39,16 +40,25 @@ class NtRcPendingProvisioning
             return array('service_id' => $idService, 'success' => false);
         }
 
-        // V1 güvenli mod: gerçek register çağrısı ayrı fazda açılacak.
+        if (NtRcProvisioningMode::isSafe()) {
+            Db::getInstance()->update('ntresellerclub_service', array(
+                'status' => pSQL('ready'),
+                'last_sync' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s'),
+            ), 'id_ntresellerclub_service=' . $idService);
+
+            NtRcLog::add('info', 'pending_provisioning', 'Safe mode ready: ' . $domainName . ' via ' . $providerCode);
+            return array('service_id' => $idService, 'success' => true, 'domain' => $domainName, 'provider' => $providerCode, 'status' => 'ready');
+        }
+
         Db::getInstance()->update('ntresellerclub_service', array(
-            'status' => pSQL('ready'),
+            'status' => pSQL('register_waiting'),
             'last_sync' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s'),
         ), 'id_ntresellerclub_service=' . $idService);
 
-        NtRcLog::add('info', 'pending_provisioning', 'Domain ready: ' . $domainName . ' via ' . $providerCode);
-
-        return array('service_id' => $idService, 'success' => true, 'domain' => $domainName, 'provider' => $providerCode, 'status' => 'ready');
+        NtRcLog::add('info', 'pending_provisioning', 'Live mode register waiting: ' . $domainName . ' via ' . $providerCode);
+        return array('service_id' => $idService, 'success' => true, 'domain' => $domainName, 'provider' => $providerCode, 'status' => 'register_waiting');
     }
 
     protected function markError($idService, $message)
