@@ -7,27 +7,49 @@ class NtdomainsearchSearchModuleFrontController extends ModuleFrontController
     {
         header('Content-Type: application/json');
 
-        $domain = Tools::strtolower(trim(Tools::getValue('domain')));
-        $tlds = Tools::getValue('tlds', array('com'));
+        $sld = Tools::strtolower(trim(Tools::getValue('domain')));
+        $tlds = (array)Tools::getValue('tlds', array('com'));
 
-        if (!$domain || !Validate::isGenericName($domain)) {
+        if (!$sld || !Validate::isGenericName(str_replace(array('-', '_'), '', $sld))) {
             die(json_encode(array('success' => false, 'message' => 'Geçerli bir alan adı yazınız.')));
         }
 
-        $clientFile = _PS_MODULE_DIR_ . 'ntresellerclub/classes/NtRcApiClient.php';
-        if (!file_exists($clientFile)) {
-            die(json_encode(array('success' => false, 'message' => 'Ana ntresellerclub modülü bulunamadı.')));
+        $factoryFile = _PS_MODULE_DIR_ . 'ntresellerclub/classes/providers/NtRcProviderFactory.php';
+        if (!file_exists($factoryFile)) {
+            die(json_encode(array('success' => false, 'message' => 'Provider factory bulunamadı.')));
         }
 
-        require_once $clientFile;
+        require_once $factoryFile;
 
-        $client = new NtRcApiClient(
-            (bool)Configuration::get('NTRC_LIVE_MODE'),
-            Configuration::get('NTRC_RESELLER_ID'),
-            Configuration::get('NTRC_API_KEY'),
-            Configuration::get('NTRC_LANG_PREF') ?: 'en'
-        );
+        $final = array();
+        $errors = array();
 
-        die(json_encode($client->domainAvailability($domain, (array)$tlds)));
+        foreach ($tlds as $tld) {
+            $tld = Tools::strtolower(ltrim(trim($tld), '.'));
+            if (!$tld) {
+                continue;
+            }
+
+            $provider = NtRcProviderFactory::makeByTld($tld);
+            if (!$provider) {
+                $errors[$sld . '.' . $tld] = 'Bu uzantı için aktif/lisanslı provider bulunamadı.';
+                continue;
+            }
+
+            $response = $provider->checkAvailability($sld, array($tld), 1);
+            if (!$response['success']) {
+                $errors[$sld . '.' . $tld] = isset($response['error']) ? $response['error'] : 'Provider sorgusu başarısız.';
+                continue;
+            }
+
+            $final = array_merge($final, (array)$response['data']);
+        }
+
+        die(json_encode(array(
+            'success' => count($final) > 0,
+            'data' => $final,
+            'errors' => $errors,
+            'message' => count($final) > 0 ? null : 'Uygun provider sonucu alınamadı.'
+        )));
     }
 }
