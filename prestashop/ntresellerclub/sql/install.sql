@@ -13,9 +13,27 @@ CREATE TABLE IF NOT EXISTS `PREFIX_ntresellerclub_customer` (
   KEY `idx_provider_customer` (`resellerclub_customer_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE IF NOT EXISTS `PREFIX_ntresellerclub_provider_customer` (
+  `id_ntresellerclub_provider_customer` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `id_customer` INT UNSIGNED NOT NULL,
+  `provider_code` VARCHAR(64) NOT NULL,
+  `provider_customer_id` VARCHAR(128) DEFAULT NULL,
+  `provider_username` VARCHAR(255) DEFAULT NULL,
+  `email` VARCHAR(255) NOT NULL,
+  `status` VARCHAR(50) DEFAULT 'pending',
+  `raw_data` MEDIUMTEXT DEFAULT NULL,
+  `created_at` DATETIME NOT NULL,
+  `updated_at` DATETIME DEFAULT NULL,
+  PRIMARY KEY (`id_ntresellerclub_provider_customer`),
+  UNIQUE KEY `uniq_customer_provider` (`id_customer`, `provider_code`),
+  KEY `idx_provider_customer_code` (`provider_code`),
+  KEY `idx_provider_customer_id` (`provider_customer_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE IF NOT EXISTS `PREFIX_ntresellerclub_contact` (
   `id_ntresellerclub_contact` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `id_customer` INT UNSIGNED NOT NULL,
+  `provider_code` VARCHAR(64) DEFAULT NULL,
   `provider_contact_id` BIGINT UNSIGNED DEFAULT NULL,
   `contact_type` VARCHAR(50) DEFAULT 'domain',
   `firstname` VARCHAR(128) DEFAULT NULL,
@@ -28,6 +46,7 @@ CREATE TABLE IF NOT EXISTS `PREFIX_ntresellerclub_contact` (
   `updated_at` DATETIME DEFAULT NULL,
   PRIMARY KEY (`id_ntresellerclub_contact`),
   KEY `idx_contact_customer` (`id_customer`),
+  KEY `idx_contact_provider` (`provider_code`),
   KEY `idx_provider_contact` (`provider_contact_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -36,11 +55,12 @@ CREATE TABLE IF NOT EXISTS `PREFIX_ntresellerclub_service` (
   `id_customer` INT UNSIGNED NOT NULL,
   `id_order` INT UNSIGNED DEFAULT NULL,
   `id_product` INT UNSIGNED DEFAULT NULL,
+  `provider_code` VARCHAR(64) DEFAULT NULL,
   `service_type` VARCHAR(50) NOT NULL,
   `domain_name` VARCHAR(255) DEFAULT NULL,
-  `provider_order_id` BIGINT UNSIGNED DEFAULT NULL,
-  `provider_customer_id` BIGINT UNSIGNED DEFAULT NULL,
-  `provider_contact_id` BIGINT UNSIGNED DEFAULT NULL,
+  `provider_order_id` VARCHAR(128) DEFAULT NULL,
+  `provider_customer_id` VARCHAR(128) DEFAULT NULL,
+  `provider_contact_id` VARCHAR(128) DEFAULT NULL,
   `start_date` DATE DEFAULT NULL,
   `expiry_date` DATE DEFAULT NULL,
   `status` VARCHAR(50) DEFAULT 'pending',
@@ -54,6 +74,7 @@ CREATE TABLE IF NOT EXISTS `PREFIX_ntresellerclub_service` (
   PRIMARY KEY (`id_ntresellerclub_service`),
   KEY `idx_service_customer` (`id_customer`),
   KEY `idx_service_order` (`id_order`),
+  KEY `idx_service_provider` (`provider_code`),
   KEY `idx_service_domain` (`domain_name`),
   KEY `idx_service_expiry` (`expiry_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -62,14 +83,17 @@ CREATE TABLE IF NOT EXISTS `PREFIX_ntresellerclub_cart_domain` (
   `id_ntresellerclub_cart_domain` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `id_cart` INT UNSIGNED NOT NULL,
   `domain_name` VARCHAR(255) NOT NULL,
+  `provider_code` VARCHAR(64) DEFAULT NULL,
   `years` INT UNSIGNED DEFAULT 1,
   `created_at` DATETIME NOT NULL,
   PRIMARY KEY (`id_ntresellerclub_cart_domain`),
-  KEY `idx_id_cart` (`id_cart`)
+  KEY `idx_id_cart` (`id_cart`),
+  KEY `idx_cart_provider` (`provider_code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS `PREFIX_ntresellerclub_price` (
   `id_ntresellerclub_price` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `provider_code` VARCHAR(64) DEFAULT NULL,
   `product_type` VARCHAR(50) NOT NULL,
   `code` VARCHAR(100) NOT NULL,
   `years` INT UNSIGNED DEFAULT 1,
@@ -78,7 +102,7 @@ CREATE TABLE IF NOT EXISTS `PREFIX_ntresellerclub_price` (
   `currency` VARCHAR(10) DEFAULT NULL,
   `last_sync` DATETIME DEFAULT NULL,
   PRIMARY KEY (`id_ntresellerclub_price`),
-  UNIQUE KEY `uniq_price_code` (`product_type`, `code`, `years`)
+  UNIQUE KEY `uniq_price_code` (`provider_code`, `product_type`, `code`, `years`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS `PREFIX_ntresellerclub_notice` (
