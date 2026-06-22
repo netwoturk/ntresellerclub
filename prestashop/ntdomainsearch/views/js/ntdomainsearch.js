@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', function () {
           html += '<div class="nt-result nt-status-' + status + '">';
           html += '<strong>' + name + '</strong><span>' + status + '</span>';
           if (status === 'available') {
-            html += '<button type="button" disabled>Satın Al (V2)</button>';
+            html += '<button type="button" class="nt-buy-domain" data-domain="' + name + '">Satın Al</button>';
           }
           html += '</div>';
         });
@@ -33,6 +33,35 @@ document.addEventListener('DOMContentLoaded', function () {
       })
       .catch(function () {
         result.innerHTML = '<div class="nt-error">Bağlantı hatası oluştu.</div>';
+      });
+  });
+
+  result.addEventListener('click', function (e) {
+    if (!e.target.classList.contains('nt-buy-domain')) return;
+
+    var domain = e.target.getAttribute('data-domain');
+    var data = new FormData();
+    data.append('domain', domain);
+    data.append('years', '1');
+
+    e.target.disabled = true;
+    e.target.innerHTML = 'Ekleniyor...';
+
+    fetch(ntDomainAddToCartAjax, { method: 'POST', body: data, credentials: 'same-origin' })
+      .then(function (response) { return response.json(); })
+      .then(function (json) {
+        if (!json.success) {
+          e.target.disabled = false;
+          e.target.innerHTML = 'Satın Al';
+          alert(json.message || 'Sepete ekleme başarısız.');
+          return;
+        }
+        e.target.innerHTML = 'Sepete Hazır';
+      })
+      .catch(function () {
+        e.target.disabled = false;
+        e.target.innerHTML = 'Satın Al';
+        alert('Bağlantı hatası oluştu.');
       });
   });
 });
