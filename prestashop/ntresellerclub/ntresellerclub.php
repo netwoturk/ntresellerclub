@@ -6,6 +6,7 @@ if (!defined('_PS_VERSION_')) {
 require_once __DIR__ . '/classes/NtRcApiClient.php';
 require_once __DIR__ . '/classes/NtRcLicense.php';
 require_once __DIR__ . '/classes/NtRcProvisioning.php';
+require_once __DIR__ . '/classes/NtRcFeature.php';
 
 class Ntresellerclub extends Module
 {
@@ -15,6 +16,13 @@ class Ntresellerclub extends Module
     const CFG_LANG_PREF = 'NTRC_LANG_PREF';
     const CFG_LICENSE_KEY = 'NTRC_LICENSE_KEY';
     const CFG_CRON_TOKEN = 'NTRC_CRON_TOKEN';
+    const CFG_DNA_USERNAME = 'NTRC_DNA_USERNAME';
+    const CFG_DNA_PASSWORD = 'NTRC_DNA_PASSWORD';
+    const CFG_DNA_TEST_MODE = 'NTRC_DNA_TEST_MODE';
+    const CFG_FEATURE_CORE = 'NTRC_FEATURE_CORE';
+    const CFG_FEATURE_RESELLERCLUB = 'NTRC_FEATURE_RESELLERCLUB';
+    const CFG_FEATURE_DOMAINNAMEAPI = 'NTRC_FEATURE_DOMAINNAMEAPI';
+    const CFG_FEATURE_HOSTING = 'NTRC_FEATURE_HOSTING';
 
     public function __construct()
     {
@@ -26,8 +34,8 @@ class Ntresellerclub extends Module
         $this->bootstrap = true;
         $this->ps_versions_compliancy = array('min' => '1.7.0.0', 'max' => _PS_VERSION_);
         parent::__construct();
-        $this->displayName = $this->l('NetwoTurk ResellerClub Panel');
-        $this->description = $this->l('Provider automation module.');
+        $this->displayName = $this->l('NetwoTurk Multi Provider Domain & Hosting Panel');
+        $this->description = $this->l('ResellerClub ve DomainNameAPI destekli domain, hosting ve servis otomasyonu.');
     }
 
     public function install()
@@ -39,18 +47,27 @@ class Ntresellerclub extends Module
             && Configuration::updateValue(self::CFG_LANG_PREF, 'en')
             && Configuration::updateValue(self::CFG_LICENSE_KEY, '')
             && Configuration::updateValue(self::CFG_CRON_TOKEN, Tools::passwdGen(32))
+            && Configuration::updateValue(self::CFG_DNA_USERNAME, '')
+            && Configuration::updateValue(self::CFG_DNA_PASSWORD, '')
+            && Configuration::updateValue(self::CFG_DNA_TEST_MODE, 1)
+            && Configuration::updateValue(self::CFG_FEATURE_CORE, 1)
+            && Configuration::updateValue(self::CFG_FEATURE_RESELLERCLUB, 1)
+            && Configuration::updateValue(self::CFG_FEATURE_DOMAINNAMEAPI, 0)
+            && Configuration::updateValue(self::CFG_FEATURE_HOSTING, 1)
             && $this->registerHook('actionValidateOrder')
             && $this->registerHook('displayCustomerAccount');
     }
 
     public function uninstall()
     {
-        Configuration::deleteByName(self::CFG_LIVE_MODE);
-        Configuration::deleteByName(self::CFG_RESELLER_ID);
-        Configuration::deleteByName(self::CFG_API_KEY);
-        Configuration::deleteByName(self::CFG_LANG_PREF);
-        Configuration::deleteByName(self::CFG_LICENSE_KEY);
-        Configuration::deleteByName(self::CFG_CRON_TOKEN);
+        foreach (array(
+            self::CFG_LIVE_MODE, self::CFG_RESELLER_ID, self::CFG_API_KEY, self::CFG_LANG_PREF,
+            self::CFG_LICENSE_KEY, self::CFG_CRON_TOKEN, self::CFG_DNA_USERNAME, self::CFG_DNA_PASSWORD,
+            self::CFG_DNA_TEST_MODE, self::CFG_FEATURE_CORE, self::CFG_FEATURE_RESELLERCLUB,
+            self::CFG_FEATURE_DOMAINNAMEAPI, self::CFG_FEATURE_HOSTING
+        ) as $key) {
+            Configuration::deleteByName($key);
+        }
         return parent::uninstall();
     }
 
@@ -58,21 +75,51 @@ class Ntresellerclub extends Module
     {
         $output = '';
         if (Tools::isSubmit('submitNtRcSettings')) {
-            Configuration::updateValue(self::CFG_LIVE_MODE, (int)Tools::getValue(self::CFG_LIVE_MODE));
-            Configuration::updateValue(self::CFG_RESELLER_ID, trim(Tools::getValue(self::CFG_RESELLER_ID)));
-            Configuration::updateValue(self::CFG_API_KEY, trim(Tools::getValue(self::CFG_API_KEY)));
-            Configuration::updateValue(self::CFG_LANG_PREF, trim(Tools::getValue(self::CFG_LANG_PREF)) ?: 'en');
-            Configuration::updateValue(self::CFG_LICENSE_KEY, trim(Tools::getValue(self::CFG_LICENSE_KEY)));
+            $this->saveSettings();
             $output .= $this->displayConfirmation($this->l('Ayarlar kaydedildi.'));
         }
         if (Tools::isSubmit('testNtRcApi')) {
             $output .= $this->renderApiTest();
         }
-        return $output . $this->renderForm();
+        return $output . $this->renderProviderStatus() . $this->renderForm();
+    }
+
+    protected function saveSettings()
+    {
+        Configuration::updateValue(self::CFG_LIVE_MODE, (int)Tools::getValue(self::CFG_LIVE_MODE));
+        Configuration::updateValue(self::CFG_RESELLER_ID, trim(Tools::getValue(self::CFG_RESELLER_ID)));
+        Configuration::updateValue(self::CFG_API_KEY, trim(Tools::getValue(self::CFG_API_KEY)));
+        Configuration::updateValue(self::CFG_LANG_PREF, trim(Tools::getValue(self::CFG_LANG_PREF)) ?: 'en');
+        Configuration::updateValue(self::CFG_LICENSE_KEY, trim(Tools::getValue(self::CFG_LICENSE_KEY)));
+        Configuration::updateValue(self::CFG_DNA_USERNAME, trim(Tools::getValue(self::CFG_DNA_USERNAME)));
+        Configuration::updateValue(self::CFG_DNA_PASSWORD, trim(Tools::getValue(self::CFG_DNA_PASSWORD)));
+        Configuration::updateValue(self::CFG_DNA_TEST_MODE, (int)Tools::getValue(self::CFG_DNA_TEST_MODE));
+        Configuration::updateValue(self::CFG_FEATURE_CORE, (int)Tools::getValue(self::CFG_FEATURE_CORE));
+        Configuration::updateValue(self::CFG_FEATURE_RESELLERCLUB, (int)Tools::getValue(self::CFG_FEATURE_RESELLERCLUB));
+        Configuration::updateValue(self::CFG_FEATURE_DOMAINNAMEAPI, (int)Tools::getValue(self::CFG_FEATURE_DOMAINNAMEAPI));
+        Configuration::updateValue(self::CFG_FEATURE_HOSTING, (int)Tools::getValue(self::CFG_FEATURE_HOSTING));
+    }
+
+    protected function renderProviderStatus()
+    {
+        $rows = array(
+            array('Core Lisans', Configuration::get(self::CFG_FEATURE_CORE) ? 'Aktif' : 'Pasif'),
+            array('ResellerClub Provider', Configuration::get(self::CFG_FEATURE_RESELLERCLUB) ? 'Aktif' : 'Pasif'),
+            array('DomainNameAPI Provider', Configuration::get(self::CFG_FEATURE_DOMAINNAMEAPI) ? 'Aktif' : 'Pasif'),
+            array('Hosting Manager', Configuration::get(self::CFG_FEATURE_HOSTING) ? 'Aktif' : 'Pasif'),
+        );
+        $html = '<div class="panel"><h3>' . $this->l('Provider ve Lisans Durumu') . '</h3><table class="table"><tbody>';
+        foreach ($rows as $row) {
+            $html .= '<tr><td>' . Tools::safeOutput($row[0]) . '</td><td><strong>' . Tools::safeOutput($row[1]) . '</strong></td></tr>';
+        }
+        return $html . '</tbody></table></div>';
     }
 
     protected function renderApiTest()
     {
+        if (!NtRcFeature::isResellerClubActive()) {
+            return $this->displayWarning($this->l('ResellerClub provider lisansı/özelliği aktif değil.'));
+        }
         $client = new NtRcApiClient(
             (bool)Configuration::get(self::CFG_LIVE_MODE),
             Configuration::get(self::CFG_RESELLER_ID),
@@ -81,7 +128,7 @@ class Ntresellerclub extends Module
         );
         $response = $client->domainAvailability('netwoturk', array('com'));
         if ($response['success']) {
-            return $this->displayConfirmation($this->l('API testi başarılı.')) . '<pre>' . Tools::safeOutput(print_r($response['data'], true)) . '</pre>';
+            return $this->displayConfirmation($this->l('ResellerClub API testi başarılı.')) . '<pre>' . Tools::safeOutput(print_r($response['data'], true)) . '</pre>';
         }
         return $this->displayError($this->l('API testi başarısız: ') . Tools::safeOutput($response['error']) . ' HTTP: ' . (int)$response['http_code']) . '<pre>' . Tools::safeOutput($response['raw']) . '</pre>';
     }
@@ -90,20 +137,24 @@ class Ntresellerclub extends Module
     {
         $cronUrl = $this->context->link->getModuleLink($this->name, 'cron', array('token' => Configuration::get(self::CFG_CRON_TOKEN)));
         $fields = array('form' => array(
-            'legend' => array('title' => $this->l('ResellerClub API Ayarları')),
+            'legend' => array('title' => $this->l('Multi Provider API ve Lisans Ayarları')),
             'input' => array(
-                array('type' => 'switch', 'label' => $this->l('Live Modu'), 'name' => self::CFG_LIVE_MODE, 'is_bool' => true, 'values' => array(
-                    array('id' => 'live_on', 'value' => 1, 'label' => $this->l('Canlı')),
-                    array('id' => 'live_off', 'value' => 0, 'label' => $this->l('Test')),
-                )),
-                array('type' => 'text', 'label' => $this->l('Reseller ID'), 'name' => self::CFG_RESELLER_ID, 'required' => true),
-                array('type' => 'password', 'label' => $this->l('API Key'), 'name' => self::CFG_API_KEY, 'required' => true),
-                array('type' => 'text', 'label' => $this->l('Dil'), 'name' => self::CFG_LANG_PREF),
                 array('type' => 'text', 'label' => $this->l('Yıllık Lisans Anahtarı'), 'name' => self::CFG_LICENSE_KEY),
+                array('type' => 'switch', 'label' => $this->l('Core Lisans Aktif'), 'name' => self::CFG_FEATURE_CORE, 'is_bool' => true, 'values' => $this->switchValues()),
+                array('type' => 'switch', 'label' => $this->l('ResellerClub Provider'), 'name' => self::CFG_FEATURE_RESELLERCLUB, 'is_bool' => true, 'values' => $this->switchValues()),
+                array('type' => 'switch', 'label' => $this->l('DomainNameAPI Provider'), 'name' => self::CFG_FEATURE_DOMAINNAMEAPI, 'is_bool' => true, 'values' => $this->switchValues()),
+                array('type' => 'switch', 'label' => $this->l('Hosting Manager'), 'name' => self::CFG_FEATURE_HOSTING, 'is_bool' => true, 'values' => $this->switchValues()),
+                array('type' => 'switch', 'label' => $this->l('ResellerClub Live Modu'), 'name' => self::CFG_LIVE_MODE, 'is_bool' => true, 'values' => $this->switchValues()),
+                array('type' => 'text', 'label' => $this->l('ResellerClub Reseller ID'), 'name' => self::CFG_RESELLER_ID),
+                array('type' => 'password', 'label' => $this->l('ResellerClub API Key'), 'name' => self::CFG_API_KEY),
+                array('type' => 'text', 'label' => $this->l('ResellerClub Dil'), 'name' => self::CFG_LANG_PREF),
+                array('type' => 'text', 'label' => $this->l('DomainNameAPI Kullanıcı Adı'), 'name' => self::CFG_DNA_USERNAME),
+                array('type' => 'password', 'label' => $this->l('DomainNameAPI Şifre'), 'name' => self::CFG_DNA_PASSWORD),
+                array('type' => 'switch', 'label' => $this->l('DomainNameAPI Test Modu'), 'name' => self::CFG_DNA_TEST_MODE, 'is_bool' => true, 'values' => $this->switchValues()),
                 array('type' => 'text', 'label' => $this->l('Cron URL'), 'name' => 'NTRC_CRON_URL', 'readonly' => true),
             ),
             'submit' => array('title' => $this->l('Kaydet'), 'name' => 'submitNtRcSettings'),
-            'buttons' => array(array('title' => $this->l('API Test Et'), 'name' => 'testNtRcApi', 'type' => 'submit', 'class' => 'btn btn-default pull-right')),
+            'buttons' => array(array('title' => $this->l('ResellerClub API Test Et'), 'name' => 'testNtRcApi', 'type' => 'submit', 'class' => 'btn btn-default pull-right')),
         ));
         $helper = new HelperForm();
         $helper->module = $this;
@@ -111,15 +162,35 @@ class Ntresellerclub extends Module
         $helper->submit_action = 'submitNtRcSettings';
         $helper->currentIndex = AdminController::$currentIndex . '&configure=' . $this->name;
         $helper->token = Tools::getAdminTokenLite('AdminModules');
-        $helper->fields_value = array(
+        $helper->fields_value = $this->formValues($cronUrl);
+        return $helper->generateForm(array($fields));
+    }
+
+    protected function switchValues()
+    {
+        return array(
+            array('id' => 'on', 'value' => 1, 'label' => $this->l('Aktif')),
+            array('id' => 'off', 'value' => 0, 'label' => $this->l('Pasif')),
+        );
+    }
+
+    protected function formValues($cronUrl)
+    {
+        return array(
             self::CFG_LIVE_MODE => Configuration::get(self::CFG_LIVE_MODE),
             self::CFG_RESELLER_ID => Configuration::get(self::CFG_RESELLER_ID),
             self::CFG_API_KEY => Configuration::get(self::CFG_API_KEY),
             self::CFG_LANG_PREF => Configuration::get(self::CFG_LANG_PREF),
             self::CFG_LICENSE_KEY => Configuration::get(self::CFG_LICENSE_KEY),
+            self::CFG_DNA_USERNAME => Configuration::get(self::CFG_DNA_USERNAME),
+            self::CFG_DNA_PASSWORD => Configuration::get(self::CFG_DNA_PASSWORD),
+            self::CFG_DNA_TEST_MODE => Configuration::get(self::CFG_DNA_TEST_MODE),
+            self::CFG_FEATURE_CORE => Configuration::get(self::CFG_FEATURE_CORE),
+            self::CFG_FEATURE_RESELLERCLUB => Configuration::get(self::CFG_FEATURE_RESELLERCLUB),
+            self::CFG_FEATURE_DOMAINNAMEAPI => Configuration::get(self::CFG_FEATURE_DOMAINNAMEAPI),
+            self::CFG_FEATURE_HOSTING => Configuration::get(self::CFG_FEATURE_HOSTING),
             'NTRC_CRON_URL' => $cronUrl,
         );
-        return $helper->generateForm(array($fields));
     }
 
     public function hookActionValidateOrder($params)
