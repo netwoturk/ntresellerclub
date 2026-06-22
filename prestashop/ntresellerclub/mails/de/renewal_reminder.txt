@@ -1,0 +1,9 @@
+Hallo {firstname} {lastname},
+
+Ihr Dienst {domain_name} läuft in {days_before} Tagen ab.
+
+Ablaufdatum: {expiry_date}
+
+Bitte verlängern Sie den Dienst über Ihr Kundenkonto, um eine Unterbrechung zu vermeiden.
+
+NetwoTurk
