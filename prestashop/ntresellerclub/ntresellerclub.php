@@ -8,6 +8,9 @@ require_once __DIR__ . '/classes/NtRcLicense.php';
 require_once __DIR__ . '/classes/NtRcProvisioning.php';
 require_once __DIR__ . '/classes/NtRcFeature.php';
 require_once __DIR__ . '/classes/NtRcInstaller.php';
+require_once __DIR__ . '/classes/NtRcManualExchangeRate.php';
+require_once __DIR__ . '/classes/NtRcExchangeRateAdminRenderer.php';
+require_once __DIR__ . '/classes/NtRcTrPriceAdminRenderer.php';
 
 class Ntresellerclub extends Module
 {
@@ -56,6 +59,7 @@ class Ntresellerclub extends Module
             && Configuration::updateValue(self::CFG_FEATURE_RESELLERCLUB, 1)
             && Configuration::updateValue(self::CFG_FEATURE_DOMAINNAMEAPI, 0)
             && Configuration::updateValue(self::CFG_FEATURE_HOSTING, 1)
+            && NtRcManualExchangeRate::setRate('USD', 'TRY', 40)
             && $this->registerHook('actionValidateOrder')
             && $this->registerHook('displayCustomerAccount');
     }
@@ -80,10 +84,45 @@ class Ntresellerclub extends Module
             $this->saveSettings();
             $output .= $this->displayConfirmation($this->l('Ayarlar kaydedildi.'));
         }
+        if (Tools::isSubmit('submitNtRcManualRate')) {
+            $this->saveManualRate();
+            $output .= $this->displayConfirmation($this->l('Kur kaydedildi.'));
+        }
+        if (Tools::isSubmit('submitNtRcSeedTrPrices')) {
+            $this->seedTrPrices();
+            $output .= $this->displayConfirmation($this->l('TR fiyat satirlari olusturuldu.'));
+        }
         if (Tools::isSubmit('testNtRcApi')) {
             $output .= $this->renderApiTest();
         }
-        return $output . $this->renderProviderStatus() . $this->renderForm();
+        return $output
+            . $this->renderProviderStatus()
+            . NtRcExchangeRateAdminRenderer::render($this)
+            . NtRcTrPriceAdminRenderer::render($this)
+            . $this->renderForm();
+    }
+
+    protected function saveManualRate()
+    {
+        $from = Tools::getValue('nt_rate_from');
+        $to = Tools::getValue('nt_rate_to');
+        $rate = Tools::getValue('nt_rate_value');
+        NtRcManualExchangeRate::setRate($from, $to, $rate);
+    }
+
+    protected function seedTrPrices()
+    {
+        require_once __DIR__ . '/classes/NtRcTrPriceManager.php';
+        foreach (NtRcTrPriceManager::allowedTlds() as $tld) {
+            NtRcTrPriceManager::upsertCost($tld, 'USD', array(
+                'register' => 0,
+                'transfer' => 0,
+                'renew' => 0,
+                'restore' => 0,
+                'trustee' => 0,
+                'backorder' => 0,
+            ));
+        }
     }
 
     protected function saveSettings()
