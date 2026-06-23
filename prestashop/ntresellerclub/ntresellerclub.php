@@ -12,6 +12,7 @@ require_once __DIR__ . '/classes/NtRcManualExchangeRate.php';
 require_once __DIR__ . '/classes/NtRcExchangeRateAdminRenderer.php';
 require_once __DIR__ . '/classes/NtRcTrPriceAdminRenderer.php';
 require_once __DIR__ . '/classes/NtRcTrPriceManager.php';
+require_once __DIR__ . '/classes/NtRcRuntimeAdminRenderer.php';
 
 class Ntresellerclub extends Module
 {
@@ -28,6 +29,9 @@ class Ntresellerclub extends Module
     const CFG_FEATURE_RESELLERCLUB = 'NTRC_FEATURE_RESELLERCLUB';
     const CFG_FEATURE_DOMAINNAMEAPI = 'NTRC_FEATURE_DOMAINNAMEAPI';
     const CFG_FEATURE_HOSTING = 'NTRC_FEATURE_HOSTING';
+    const CFG_MEMORY_LIMIT = 'NTRC_MEMORY_LIMIT';
+    const CFG_TIME_LIMIT = 'NTRC_TIME_LIMIT';
+    const CFG_CRON_BATCH_LIMIT = 'NTRC_CRON_BATCH_LIMIT';
 
     public function __construct()
     {
@@ -60,6 +64,9 @@ class Ntresellerclub extends Module
             && Configuration::updateValue(self::CFG_FEATURE_RESELLERCLUB, 1)
             && Configuration::updateValue(self::CFG_FEATURE_DOMAINNAMEAPI, 0)
             && Configuration::updateValue(self::CFG_FEATURE_HOSTING, 1)
+            && Configuration::updateValue(self::CFG_MEMORY_LIMIT, '512M')
+            && Configuration::updateValue(self::CFG_TIME_LIMIT, 120)
+            && Configuration::updateValue(self::CFG_CRON_BATCH_LIMIT, 10)
             && NtRcManualExchangeRate::setRate('USD', 'TRY', 40)
             && $this->registerHook('actionValidateOrder')
             && $this->registerHook('displayCustomerAccount');
@@ -71,7 +78,8 @@ class Ntresellerclub extends Module
             self::CFG_LIVE_MODE, self::CFG_RESELLER_ID, self::CFG_API_KEY, self::CFG_LANG_PREF,
             self::CFG_LICENSE_KEY, self::CFG_CRON_TOKEN, self::CFG_DNA_USERNAME, self::CFG_DNA_PASSWORD,
             self::CFG_DNA_TEST_MODE, self::CFG_FEATURE_CORE, self::CFG_FEATURE_RESELLERCLUB,
-            self::CFG_FEATURE_DOMAINNAMEAPI, self::CFG_FEATURE_HOSTING
+            self::CFG_FEATURE_DOMAINNAMEAPI, self::CFG_FEATURE_HOSTING, self::CFG_MEMORY_LIMIT,
+            self::CFG_TIME_LIMIT, self::CFG_CRON_BATCH_LIMIT
         ) as $key) {
             Configuration::deleteByName($key);
         }
@@ -89,6 +97,10 @@ class Ntresellerclub extends Module
             $this->saveManualRate();
             $output .= $this->displayConfirmation($this->l('Kur kaydedildi.'));
         }
+        if (Tools::isSubmit('submitNtRcRuntimeSettings')) {
+            $this->saveRuntimeSettings();
+            $output .= $this->displayConfirmation($this->l('Runtime ayarlari kaydedildi.'));
+        }
         if (Tools::isSubmit('submitNtRcSeedTrPrices')) {
             $this->seedTrPrices();
             $output .= $this->displayConfirmation($this->l('TR fiyat satirlari olusturuldu.'));
@@ -102,6 +114,7 @@ class Ntresellerclub extends Module
         }
         return $output
             . $this->renderProviderStatus()
+            . NtRcRuntimeAdminRenderer::render($this)
             . NtRcExchangeRateAdminRenderer::render($this)
             . NtRcTrPriceAdminRenderer::render($this)
             . $this->renderForm();
@@ -114,6 +127,33 @@ class Ntresellerclub extends Module
             Tools::getValue('nt_rate_to'),
             Tools::getValue('nt_rate_value')
         );
+    }
+
+    protected function saveRuntimeSettings()
+    {
+        $memory = trim((string)Tools::getValue(self::CFG_MEMORY_LIMIT, '512M'));
+        $time = (int)Tools::getValue(self::CFG_TIME_LIMIT, 120);
+        $batch = (int)Tools::getValue(self::CFG_CRON_BATCH_LIMIT, 10);
+
+        if ($memory === '') {
+            $memory = '512M';
+        }
+        if ($time < 30) {
+            $time = 30;
+        }
+        if ($time > 300) {
+            $time = 300;
+        }
+        if ($batch < 1) {
+            $batch = 1;
+        }
+        if ($batch > 25) {
+            $batch = 25;
+        }
+
+        Configuration::updateValue(self::CFG_MEMORY_LIMIT, $memory);
+        Configuration::updateValue(self::CFG_TIME_LIMIT, $time);
+        Configuration::updateValue(self::CFG_CRON_BATCH_LIMIT, $batch);
     }
 
     protected function seedTrPrices()
