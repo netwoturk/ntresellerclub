@@ -38,6 +38,33 @@ class NtRcDomainNameApiProvider implements NtRcProviderInterface
         }
     }
 
+    public function getTrPrices()
+    {
+        $client = $this->createClient();
+        if (!$client) {
+            return array('success' => false, 'error' => 'DomainNameAPI library not found');
+        }
+
+        try {
+            $raw = null;
+            if (method_exists($client, 'getPrices')) {
+                $raw = $client->getPrices();
+            } elseif (method_exists($client, 'getResellerPrices')) {
+                $raw = $client->getResellerPrices();
+            } elseif (method_exists($client, 'getTldPrices')) {
+                $raw = $client->getTldPrices();
+            }
+
+            if ($raw === null) {
+                return array('success' => false, 'error' => 'DomainNameAPI price method not found');
+            }
+
+            return array('success' => true, 'data' => $this->normalizeTrPrices($raw));
+        } catch (Exception $e) {
+            return array('success' => false, 'error' => $e->getMessage());
+        }
+    }
+
     public function registerDomain($domainName, $years, array $contact, array $nameservers, array $extra = array())
     {
         $client = $this->createClient();
@@ -130,5 +157,48 @@ class NtRcDomainNameApiProvider implements NtRcProviderInterface
             );
         }
         return $items;
+    }
+
+    protected function normalizeTrPrices($raw)
+    {
+        $allowed = array('tr', 'com.tr', 'net.tr', 'org.tr', 'av.tr', 'gen.tr', 'web.tr');
+        $items = array();
+
+        foreach ((array)$raw as $row) {
+            $tld = '';
+            if (isset($row['TLD'])) {
+                $tld = strtolower(ltrim($row['TLD'], '.'));
+            } elseif (isset($row['tld'])) {
+                $tld = strtolower(ltrim($row['tld'], '.'));
+            } elseif (isset($row['Extension'])) {
+                $tld = strtolower(ltrim($row['Extension'], '.'));
+            }
+
+            if (!$tld || !in_array($tld, $allowed)) {
+                continue;
+            }
+
+            $items[$tld] = array(
+                'currency' => isset($row['Currency']) ? $row['Currency'] : (isset($row['currency']) ? $row['currency'] : 'USD'),
+                'register' => $this->pickPrice($row, array('Register', 'Create', 'Registration', 'register')),
+                'transfer' => $this->pickPrice($row, array('Transfer', 'transfer')),
+                'renew' => $this->pickPrice($row, array('Renew', 'Renewal', 'renew')),
+                'restore' => $this->pickPrice($row, array('Restore', 'Redemption', 'restore')),
+                'trustee' => $this->pickPrice($row, array('Trustee', 'trustee')),
+                'backorder' => $this->pickPrice($row, array('Backorder', 'backorder')),
+            );
+        }
+
+        return $items;
+    }
+
+    protected function pickPrice(array $row, array $keys)
+    {
+        foreach ($keys as $key) {
+            if (isset($row[$key]) && is_numeric($row[$key])) {
+                return (float)$row[$key];
+            }
+        }
+        return 0;
     }
 }
