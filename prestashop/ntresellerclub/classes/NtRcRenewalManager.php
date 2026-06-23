@@ -3,26 +3,38 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+require_once __DIR__ . '/NtRcRuntimeGuard.php';
+require_once __DIR__ . '/NtRcLog.php';
+
 class NtRcRenewalManager
 {
     protected $noticeDays = array(30, 15, 7, 3, 1);
 
-    public function scan()
+    public function scan($limit = null)
     {
+        NtRcRuntimeGuard::beforeHeavyProcess('renewal_scan');
+        $limit = $limit === null ? NtRcRuntimeGuard::cronBatchLimit(10) : min((int)$limit, NtRcRuntimeGuard::cronBatchLimit(10));
+
         $today = new DateTime(date('Y-m-d'));
-        $query = 'SELECT * FROM `' . _DB_PREFIX_ . 'ntresellerclub_service` WHERE expiry_date IS NOT NULL';
+        $query = 'SELECT * FROM `' . _DB_PREFIX_ . 'ntresellerclub_service` WHERE expiry_date IS NOT NULL ORDER BY expiry_date ASC LIMIT ' . (int)$limit;
         $services = Db::getInstance()->executeS($query);
         $results = array();
 
-        foreach ($services as $service) {
-            $expiry = new DateTime($service['expiry_date']);
-            $days = (int)$today->diff($expiry)->format('%r%a');
-            if (in_array($days, $this->noticeDays)) {
-                $results[] = $this->sendNotice($service, $days);
+        foreach ((array)$services as $service) {
+            try {
+                $expiry = new DateTime($service['expiry_date']);
+                $days = (int)$today->diff($expiry)->format('%r%a');
+                if (in_array($days, $this->noticeDays)) {
+                    $results[] = $this->sendNotice($service, $days);
+                }
+            } catch (Exception $e) {
+                $idService = isset($service['id_ntresellerclub_service']) ? (int)$service['id_ntresellerclub_service'] : 0;
+                NtRcLog::add('error', 'renewal_scan', 'Exception service=' . $idService . ' ' . $e->getMessage());
+                $results[] = array('service_id' => $idService, 'success' => false, 'error' => $e->getMessage());
             }
         }
 
-        return $results;
+        return array('success' => true, 'limit' => $limit, 'count' => count($results), 'items' => $results);
     }
 
     protected function sendNotice(array $service, $days)
@@ -38,6 +50,7 @@ class NtRcRenewalManager
 
         $customer = new Customer((int)$service['id_customer']);
         if (!Validate::isLoadedObject($customer)) {
+            NtRcLog::add('warning', 'renewal_scan', 'Customer not found service=' . $idService);
             return array('service_id' => $idService, 'days' => $days, 'status' => 'customer_not_found');
         }
 
@@ -53,7 +66,7 @@ class NtRcRenewalManager
         $sent = Mail::Send(
             $idLang,
             'renewal_reminder',
-            'Hizmet yenileme hatırlatması',
+            'Hizmet yenileme hatirlatmasi',
             $templateVars,
             $customer->email,
             $customer->firstname . ' ' . $customer->lastname,
@@ -65,6 +78,7 @@ class NtRcRenewalManager
         );
 
         if (!$sent) {
+            NtRcLog::add('error', 'renewal_scan', 'Mail failed service=' . $idService);
             return array('service_id' => $idService, 'days' => $days, 'status' => 'mail_failed');
         }
 
@@ -75,6 +89,7 @@ class NtRcRenewalManager
             'sent_at' => date('Y-m-d H:i:s'),
         ));
 
+        NtRcLog::add('info', 'renewal_scan', 'Renewal notice sent service=' . $idService . ' days=' . (int)$days);
         return array('service_id' => $idService, 'days' => $days, 'status' => 'sent');
     }
 }
