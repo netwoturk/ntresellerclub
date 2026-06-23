@@ -6,21 +6,31 @@ if (!defined('_PS_VERSION_')) {
 require_once __DIR__ . '/providers/NtRcProviderFactory.php';
 require_once __DIR__ . '/NtRcLog.php';
 require_once __DIR__ . '/NtRcProvisioningMode.php';
+require_once __DIR__ . '/NtRcRuntimeGuard.php';
 
 class NtRcPendingProvisioning
 {
     public function process($limit = 10)
     {
+        NtRcRuntimeGuard::beforeHeavyProcess('pending_provisioning');
+        $limit = min((int)$limit, NtRcRuntimeGuard::cronBatchLimit(10));
+
         $services = Db::getInstance()->executeS(
             'SELECT * FROM `' . _DB_PREFIX_ . 'ntresellerclub_service` WHERE status="pending" AND service_type="domain" ORDER BY id_ntresellerclub_service ASC LIMIT ' . (int)$limit
         );
 
         $results = array();
         foreach ((array)$services as $service) {
-            $results[] = $this->processDomain($service);
+            try {
+                $results[] = $this->processDomain($service);
+            } catch (Exception $e) {
+                $idService = isset($service['id_ntresellerclub_service']) ? (int)$service['id_ntresellerclub_service'] : 0;
+                $this->markError($idService, 'Pending provisioning exception: ' . $e->getMessage());
+                $results[] = array('service_id' => $idService, 'success' => false, 'error' => $e->getMessage());
+            }
         }
 
-        return $results;
+        return array('success' => true, 'limit' => $limit, 'count' => count($results), 'items' => $results);
     }
 
     protected function processDomain(array $service)
@@ -36,7 +46,7 @@ class NtRcPendingProvisioning
 
         $provider = NtRcProviderFactory::make($providerCode);
         if (!$provider) {
-            $this->markError($idService, 'Aktif provider bulunamadı.');
+            $this->markError($idService, 'Aktif provider bulunamadi.');
             return array('service_id' => $idService, 'success' => false);
         }
 
@@ -63,10 +73,12 @@ class NtRcPendingProvisioning
 
     protected function markError($idService, $message)
     {
-        Db::getInstance()->update('ntresellerclub_service', array(
-            'status' => pSQL('error'),
-            'updated_at' => date('Y-m-d H:i:s'),
-        ), 'id_ntresellerclub_service=' . (int)$idService);
+        if ($idService > 0) {
+            Db::getInstance()->update('ntresellerclub_service', array(
+                'status' => pSQL('error'),
+                'updated_at' => date('Y-m-d H:i:s'),
+            ), 'id_ntresellerclub_service=' . (int)$idService);
+        }
         NtRcLog::add('error', 'pending_provisioning', $message);
     }
 }
