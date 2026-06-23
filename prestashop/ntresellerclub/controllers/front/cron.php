@@ -8,29 +8,47 @@ class NtresellerclubCronModuleFrontController extends ModuleFrontController
         parent::initContent();
         header('Content-Type: application/json');
 
-        $token = Tools::getValue('token');
-        if ($token !== Configuration::get('NTRC_CRON_TOKEN')) {
-            die(json_encode(array('success' => false, 'message' => 'Invalid token')));
+        try {
+            require_once _PS_MODULE_DIR_ . 'ntresellerclub/classes/NtRcRuntimeGuard.php';
+            NtRcRuntimeGuard::beforeHeavyProcess('front_cron');
+
+            $token = Tools::getValue('token');
+            if (!$token || $token !== Configuration::get('NTRC_CRON_TOKEN')) {
+                die(json_encode(array('success' => false, 'message' => 'Invalid token')));
+            }
+
+            $limit = NtRcRuntimeGuard::cronBatchLimit(10);
+
+            require_once _PS_MODULE_DIR_ . 'ntresellerclub/classes/NtRcRenewalManager.php';
+            require_once _PS_MODULE_DIR_ . 'ntresellerclub/classes/NtRcPendingProvisioning.php';
+            require_once _PS_MODULE_DIR_ . 'ntresellerclub/classes/NtRcOperationProcessor.php';
+
+            $renewalManager = new NtRcRenewalManager();
+            $renewalResult = $renewalManager->scan();
+
+            $pendingManager = new NtRcPendingProvisioning();
+            $pendingResult = $pendingManager->process($limit);
+
+            $operationManager = new NtRcOperationProcessor();
+            $operationResult = $operationManager->process($limit);
+
+            $dnaPriceSync = array('success' => false, 'message' => 'DomainNameAPI pasif.');
+            if ((int)Configuration::get('NTRC_FEATURE_DOMAINNAMEAPI') === 1) {
+                require_once _PS_MODULE_DIR_ . 'ntresellerclub/classes/NtRcDomainNameApiPriceSync.php';
+                $sync = new NtRcDomainNameApiPriceSync();
+                $dnaPriceSync = $sync->sync();
+            }
+
+            die(json_encode(array(
+                'success' => true,
+                'limit' => $limit,
+                'renewals' => $renewalResult,
+                'pending_provisioning' => $pendingResult,
+                'operations' => $operationResult,
+                'dna_price_sync' => $dnaPriceSync,
+            )));
+        } catch (Exception $e) {
+            die(json_encode(array('success' => false, 'message' => 'Cron hata olustu.', 'error' => $e->getMessage())));
         }
-
-        require_once _PS_MODULE_DIR_ . 'ntresellerclub/classes/NtRcRenewalManager.php';
-        require_once _PS_MODULE_DIR_ . 'ntresellerclub/classes/NtRcPendingProvisioning.php';
-        require_once _PS_MODULE_DIR_ . 'ntresellerclub/classes/NtRcOperationProcessor.php';
-
-        $renewalManager = new NtRcRenewalManager();
-        $renewalResult = $renewalManager->scan();
-
-        $pendingManager = new NtRcPendingProvisioning();
-        $pendingResult = $pendingManager->process(10);
-
-        $operationManager = new NtRcOperationProcessor();
-        $operationResult = $operationManager->process(10);
-
-        die(json_encode(array(
-            'success' => true,
-            'renewals' => $renewalResult,
-            'pending_provisioning' => $pendingResult,
-            'operations' => $operationResult,
-        )));
     }
 }
