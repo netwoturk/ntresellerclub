@@ -11,6 +11,7 @@ require_once __DIR__ . '/classes/NtRcInstaller.php';
 require_once __DIR__ . '/classes/NtRcManualExchangeRate.php';
 require_once __DIR__ . '/classes/NtRcExchangeRateAdminRenderer.php';
 require_once __DIR__ . '/classes/NtRcTrPriceAdminRenderer.php';
+require_once __DIR__ . '/classes/NtRcTrPriceManager.php';
 
 class Ntresellerclub extends Module
 {
@@ -92,6 +93,10 @@ class Ntresellerclub extends Module
             $this->seedTrPrices();
             $output .= $this->displayConfirmation($this->l('TR fiyat satirlari olusturuldu.'));
         }
+        if (Tools::isSubmit('submitNtRcSaveTrPrices')) {
+            $this->saveTrPrices();
+            $output .= $this->displayConfirmation($this->l('TR fiyat ayarlari kaydedildi.'));
+        }
         if (Tools::isSubmit('testNtRcApi')) {
             $output .= $this->renderApiTest();
         }
@@ -104,15 +109,15 @@ class Ntresellerclub extends Module
 
     protected function saveManualRate()
     {
-        $from = Tools::getValue('nt_rate_from');
-        $to = Tools::getValue('nt_rate_to');
-        $rate = Tools::getValue('nt_rate_value');
-        NtRcManualExchangeRate::setRate($from, $to, $rate);
+        NtRcManualExchangeRate::setRate(
+            Tools::getValue('nt_rate_from'),
+            Tools::getValue('nt_rate_to'),
+            Tools::getValue('nt_rate_value')
+        );
     }
 
     protected function seedTrPrices()
     {
-        require_once __DIR__ . '/classes/NtRcTrPriceManager.php';
         foreach (NtRcTrPriceManager::allowedTlds() as $tld) {
             NtRcTrPriceManager::upsertCost($tld, 'USD', array(
                 'register' => 0,
@@ -122,6 +127,28 @@ class Ntresellerclub extends Module
                 'trustee' => 0,
                 'backorder' => 0,
             ));
+        }
+    }
+
+    protected function saveTrPrices()
+    {
+        $rows = Tools::getValue('tr_price', array());
+        foreach ((array)$rows as $row) {
+            if (empty($row['code'])) {
+                continue;
+            }
+            $parts = explode(':', $row['code']);
+            if (count($parts) !== 2) {
+                continue;
+            }
+            NtRcTrPriceManager::setSalePrice(
+                $parts[0],
+                $parts[1],
+                isset($row['sale_price']) ? $row['sale_price'] : 0,
+                isset($row['margin_mode']) ? $row['margin_mode'] : 'manual',
+                isset($row['margin_percent']) ? $row['margin_percent'] : 0,
+                isset($row['margin_fixed']) ? $row['margin_fixed'] : 0
+            );
         }
     }
 
