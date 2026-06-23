@@ -37,10 +37,15 @@ INSERT IGNORE INTO `PREFIX_ntresellerclub_tld_route` (`tld`, `provider_code`, `i
 ('com', 'resellerclub', 1, 10, NOW()),
 ('net', 'resellerclub', 1, 10, NOW()),
 ('org', 'resellerclub', 1, 10, NOW()),
+('info', 'resellerclub', 1, 10, NOW()),
+('biz', 'resellerclub', 1, 10, NOW()),
 ('tr', 'domainnameapi', 1, 10, NOW()),
 ('com.tr', 'domainnameapi', 1, 10, NOW()),
 ('net.tr', 'domainnameapi', 1, 10, NOW()),
-('org.tr', 'domainnameapi', 1, 10, NOW());
+('org.tr', 'domainnameapi', 1, 10, NOW()),
+('av.tr', 'domainnameapi', 1, 10, NOW()),
+('gen.tr', 'domainnameapi', 1, 10, NOW()),
+('web.tr', 'domainnameapi', 1, 10, NOW());
 
 CREATE TABLE IF NOT EXISTS `PREFIX_ntresellerclub_customer` (
   `id_ntresellerclub_customer` INT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -144,6 +149,10 @@ CREATE TABLE IF NOT EXISTS `PREFIX_ntresellerclub_price` (
   `cost_price` DECIMAL(20,6) DEFAULT NULL,
   `sale_price` DECIMAL(20,6) DEFAULT NULL,
   `currency` VARCHAR(10) DEFAULT NULL,
+  `margin_mode` VARCHAR(32) DEFAULT 'manual',
+  `margin_percent` DECIMAL(20,6) DEFAULT 0,
+  `margin_fixed` DECIMAL(20,6) DEFAULT 0,
+  `tax_included` TINYINT(1) DEFAULT 1,
   `last_sync` DATETIME DEFAULT NULL,
   PRIMARY KEY (`id_ntresellerclub_price`),
   UNIQUE KEY `uniq_price_code` (`provider_code`, `product_type`, `code`, `years`)
