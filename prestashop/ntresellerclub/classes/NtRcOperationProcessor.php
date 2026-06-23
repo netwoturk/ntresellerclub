@@ -6,17 +6,30 @@ if (!defined('_PS_VERSION_')) {
 require_once __DIR__ . '/NtRcDomainOperationQueue.php';
 require_once __DIR__ . '/providers/NtRcProviderFactory.php';
 require_once __DIR__ . '/NtRcLog.php';
+require_once __DIR__ . '/NtRcRuntimeGuard.php';
 
 class NtRcOperationProcessor
 {
     public function process($limit = 10)
     {
+        NtRcRuntimeGuard::beforeHeavyProcess('operation_processor');
+        $limit = min((int)$limit, NtRcRuntimeGuard::cronBatchLimit(10));
+
         $items = NtRcDomainOperationQueue::pending($limit);
         $results = array();
         foreach ((array)$items as $item) {
-            $results[] = $this->processOne($item);
+            try {
+                $results[] = $this->processOne($item);
+            } catch (Exception $e) {
+                $idOperation = isset($item['id_ntresellerclub_operation']) ? (int)$item['id_ntresellerclub_operation'] : 0;
+                if ($idOperation > 0) {
+                    NtRcDomainOperationQueue::markError($idOperation, array('message' => $e->getMessage()));
+                }
+                NtRcLog::add('error', 'operation_processor', 'Exception: ' . $e->getMessage());
+                $results[] = array('success' => false, 'operation_id' => $idOperation, 'error' => $e->getMessage());
+            }
         }
-        return $results;
+        return array('success' => true, 'limit' => $limit, 'count' => count($results), 'items' => $results);
     }
 
     protected function processOne(array $item)
@@ -41,12 +54,12 @@ class NtRcOperationProcessor
 
         if (isset($response['success']) && $response['success']) {
             NtRcDomainOperationQueue::markDone((int)$item['id_ntresellerclub_operation'], $response);
-            NtRcLog::add('info', 'operation_processor', 'Operation done');
+            NtRcLog::add('info', 'operation_processor', 'Operation done action=' . $action . ' domain=' . $domain);
             return array('success' => true, 'operation_id' => (int)$item['id_ntresellerclub_operation'], 'action' => $action);
         }
 
         NtRcDomainOperationQueue::markError((int)$item['id_ntresellerclub_operation'], $response);
-        NtRcLog::add('error', 'operation_processor', 'Operation error');
+        NtRcLog::add('error', 'operation_processor', 'Operation error action=' . $action . ' domain=' . $domain);
         return array('success' => false, 'operation_id' => (int)$item['id_ntresellerclub_operation'], 'action' => $action);
     }
 }
