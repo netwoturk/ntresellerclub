@@ -7,7 +7,18 @@ class NtRcInstaller
 {
     public static function installSql()
     {
-        $file = _PS_MODULE_DIR_ . 'ntresellerclub/sql/install.sql';
+        foreach (array('install.sql', 'history.sql') as $sqlFile) {
+            if (!self::executeSqlFile($sqlFile)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    protected static function executeSqlFile($sqlFile)
+    {
+        $file = _PS_MODULE_DIR_ . 'ntresellerclub/sql/' . $sqlFile;
         if (!file_exists($file)) {
             return false;
         }
@@ -44,6 +55,8 @@ class NtRcInstaller
             'ntresellerclub_service',
             'ntresellerclub_cart_domain',
             'ntresellerclub_price',
+            'ntresellerclub_price_history',
+            'ntresellerclub_exchange_rate_history',
             'ntresellerclub_notice',
             'ntresellerclub_log',
             'ntresellerclub_license'
