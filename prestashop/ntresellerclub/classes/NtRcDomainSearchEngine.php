@@ -6,6 +6,8 @@ if (!defined('_PS_VERSION_')) {
 require_once __DIR__ . '/providers/NtRcProviderFactory.php';
 require_once __DIR__ . '/providers/NtRcTldRouteManager.php';
 require_once __DIR__ . '/providers/NtRcProviderRegistry.php';
+require_once __DIR__ . '/NtRcTrPriceManager.php';
+require_once __DIR__ . '/NtRcTrPriceCalculator.php';
 
 class NtRcDomainSearchEngine
 {
@@ -51,7 +53,7 @@ class NtRcDomainSearchEngine
             }
 
             foreach ((array)$response['data'] as $domain => $row) {
-                $items[$domain] = $this->normalizeItem($domain, $providerCode, $row);
+                $items[$domain] = $this->normalizeItem($domain, $providerCode, $row, $tld);
             }
         }
 
@@ -80,10 +82,10 @@ class NtRcDomainSearchEngine
 
     protected function defaultTlds()
     {
-        return array('com', 'net', 'org', 'info', 'biz', 'tr', 'com.tr', 'net.tr', 'org.tr');
+        return array('com', 'net', 'org', 'info', 'biz', 'tr', 'com.tr', 'net.tr', 'org.tr', 'av.tr', 'gen.tr', 'web.tr');
     }
 
-    protected function normalizeItem($domain, $providerCode, $row)
+    protected function normalizeItem($domain, $providerCode, $row, $tld)
     {
         $status = 'unknown';
         if (is_array($row) && isset($row['status'])) {
@@ -92,6 +94,34 @@ class NtRcDomainSearchEngine
             $status = strtolower($row);
         }
 
-        return array('domain' => $domain, 'provider' => $providerCode, 'status' => $status, 'available' => in_array($status, array('available', 'avail')), 'raw' => $row);
+        $item = array(
+            'domain' => $domain,
+            'provider' => $providerCode,
+            'status' => $status,
+            'available' => in_array($status, array('available', 'avail')),
+            'raw' => $row
+        );
+
+        if ($providerCode === 'domainnameapi' && NtRcTrPriceManager::isAllowedTld($tld)) {
+            $price = $this->getTrRegisterPrice($tld);
+            if ($price && !empty($price['success'])) {
+                $item['price'] = $price['sale_price'];
+                $item['currency'] = $price['target_currency'];
+                $item['cost_converted'] = $price['cost_converted'];
+            }
+        }
+
+        return $item;
+    }
+
+    protected function getTrRegisterPrice($tld)
+    {
+        $rows = NtRcTrPriceManager::getByTld($tld);
+        foreach ((array)$rows as $row) {
+            if ($row['code'] === $tld . ':register') {
+                return NtRcTrPriceCalculator::calculate($row);
+            }
+        }
+        return null;
     }
 }
