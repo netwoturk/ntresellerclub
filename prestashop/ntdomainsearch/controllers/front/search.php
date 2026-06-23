@@ -11,22 +11,18 @@ class NtdomainsearchSearchModuleFrontController extends ModuleFrontController
         $tlds = (array)Tools::getValue('tlds', array());
 
         $engineFile = _PS_MODULE_DIR_ . 'ntresellerclub/classes/NtRcDomainSearchEngine.php';
-        if (!file_exists($engineFile)) {
-            die(json_encode(array('success' => false, 'message' => 'Domain search engine bulunamadi.')));
+        $formatterFile = _PS_MODULE_DIR_ . 'ntresellerclub/classes/NtRcDomainSearchResultFormatter.php';
+        if (!file_exists($engineFile) || !file_exists($formatterFile)) {
+            die(json_encode(array('success' => false, 'message' => 'Domain search altyapisi yok.')));
         }
 
         require_once $engineFile;
+        require_once $formatterFile;
 
         $engine = new NtRcDomainSearchEngine();
         $result = $engine->search($query, $tlds);
+        $formatted = NtRcDomainSearchResultFormatter::toJson($result);
 
-        die(json_encode(array(
-            'success' => $result['success'],
-            'query' => $result['query'],
-            'sld' => $result['sld'],
-            'data' => $result['items'],
-            'errors' => $result['errors'],
-            'message' => $result['success'] ? null : 'Uygun provider sonucu alinamadi.'
-        )));
+        die(json_encode($formatted));
     }
 }
