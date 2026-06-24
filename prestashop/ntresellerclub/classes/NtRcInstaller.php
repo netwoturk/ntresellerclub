@@ -13,7 +13,7 @@ class NtRcInstaller
             }
         }
 
-        return true;
+        return self::ensureOperationQueueSchema();
     }
 
     protected static function executeSqlFile($sqlFile)
@@ -40,6 +40,26 @@ class NtRcInstaller
         return true;
     }
 
+    public static function ensureOperationQueueSchema()
+    {
+        if (!self::addColumnIfMissing('ntresellerclub_operation_queue', 'priority', 'INT UNSIGNED NOT NULL DEFAULT 3 AFTER `action`')) {
+            return false;
+        }
+
+        return self::addColumnIfMissing('ntresellerclub_operation_queue', 'lock_token', 'VARCHAR(128) DEFAULT NULL AFTER `last_error`');
+    }
+
+    protected static function addColumnIfMissing($table, $column, $definition)
+    {
+        $fullTable = _DB_PREFIX_ . $table;
+        $exists = Db::getInstance()->getValue('SHOW COLUMNS FROM `' . pSQL($fullTable) . '` LIKE "' . pSQL($column) . '"');
+        if ($exists) {
+            return true;
+        }
+
+        return Db::getInstance()->execute('ALTER TABLE `' . pSQL($fullTable) . '` ADD `' . pSQL($column) . '` ' . $definition);
+    }
+
     public static function uninstallSql($dropTables = false)
     {
         if (!$dropTables) {
@@ -57,6 +77,7 @@ class NtRcInstaller
             'ntresellerclub_price',
             'ntresellerclub_price_history',
             'ntresellerclub_exchange_rate_history',
+            'ntresellerclub_operation_queue',
             'ntresellerclub_notice',
             'ntresellerclub_log',
             'ntresellerclub_license'
