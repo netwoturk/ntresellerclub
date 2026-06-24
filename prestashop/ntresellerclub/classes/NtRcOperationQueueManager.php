@@ -4,6 +4,7 @@ if (!defined('_PS_VERSION_')) {
 }
 
 require_once __DIR__ . '/NtRcLog.php';
+require_once __DIR__ . '/NtRcApiContractGuard.php';
 
 class NtRcOperationQueueManager
 {
@@ -11,6 +12,12 @@ class NtRcOperationQueueManager
     {
         if (!$providerCode || !$serviceType || !$action) {
             return array('success' => false, 'message' => 'Queue icin provider, service type ve action zorunludur.');
+        }
+
+        $contract = NtRcApiContractGuard::validate($providerCode, $serviceType, $action, $payload);
+        if (empty($contract['success'])) {
+            NtRcLog::add('warning', 'operation_queue_contract', 'Denied provider=' . $providerCode . ' service=' . $serviceType . ' action=' . $action . ' message=' . $contract['message']);
+            return $contract;
         }
 
         $data = array(
