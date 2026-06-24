@@ -28,3 +28,29 @@ CREATE TABLE IF NOT EXISTS `PREFIX_ntresellerclub_exchange_rate_history` (
   KEY `idx_exchange_pair` (`from_currency`, `to_currency`),
   KEY `idx_exchange_created` (`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `PREFIX_ntresellerclub_operation_queue` (
+  `id_ntresellerclub_operation_queue` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `id_order` INT UNSIGNED DEFAULT NULL,
+  `id_customer` INT UNSIGNED DEFAULT NULL,
+  `id_service` INT UNSIGNED DEFAULT NULL,
+  `provider_code` VARCHAR(64) NOT NULL,
+  `service_type` VARCHAR(50) NOT NULL,
+  `action` VARCHAR(64) NOT NULL,
+  `payload_json` MEDIUMTEXT DEFAULT NULL,
+  `response_json` MEDIUMTEXT DEFAULT NULL,
+  `status` VARCHAR(50) DEFAULT 'pending',
+  `retry_count` INT UNSIGNED DEFAULT 0,
+  `max_retries` INT UNSIGNED DEFAULT 3,
+  `last_error` TEXT DEFAULT NULL,
+  `locked_at` DATETIME DEFAULT NULL,
+  `processed_at` DATETIME DEFAULT NULL,
+  `created_at` DATETIME NOT NULL,
+  `updated_at` DATETIME DEFAULT NULL,
+  PRIMARY KEY (`id_ntresellerclub_operation_queue`),
+  KEY `idx_queue_status` (`status`),
+  KEY `idx_queue_provider` (`provider_code`),
+  KEY `idx_queue_order` (`id_order`),
+  KEY `idx_queue_service` (`id_service`),
+  KEY `idx_queue_retry` (`retry_count`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
