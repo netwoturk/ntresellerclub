@@ -34,32 +34,40 @@ class NtRcOperationQueueProcessor
     protected function processOne(array $item)
     {
         $idQueue = (int)$item['id_ntresellerclub_operation_queue'];
-        NtRcOperationQueueManager::markProcessing($idQueue);
-
-        $payload = $this->decodePayload($item['payload_json']);
-        $contract = NtRcApiContractGuard::validate($item['provider_code'], $item['service_type'], $item['action'], $payload);
-        if (empty($contract['success'])) {
-            NtRcOperationQueueManager::markRetryOrFailed($item, $contract['message']);
-            return array('success' => false, 'queue_id' => $idQueue, 'message' => $contract['message']);
+        $lockToken = NtRcOperationQueueManager::markProcessing($idQueue);
+        if (!$lockToken) {
+            return array('success' => false, 'queue_id' => $idQueue, 'message' => 'Queue kaydi baska cron tarafindan kilitlendi.');
         }
 
-        $provider = NtRcProviderFactory::make($item['provider_code']);
-        if (!$provider) {
-            NtRcOperationQueueManager::markRetryOrFailed($item, 'Provider olusturulamadi.');
-            return array('success' => false, 'queue_id' => $idQueue, 'message' => 'Provider olusturulamadi.');
-        }
+        try {
+            $payload = $this->decodePayload($item['payload_json']);
+            $contract = NtRcApiContractGuard::validate($item['provider_code'], $item['service_type'], $item['action'], $payload);
+            if (empty($contract['success'])) {
+                NtRcOperationQueueManager::markRetryOrFailed($item, $contract['message'], $lockToken);
+                return array('success' => false, 'queue_id' => $idQueue, 'message' => $contract['message']);
+            }
 
-        $response = $this->dispatch($provider, $item, $payload);
-        if (!empty($response['success'])) {
-            NtRcOperationQueueManager::markDone($idQueue, $response);
-            NtRcLog::add('info', 'operation_queue_processor', 'Queue done id=' . $idQueue . ' action=' . $item['action']);
-            return array('success' => true, 'queue_id' => $idQueue, 'action' => $item['action']);
-        }
+            $provider = NtRcProviderFactory::make($item['provider_code']);
+            if (!$provider) {
+                NtRcOperationQueueManager::markRetryOrFailed($item, 'Provider olusturulamadi.', $lockToken);
+                return array('success' => false, 'queue_id' => $idQueue, 'message' => 'Provider olusturulamadi.');
+            }
 
-        $error = isset($response['error']) ? $response['error'] : (isset($response['message']) ? $response['message'] : 'Provider islemi basarisiz.');
-        NtRcOperationQueueManager::markRetryOrFailed($item, $error);
-        NtRcLog::add('error', 'operation_queue_processor', 'Queue failed id=' . $idQueue . ' error=' . $error);
-        return array('success' => false, 'queue_id' => $idQueue, 'error' => $error);
+            $response = $this->dispatch($provider, $item, $payload);
+            if (!empty($response['success'])) {
+                NtRcOperationQueueManager::markDone($idQueue, $response, $lockToken);
+                NtRcLog::add('info', 'operation_queue_processor', 'Queue done id=' . $idQueue . ' action=' . $item['action']);
+                return array('success' => true, 'queue_id' => $idQueue, 'action' => $item['action']);
+            }
+
+            $error = isset($response['error']) ? $response['error'] : (isset($response['message']) ? $response['message'] : 'Provider islemi basarisiz.');
+            NtRcOperationQueueManager::markRetryOrFailed($item, $error, $lockToken);
+            NtRcLog::add('error', 'operation_queue_processor', 'Queue failed id=' . $idQueue . ' error=' . $error);
+            return array('success' => false, 'queue_id' => $idQueue, 'error' => $error);
+        } catch (Exception $e) {
+            NtRcOperationQueueManager::markRetryOrFailed($item, $e->getMessage(), $lockToken);
+            throw $e;
+        }
     }
 
     protected function dispatch($provider, array $item, array $payload)
