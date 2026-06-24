@@ -54,7 +54,7 @@ class NtRcOperationQueueProcessor
                 return array('success' => false, 'queue_id' => $idQueue, 'message' => 'Provider olusturulamadi.');
             }
 
-            $response = $this->dispatch($provider, $item, $payload);
+            $response = $this->sanitizeProviderResponse($this->dispatch($provider, $item, $payload));
             if (!empty($response['success'])) {
                 $this->afterSuccess($item, $payload, $response);
                 NtRcOperationQueueManager::markDone($idQueue, $response, $lockToken);
@@ -80,10 +80,7 @@ class NtRcOperationQueueProcessor
         $years = isset($payload['years']) ? (int)$payload['years'] : 1;
 
         if ($item['service_type'] === 'customer' && $action === 'create') {
-            if (method_exists($provider, 'createCustomer')) {
-                return $provider->createCustomer($payload);
-            }
-            return array('success' => false, 'message' => 'Provider customer create adapter henuz tanimli degil.');
+            return $this->dispatchCustomerCreate($provider, $item, $payload);
         }
 
         if ($action === 'details' && $domain && method_exists($provider, 'getDetails')) {
@@ -107,6 +104,45 @@ class NtRcOperationQueueProcessor
         }
 
         return array('success' => false, 'message' => 'Bu action icin provider metodu tanimli degil.');
+    }
+
+    protected function dispatchCustomerCreate($provider, array $item, array $payload)
+    {
+        $email = isset($payload['email']) ? trim((string)$payload['email']) : '';
+        if ($email === '' && isset($payload['contact_profile']['email'])) {
+            $email = trim((string)$payload['contact_profile']['email']);
+        }
+        if ($email === '') {
+            return array('success' => false, 'message' => 'Customer email zorunludur.');
+        }
+
+        if ($item['provider_code'] === 'domainnameapi') {
+            $domainName = isset($payload['domain_name']) ? $payload['domain_name'] : '';
+            if (!$domainName || !NtRcApiContractGuard::isDomainNameApiTrDomain($domainName)) {
+                return array('success' => false, 'message' => 'DomainNameAPI customer akisi sadece TR domain icin kullanilir.');
+            }
+        }
+
+        if (method_exists($provider, 'searchCustomer')) {
+            $search = $provider->searchCustomer($email);
+            if (empty($search['success'])) {
+                return $search;
+            }
+            if (!empty($search['found']) && !empty($search['provider_customer_id'])) {
+                return array(
+                    'success' => true,
+                    'source' => 'existing_provider_customer',
+                    'provider_customer_id' => $search['provider_customer_id'],
+                    'data' => isset($search['data']) ? $search['data'] : array(),
+                );
+            }
+        }
+
+        if (method_exists($provider, 'createCustomer')) {
+            return $provider->createCustomer($payload);
+        }
+
+        return array('success' => false, 'message' => 'Provider customer create adapter tanimli degil.');
     }
 
     protected function afterSuccess(array $item, array $payload, array $response)
@@ -140,6 +176,27 @@ class NtRcOperationQueueProcessor
         }
 
         return null;
+    }
+
+    protected function sanitizeProviderResponse($response)
+    {
+        if (!is_array($response)) {
+            return $response;
+        }
+
+        foreach (array('raw', 'last_url', 'api-key', 'api_key', 'passwd', 'password', 'auth-code', 'auth_code') as $key) {
+            if (isset($response[$key])) {
+                unset($response[$key]);
+            }
+        }
+
+        foreach ($response as $key => $value) {
+            if (is_array($value)) {
+                $response[$key] = $this->sanitizeProviderResponse($value);
+            }
+        }
+
+        return $response;
     }
 
     protected function decodePayload($payloadJson)
