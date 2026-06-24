@@ -120,7 +120,7 @@ Durum: Başladı
 
 ## PHASE 06 - Provider Customer & Contact System
 
-Durum: Planlandı
+Durum: Başladı
 
 ### Hedefler
 
