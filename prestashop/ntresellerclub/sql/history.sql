@@ -58,3 +58,28 @@ CREATE TABLE IF NOT EXISTS `PREFIX_ntresellerclub_operation_queue` (
   KEY `idx_queue_retry` (`retry_count`),
   KEY `idx_queue_lock` (`lock_token`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `PREFIX_ntresellerclub_contact_profile` (
+  `id_ntresellerclub_contact_profile` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `id_customer` INT UNSIGNED NOT NULL,
+  `profile_type` VARCHAR(50) DEFAULT 'personal',
+  `company_name` VARCHAR(255) DEFAULT NULL,
+  `first_name` VARCHAR(128) DEFAULT NULL,
+  `last_name` VARCHAR(128) DEFAULT NULL,
+  `tax_number` VARCHAR(64) DEFAULT NULL,
+  `tax_office` VARCHAR(128) DEFAULT NULL,
+  `tc_number` VARCHAR(64) DEFAULT NULL,
+  `address` TEXT DEFAULT NULL,
+  `city` VARCHAR(128) DEFAULT NULL,
+  `state` VARCHAR(128) DEFAULT NULL,
+  `country_iso` VARCHAR(5) DEFAULT NULL,
+  `postcode` VARCHAR(32) DEFAULT NULL,
+  `phone` VARCHAR(64) DEFAULT NULL,
+  `email` VARCHAR(255) DEFAULT NULL,
+  `is_default` TINYINT(1) DEFAULT 0,
+  `created_at` DATETIME NOT NULL,
+  `updated_at` DATETIME DEFAULT NULL,
+  PRIMARY KEY (`id_ntresellerclub_contact_profile`),
+  KEY `idx_contact_profile_customer` (`id_customer`),
+  KEY `idx_contact_profile_default` (`id_customer`, `is_default`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
