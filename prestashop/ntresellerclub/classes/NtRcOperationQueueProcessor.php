@@ -77,6 +77,13 @@ class NtRcOperationQueueProcessor
         $domain = isset($payload['domain']) ? $payload['domain'] : (isset($payload['domain_name']) ? $payload['domain_name'] : null);
         $years = isset($payload['years']) ? (int)$payload['years'] : 1;
 
+        if ($item['service_type'] === 'customer' && $action === 'create') {
+            if (method_exists($provider, 'createCustomer')) {
+                return $provider->createCustomer($payload);
+            }
+            return array('success' => false, 'message' => 'Provider customer create adapter henuz tanimli degil.');
+        }
+
         if ($action === 'details' && $domain && method_exists($provider, 'getDetails')) {
             return $provider->getDetails($domain);
         }
