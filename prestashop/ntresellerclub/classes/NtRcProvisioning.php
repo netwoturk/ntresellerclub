@@ -42,7 +42,8 @@ class NtRcProvisioning
 
             try {
                 $providerCode = !empty($cartDomain['provider_code']) ? $cartDomain['provider_code'] : 'resellerclub';
-                $providerCustomer = NtRcProviderCustomerManager::ensure((int)$order->id_customer, $providerCode);
+                $domainName = !empty($cartDomain['domain_name']) ? $cartDomain['domain_name'] : null;
+                $providerCustomer = NtRcProviderCustomerManager::ensure((int)$order->id_customer, $providerCode, $domainName);
                 if (!$providerCustomer['success']) {
                     $results[] = $providerCustomer;
                     continue;
