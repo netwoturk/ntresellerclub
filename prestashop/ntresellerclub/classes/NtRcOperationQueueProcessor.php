@@ -1,0 +1,99 @@
+<?php
+if (!defined('_PS_VERSION_')) {
+    exit;
+}
+
+require_once __DIR__ . '/NtRcOperationQueueManager.php';
+require_once __DIR__ . '/NtRcApiContractGuard.php';
+require_once __DIR__ . '/NtRcRuntimeGuard.php';
+require_once __DIR__ . '/providers/NtRcProviderFactory.php';
+require_once __DIR__ . '/NtRcLog.php';
+
+class NtRcOperationQueueProcessor
+{
+    public function process($limit = 10)
+    {
+        NtRcRuntimeGuard::beforeHeavyProcess('operation_queue_processor');
+        $limit = min((int)$limit, NtRcRuntimeGuard::cronBatchLimit(10));
+        $items = NtRcOperationQueueManager::pending($limit);
+        $results = array();
+
+        foreach ((array)$items as $item) {
+            try {
+                $results[] = $this->processOne($item);
+            } catch (Exception $e) {
+                NtRcOperationQueueManager::markRetryOrFailed($item, $e->getMessage());
+                NtRcLog::add('error', 'operation_queue_processor', 'Exception queue=' . (int)$item['id_ntresellerclub_operation_queue'] . ' ' . $e->getMessage());
+                $results[] = array('success' => false, 'queue_id' => (int)$item['id_ntresellerclub_operation_queue'], 'error' => $e->getMessage());
+            }
+        }
+
+        return array('success' => true, 'limit' => $limit, 'count' => count($results), 'items' => $results);
+    }
+
+    protected function processOne(array $item)
+    {
+        $idQueue = (int)$item['id_ntresellerclub_operation_queue'];
+        NtRcOperationQueueManager::markProcessing($idQueue);
+
+        $payload = $this->decodePayload($item['payload_json']);
+        $contract = NtRcApiContractGuard::validate($item['provider_code'], $item['service_type'], $item['action'], $payload);
+        if (empty($contract['success'])) {
+            NtRcOperationQueueManager::markRetryOrFailed($item, $contract['message']);
+            return array('success' => false, 'queue_id' => $idQueue, 'message' => $contract['message']);
+        }
+
+        $provider = NtRcProviderFactory::make($item['provider_code']);
+        if (!$provider) {
+            NtRcOperationQueueManager::markRetryOrFailed($item, 'Provider olusturulamadi.');
+            return array('success' => false, 'queue_id' => $idQueue, 'message' => 'Provider olusturulamadi.');
+        }
+
+        $response = $this->dispatch($provider, $item, $payload);
+        if (!empty($response['success'])) {
+            NtRcOperationQueueManager::markDone($idQueue, $response);
+            NtRcLog::add('info', 'operation_queue_processor', 'Queue done id=' . $idQueue . ' action=' . $item['action']);
+            return array('success' => true, 'queue_id' => $idQueue, 'action' => $item['action']);
+        }
+
+        $error = isset($response['error']) ? $response['error'] : (isset($response['message']) ? $response['message'] : 'Provider islemi basarisiz.');
+        NtRcOperationQueueManager::markRetryOrFailed($item, $error);
+        NtRcLog::add('error', 'operation_queue_processor', 'Queue failed id=' . $idQueue . ' error=' . $error);
+        return array('success' => false, 'queue_id' => $idQueue, 'error' => $error);
+    }
+
+    protected function dispatch($provider, array $item, array $payload)
+    {
+        $action = $item['action'];
+        $domain = isset($payload['domain']) ? $payload['domain'] : (isset($payload['domain_name']) ? $payload['domain_name'] : null);
+        $years = isset($payload['years']) ? (int)$payload['years'] : 1;
+
+        if ($action === 'details' && $domain && method_exists($provider, 'getDetails')) {
+            return $provider->getDetails($domain);
+        }
+
+        if ($action === 'renew' && $domain && method_exists($provider, 'renewDomain')) {
+            return $provider->renewDomain($domain, $years);
+        }
+
+        if ($action === 'register' && $domain && method_exists($provider, 'registerDomain')) {
+            $contact = isset($payload['contact']) && is_array($payload['contact']) ? $payload['contact'] : array();
+            $nameservers = isset($payload['nameservers']) && is_array($payload['nameservers']) ? $payload['nameservers'] : array();
+            $extra = isset($payload['extra']) && is_array($payload['extra']) ? $payload['extra'] : array();
+            return $provider->registerDomain($domain, $years, $contact, $nameservers, $extra);
+        }
+
+        if ($action === 'transfer' && $domain && method_exists($provider, 'transferDomain')) {
+            $authCode = isset($payload['auth_code']) ? $payload['auth_code'] : '';
+            return $provider->transferDomain($domain, $authCode, $years);
+        }
+
+        return array('success' => false, 'message' => 'Bu action icin provider metodu tanimli degil.');
+    }
+
+    protected function decodePayload($payloadJson)
+    {
+        $payload = json_decode((string)$payloadJson, true);
+        return is_array($payload) ? $payload : array();
+    }
+}
