@@ -66,7 +66,8 @@ class NtRcOperationQueueProcessor
             return array('success' => false, 'queue_id' => $idQueue, 'error' => $error);
         } catch (Exception $e) {
             NtRcOperationQueueManager::markRetryOrFailed($item, $e->getMessage(), $lockToken);
-            throw $e;
+            NtRcLog::add('error', 'operation_queue_processor', 'Exception queue=' . $idQueue . ' ' . $e->getMessage());
+            return array('success' => false, 'queue_id' => $idQueue, 'error' => $e->getMessage());
         }
     }
 
