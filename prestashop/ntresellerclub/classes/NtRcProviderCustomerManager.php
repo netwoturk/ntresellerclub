@@ -21,6 +21,11 @@ class NtRcProviderCustomerManager
             return array('success' => false, 'message' => 'PrestaShop musterisi bulunamadi.');
         }
 
+        $contract = NtRcApiContractGuard::validate($providerCode, 'customer', 'create', array('id_customer' => (int)$idCustomer));
+        if (empty($contract['success'])) {
+            return $contract;
+        }
+
         $row = self::getMapping($idCustomer, $providerCode);
         if ($row && !empty($row['provider_customer_id'])) {
             return array('success' => true, 'provider_code' => $providerCode, 'provider_customer_id' => $row['provider_customer_id'], 'source' => 'existing');
@@ -65,6 +70,12 @@ class NtRcProviderCustomerManager
             ), 'id_ntresellerclub_provider_customer=' . (int)$row['id_ntresellerclub_provider_customer']);
             return $queueResult;
         }
+
+        Db::getInstance()->update('ntresellerclub_provider_customer', array(
+            'email' => pSQL($customer->email),
+            'status' => pSQL('pending'),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ), 'id_ntresellerclub_provider_customer=' . (int)$row['id_ntresellerclub_provider_customer']);
 
         return array(
             'success' => true,
