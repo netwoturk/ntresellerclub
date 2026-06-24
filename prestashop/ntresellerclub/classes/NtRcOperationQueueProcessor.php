@@ -6,6 +6,7 @@ if (!defined('_PS_VERSION_')) {
 require_once __DIR__ . '/NtRcOperationQueueManager.php';
 require_once __DIR__ . '/NtRcApiContractGuard.php';
 require_once __DIR__ . '/NtRcRuntimeGuard.php';
+require_once __DIR__ . '/NtRcProviderCustomerManager.php';
 require_once __DIR__ . '/providers/NtRcProviderFactory.php';
 require_once __DIR__ . '/NtRcLog.php';
 
@@ -55,6 +56,7 @@ class NtRcOperationQueueProcessor
 
             $response = $this->dispatch($provider, $item, $payload);
             if (!empty($response['success'])) {
+                $this->afterSuccess($item, $payload, $response);
                 NtRcOperationQueueManager::markDone($idQueue, $response, $lockToken);
                 NtRcLog::add('info', 'operation_queue_processor', 'Queue done id=' . $idQueue . ' action=' . $item['action']);
                 return array('success' => true, 'queue_id' => $idQueue, 'action' => $item['action']);
@@ -105,6 +107,39 @@ class NtRcOperationQueueProcessor
         }
 
         return array('success' => false, 'message' => 'Bu action icin provider metodu tanimli degil.');
+    }
+
+    protected function afterSuccess(array $item, array $payload, array $response)
+    {
+        if ($item['service_type'] !== 'customer' || $item['action'] !== 'create') {
+            return;
+        }
+
+        $providerCustomerId = $this->extractProviderCustomerId($response);
+        if (!$providerCustomerId || empty($payload['id_customer'])) {
+            return;
+        }
+
+        NtRcProviderCustomerManager::markActive((int)$payload['id_customer'], $item['provider_code'], $providerCustomerId, $response);
+    }
+
+    protected function extractProviderCustomerId(array $response)
+    {
+        foreach (array('provider_customer_id', 'customer_id', 'id_customer', 'id') as $key) {
+            if (!empty($response[$key])) {
+                return $response[$key];
+            }
+        }
+
+        if (!empty($response['data']) && is_array($response['data'])) {
+            foreach (array('provider_customer_id', 'customer_id', 'id_customer', 'id') as $key) {
+                if (!empty($response['data'][$key])) {
+                    return $response['data'][$key];
+                }
+            }
+        }
+
+        return null;
     }
 
     protected function decodePayload($payloadJson)
