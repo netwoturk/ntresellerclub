@@ -193,29 +193,31 @@ class NtRcContactProfileManager
         }
 
         $address = null;
+        $hasAddress = false;
         if (class_exists('Address') && method_exists('Address', 'getFirstCustomerAddressId')) {
             $idAddress = (int)Address::getFirstCustomerAddressId((int)$idCustomer);
             if ($idAddress > 0) {
                 $address = new Address($idAddress);
+                $hasAddress = Validate::isLoadedObject($address);
             }
         }
 
         $countryIso = '';
-        if ($address && Validate::isLoadedObject($address) && !empty($address->id_country)) {
+        if ($hasAddress && !empty($address->id_country)) {
             $countryIso = Country::getIsoById((int)$address->id_country);
         }
 
         return array(
-            'profile_type' => !empty($address->company) ? 'company' : 'personal',
-            'company_name' => $address && Validate::isLoadedObject($address) ? $address->company : '',
-            'first_name' => $address && Validate::isLoadedObject($address) ? $address->firstname : $customer->firstname,
-            'last_name' => $address && Validate::isLoadedObject($address) ? $address->lastname : $customer->lastname,
-            'address' => $address && Validate::isLoadedObject($address) ? trim($address->address1 . ' ' . $address->address2) : '',
-            'city' => $address && Validate::isLoadedObject($address) ? $address->city : '',
+            'profile_type' => $hasAddress && !empty($address->company) ? 'company' : 'personal',
+            'company_name' => $hasAddress ? $address->company : '',
+            'first_name' => $hasAddress ? $address->firstname : $customer->firstname,
+            'last_name' => $hasAddress ? $address->lastname : $customer->lastname,
+            'address' => $hasAddress ? trim($address->address1 . ' ' . $address->address2) : '',
+            'city' => $hasAddress ? $address->city : '',
             'state' => '',
             'country_iso' => $countryIso,
-            'postcode' => $address && Validate::isLoadedObject($address) ? $address->postcode : '',
-            'phone' => $address && Validate::isLoadedObject($address) ? ($address->phone_mobile ? $address->phone_mobile : $address->phone) : '',
+            'postcode' => $hasAddress ? $address->postcode : '',
+            'phone' => $hasAddress ? ($address->phone_mobile ? $address->phone_mobile : $address->phone) : '',
             'email' => $customer->email,
         );
     }
