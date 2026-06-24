@@ -3,6 +3,7 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+require_once __DIR__ . '/NtRcInstaller.php';
 require_once __DIR__ . '/NtRcApiContractGuard.php';
 require_once __DIR__ . '/NtRcContactProfileManager.php';
 require_once __DIR__ . '/NtRcOperationQueueManager.php';
@@ -141,8 +142,19 @@ class NtRcProviderCustomerManager
 
     protected static function ensureSchema()
     {
-        if (class_exists('NtRcInstaller')) {
-            NtRcInstaller::ensureProviderCustomerSchema();
+        NtRcInstaller::ensureProviderCustomerSchema();
+        self::addColumnIfMissing('provider_username', 'VARCHAR(255) DEFAULT NULL AFTER `provider_customer_id`');
+        self::addColumnIfMissing('raw_data', 'MEDIUMTEXT DEFAULT NULL AFTER `status`');
+    }
+
+    protected static function addColumnIfMissing($column, $definition)
+    {
+        $table = _DB_PREFIX_ . 'ntresellerclub_provider_customer';
+        $exists = Db::getInstance()->getValue('SHOW COLUMNS FROM `' . pSQL($table) . '` LIKE "' . pSQL($column) . '"');
+        if ($exists) {
+            return true;
         }
+
+        return Db::getInstance()->execute('ALTER TABLE `' . pSQL($table) . '` ADD `' . pSQL($column) . '` ' . $definition);
     }
 }
