@@ -3,6 +3,7 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+require_once __DIR__ . '/NtRcInstaller.php';
 require_once __DIR__ . '/NtRcLog.php';
 
 class NtRcContactProfileManager
@@ -268,10 +269,6 @@ class NtRcContactProfileManager
 
     protected static function ensureSchema()
     {
-        if (class_exists('NtRcInstaller')) {
-            return NtRcInstaller::ensureContactProfileSchema();
-        }
-
-        return true;
+        return NtRcInstaller::ensureContactProfileSchema();
     }
 }
