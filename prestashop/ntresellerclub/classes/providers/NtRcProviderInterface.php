@@ -16,4 +16,12 @@ interface NtRcProviderInterface
     public function transferDomain($domainName, $authCode, $years = 1);
 
     public function getDetails($domainName);
+
+    public function searchCustomer($email);
+
+    public function createCustomer(array $payload);
+
+    public function updateCustomer($providerCustomerId, array $payload);
+
+    public function getCustomer($providerCustomerId);
 }
