@@ -4,6 +4,7 @@ if (!defined('_PS_VERSION_')) {
 }
 
 require_once __DIR__ . '/NtRcProviderInterface.php';
+require_once dirname(__DIR__) . '/NtRcApiContractGuard.php';
 
 class NtRcDomainNameApiProvider implements NtRcProviderInterface
 {
@@ -127,6 +128,55 @@ class NtRcDomainNameApiProvider implements NtRcProviderInterface
         } catch (Exception $e) {
             return array('success' => false, 'error' => $e->getMessage());
         }
+    }
+
+    public function searchCustomer($email)
+    {
+        $email = trim((string)$email);
+        if ($email === '') {
+            return array('success' => false, 'message' => 'Customer email zorunludur.');
+        }
+
+        // TODO: DomainNameAPI PHP SDK customer/contact arama metodu resmi dokümanla doğrulanınca buraya bağlanacak.
+        return array('success' => true, 'found' => false, 'provider_customer_id' => null, 'message' => 'DomainNameAPI customer search adapter dogrulama bekliyor.');
+    }
+
+    public function createCustomer(array $payload)
+    {
+        $guard = $this->guardTrCustomerPayload($payload);
+        if (empty($guard['success'])) {
+            return $guard;
+        }
+
+        // TODO: DomainNameAPI PHP SDK customer/contact create metodu resmi dokümanla doğrulanınca buraya bağlanacak.
+        return array('success' => false, 'message' => 'DomainNameAPI customer/contact create adapter dogrulama bekliyor.');
+    }
+
+    public function updateCustomer($providerCustomerId, array $payload)
+    {
+        $guard = $this->guardTrCustomerPayload($payload);
+        if (empty($guard['success'])) {
+            return $guard;
+        }
+
+        // TODO: DomainNameAPI PHP SDK customer/contact update metodu resmi dokümanla doğrulanınca buraya bağlanacak.
+        return array('success' => false, 'message' => 'DomainNameAPI customer/contact update adapter dogrulama bekliyor.');
+    }
+
+    public function getCustomer($providerCustomerId)
+    {
+        // TODO: DomainNameAPI PHP SDK customer/contact details metodu resmi dokümanla doğrulanınca buraya bağlanacak.
+        return array('success' => false, 'message' => 'DomainNameAPI customer/contact details adapter dogrulama bekliyor.');
+    }
+
+    protected function guardTrCustomerPayload(array $payload)
+    {
+        $domainName = isset($payload['domain_name']) ? $payload['domain_name'] : '';
+        if (!$domainName || !NtRcApiContractGuard::isDomainNameApiTrDomain($domainName)) {
+            return array('success' => false, 'message' => 'DomainNameAPI customer akisi sadece TR domain icin kullanilir.');
+        }
+
+        return array('success' => true);
     }
 
     protected function createClient()
