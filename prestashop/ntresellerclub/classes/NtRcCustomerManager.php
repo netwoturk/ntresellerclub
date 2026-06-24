@@ -3,6 +3,8 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+require_once __DIR__ . '/NtRcProviderCustomerManager.php';
+
 class NtRcCustomerManager
 {
     protected $module;
@@ -12,26 +14,19 @@ class NtRcCustomerManager
         $this->module = $module;
     }
 
-    public function ensureCustomer($idCustomer)
+    public function ensureCustomer($idCustomer, $providerCode = 'resellerclub')
     {
-        $customer = new Customer((int)$idCustomer);
-        if (!Validate::isLoadedObject($customer)) {
-            return array('success' => false, 'message' => 'PrestaShop müşterisi bulunamadı.');
-        }
-
-        $existing = Db::getInstance()->getRow(
-            'SELECT * FROM `' . _DB_PREFIX_ . 'ntresellerclub_customer` WHERE id_customer=' . (int)$idCustomer
-        );
-
-        if ($existing && !empty($existing['resellerclub_customer_id'])) {
-            return array('success' => true, 'customer_id' => (int)$existing['resellerclub_customer_id'], 'source' => 'existing');
+        $result = NtRcProviderCustomerManager::ensure((int)$idCustomer, $providerCode);
+        if (empty($result['success'])) {
+            return $result;
         }
 
         return array(
             'success' => true,
-            'customer_id' => 0,
-            'source' => 'pending',
-            'message' => 'ResellerClub customer create V2 aşamasında aktif edilecek.'
+            'customer_id' => isset($result['provider_customer_id']) ? $result['provider_customer_id'] : null,
+            'provider_code' => $providerCode,
+            'queue_id' => isset($result['queue_id']) ? (int)$result['queue_id'] : 0,
+            'source' => isset($result['source']) ? $result['source'] : 'pending',
         );
     }
 }
