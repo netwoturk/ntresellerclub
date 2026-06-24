@@ -108,6 +108,10 @@ class NtRcResellerClubProvider implements NtRcProviderInterface
         }
 
         $customerId = $this->extractCustomerId($response['data']);
+        if (!$customerId) {
+            return array('success' => false, 'message' => 'ResellerClub customer ID cevaptan okunamadi.');
+        }
+
         return array(
             'success' => true,
             'provider_customer_id' => $customerId,
@@ -194,6 +198,10 @@ class NtRcResellerClubProvider implements NtRcProviderInterface
 
     protected function extractCustomerId($data)
     {
+        if (is_scalar($data) && trim((string)$data) !== '') {
+            return (string)$data;
+        }
+
         if (!is_array($data)) {
             return null;
         }
@@ -205,7 +213,7 @@ class NtRcResellerClubProvider implements NtRcProviderInterface
         }
 
         foreach ($data as $row) {
-            if (is_array($row)) {
+            if (is_array($row) || is_scalar($row)) {
                 $id = $this->extractCustomerId($row);
                 if ($id) {
                     return $id;
