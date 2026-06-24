@@ -85,7 +85,7 @@ class NtRcResellerClubProvider implements NtRcProviderInterface
             return $this->safeResponse($response);
         }
 
-        $customerId = $this->extractCustomerId($response['data']);
+        $customerId = $this->extractCustomerId($response['data'], false);
         return array(
             'success' => true,
             'found' => $customerId ? true : false,
@@ -107,7 +107,7 @@ class NtRcResellerClubProvider implements NtRcProviderInterface
             return $this->safeResponse($response);
         }
 
-        $customerId = $this->extractCustomerId($response['data']);
+        $customerId = $this->extractCustomerId($response['data'], true);
         if (!$customerId) {
             return array('success' => false, 'message' => 'ResellerClub customer ID cevaptan okunamadi.');
         }
@@ -196,9 +196,9 @@ class NtRcResellerClubProvider implements NtRcProviderInterface
         return array('cc' => $cc, 'number' => ltrim($number, '+'));
     }
 
-    protected function extractCustomerId($data)
+    protected function extractCustomerId($data, $allowScalar = false)
     {
-        if (is_scalar($data) && trim((string)$data) !== '') {
+        if ($allowScalar && is_scalar($data) && trim((string)$data) !== '') {
             return (string)$data;
         }
 
@@ -213,8 +213,8 @@ class NtRcResellerClubProvider implements NtRcProviderInterface
         }
 
         foreach ($data as $row) {
-            if (is_array($row) || is_scalar($row)) {
-                $id = $this->extractCustomerId($row);
+            if (is_array($row)) {
+                $id = $this->extractCustomerId($row, false);
                 if ($id) {
                     return $id;
                 }
