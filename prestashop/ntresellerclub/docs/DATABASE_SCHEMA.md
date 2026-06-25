@@ -35,8 +35,6 @@ Tablo: `PREFIX_ntresellerclub_provider_customer`
 | created_at | DATETIME | Oluşturma tarihi |
 | updated_at | DATETIME | Güncelleme tarihi |
 
-Kural: Her provider için müşteri ayrı map edilir. Aynı müşteri ResellerClub ve DomainNameAPI tarafında farklı ID alabilir.
-
 DomainNameAPI için `customer/create` provider customer account oluşturmaz. Sadece TR domain contact payload hazırlığı yapar ve başarılı olursa mapping `contact_ready` olur.
 
 ## 3. Contact Profile
@@ -67,8 +65,6 @@ Tablo: `PREFIX_ntresellerclub_contact_profile`
 
 V1 kuralı: 1 müşteri için varsayılan tek contact yeterlidir.
 
-V2 hazırlığı: Owner/Admin/Billing/Tech contact ayrımı eklenebilir.
-
 ## 4. TLD Routing
 
 Tablo: `PREFIX_ntresellerclub_tld_route`
@@ -82,12 +78,7 @@ Tablo: `PREFIX_ntresellerclub_tld_route`
 | created_at | DATETIME | Oluşturma tarihi |
 | updated_at | DATETIME | Güncelleme tarihi |
 
-Zorunlu yönlendirme:
-
-| Uzantı | Provider |
-|---|---|
-| com/net/org/info/biz | resellerclub |
-| tr/com.tr/net.tr/org.tr/av.tr/gen.tr/web.tr | domainnameapi |
+Zorunlu yönlendirme: global domainler ResellerClub, TR domainler DomainNameAPI.
 
 ## 5. Domain Sepeti
 
@@ -133,8 +124,6 @@ Tablo: `PREFIX_ntresellerclub_service`
 | created_at | DATETIME | Oluşturma tarihi |
 | updated_at | DATETIME | Güncelleme tarihi |
 
-Kural: Başarılı domain register/renew işleminden sonra servis `active`, başarılı transfer kuyruğundan sonra `ready` durumuna alınır. Provider cevabında dönen order/service/contact/expiry değerleri hassas alanlar temizlendikten sonra kaydedilir.
-
 ## 7. Operation Queue
 
 Tablo: `PREFIX_ntresellerclub_operation_queue`
@@ -163,74 +152,106 @@ Tablo: `PREFIX_ntresellerclub_operation_queue`
 
 Kural: Ağır API işlemleri doğrudan çalışmaz. Önce bu tabloya eklenir.
 
-DomainNameAPI TR register queue işlenmeden önce provider customer mapping `contact_ready` olmalıdır. Hazır değilse önce `customer/create` contact hazırlık kuyruğu çalışır; register kuyruğu retry/failed kurallarını bozmadan bekler.
-
 ## 8. Monitoring & Health
 
 Tablo: `PREFIX_ntresellerclub_provider_health`
 
 | Alan | Tip | Açıklama |
 |---|---|---|
-| id_ntresellerclub_provider_health | INT | Primary key |
 | provider_code | VARCHAR(64) | Provider kodu |
 | status | VARCHAR(32) | ok, warning, disabled, unlicensed |
-| is_enabled | TINYINT | Provider aktif mi |
-| is_licensed | TINYINT | Provider lisanslı mı |
 | queue_pending | INT | Provider pending queue sayısı |
 | queue_failed | INT | Provider failed queue sayısı |
 | last_error | TEXT | Sanitize edilmiş son hata |
 | response_time_ms | INT | Health snapshot ölçüm süresi |
 | checked_at | DATETIME | Kontrol zamanı |
-| created_at | DATETIME | Kayıt zamanı |
 
 Tablo: `PREFIX_ntresellerclub_runtime_health`
 
-| Alan | Tip | Açıklama |
-|---|---|---|
-| id_ntresellerclub_runtime_health | INT | Primary key |
-| context | VARCHAR(64) | cron, admin, manual vb. |
-| status | VARCHAR(32) | ok, warning |
-| memory_limit | VARCHAR(32) | PHP memory limit |
-| memory_usage_bytes | BIGINT | Anlık memory kullanımı |
-| memory_peak_bytes | BIGINT | Peak memory kullanımı |
-| max_execution_time | INT | PHP execution time |
-| batch_limit | INT | RuntimeGuard batch limiti |
-| php_sapi | VARCHAR(64) | PHP SAPI |
-| queue_pending | INT | Pending queue toplamı |
-| queue_processing | INT | Processing queue toplamı |
-| queue_failed | INT | Failed queue toplamı |
-| last_cron_at | DATETIME | Son cron işaret zamanı |
-| checked_at | DATETIME | Kontrol zamanı |
-| created_at | DATETIME | Kayıt zamanı |
+Runtime memory, peak memory, batch limit, SAPI, queue pending/processing/failed ve cron zamanını tutar.
 
 Tablo: `PREFIX_ntresellerclub_provider_statistics`
 
+Provider bazlı günlük queue toplamlarını, retry sayılarını ve son başarılı/failed zamanlarını tutar.
+
+## 9. Notification & Mail
+
+Tablo: `PREFIX_ntresellerclub_notification_template`
+
 | Alan | Tip | Açıklama |
 |---|---|---|
-| id_ntresellerclub_provider_statistics | INT | Primary key |
-| provider_code | VARCHAR(64) | Provider kodu |
-| metric_date | DATE | Günlük metrik tarihi |
-| total_queue | INT | Toplam queue |
-| pending_queue | INT | Pending queue |
-| processing_queue | INT | Processing queue |
-| done_queue | INT | Done queue |
-| failed_queue | INT | Failed queue |
-| retry_queue | INT | Retry almış queue |
-| avg_retry | DECIMAL | Ortalama retry |
-| last_success_at | DATETIME | Son başarılı queue zamanı |
-| last_failure_at | DATETIME | Son failed queue zamanı |
+| id_ntresellerclub_notification_template | INT | Primary key |
+| template_key | VARCHAR(100) | Bildirim türü |
+| lang_iso | VARCHAR(5) | tr, en, de, fr, es, it |
+| recipient_type | VARCHAR(32) | customer, admin, technical_admin |
+| subject | VARCHAR(255) | Mail konusu |
+| body_html | MEDIUMTEXT | HTML gövde |
+| body_text | MEDIUMTEXT | Text gövde |
+| is_active | TINYINT | Aktif/pasif |
 | created_at | DATETIME | Oluşturma tarihi |
 | updated_at | DATETIME | Güncelleme tarihi |
 
-Kural: Monitoring Engine cron sonunda otomatik çalışır, provider API çağrısı yapmaz, sadece DB/runtime sinyallerini yazar. Hassas alanlar `last_error`, log ve response çıktılarında sanitize edilir.
+Tablo: `PREFIX_ntresellerclub_notification_queue`
 
-## 9. TR Domain Fiyatları
+| Alan | Tip | Açıklama |
+|---|---|---|
+| id_ntresellerclub_notification_queue | INT | Primary key |
+| template_key | VARCHAR(100) | Bildirim türü |
+| lang_iso | VARCHAR(5) | Mail dili |
+| recipient_type | VARCHAR(32) | customer, admin, technical_admin |
+| id_customer | INT | Müşteri ID, varsa |
+| id_service | INT | Servis ID, varsa |
+| to_email | VARCHAR(255) | Alıcı e-posta |
+| to_name | VARCHAR(255) | Alıcı adı |
+| subject | VARCHAR(255) | Render edilmiş konu |
+| body_html | MEDIUMTEXT | Render edilmiş HTML gövde |
+| body_text | MEDIUMTEXT | Render edilmiş text gövde |
+| variables_json | MEDIUMTEXT | Sanitize edilmiş template değişkenleri |
+| dedupe_key | VARCHAR(191) | Tekrar bildirim engeli |
+| priority | INT | 1 kritik, 4 düşük |
+| status | VARCHAR(32) | pending, processing, sent, failed, cancelled |
+| retry_count | INT | Deneme sayısı |
+| max_retries | INT | Maksimum deneme |
+| last_error | TEXT | Sanitize edilmiş son hata |
+| lock_token | VARCHAR(128) | Cron lock token |
+| locked_at | DATETIME | Lock zamanı |
+| available_at | DATETIME | Gönderime uygun zaman |
+| sent_at | DATETIME | Gönderim zamanı |
+| created_at | DATETIME | Oluşturma tarihi |
+| updated_at | DATETIME | Güncelleme tarihi |
+
+Tablo: `PREFIX_ntresellerclub_notification_log`
+
+Mail denemelerini ve sanitize edilmiş sonucu tutar. Raw provider request, api key, password, auth-code, token veya credential saklamaz.
+
+Notification template key listesi:
+
+- domain_registered
+- domain_transfer_started
+- domain_renewed
+- domain_expiring_30
+- domain_expiring_15
+- domain_expiring_7
+- domain_expiring_1
+- hosting_created
+- hosting_renewed
+- ssl_created
+- ssl_renewed
+- queue_failed_admin
+- provider_down_admin
+- payment_required
+- service_suspended
+- service_expired
+
+Kural: Mail gönderimi doğrudan yapılmaz; `ntresellerclub_notification_queue` içine yazılır ve cron sonunda `Mail::Send` ile batch gönderilir.
+
+## 10. TR Domain Fiyatları
 
 Tablo: `PREFIX_ntresellerclub_price`
 
 TR domain maliyet ve satış fiyatı satırlarını tutar. Fiyat motoru DomainNameAPI maliyetlerini sadece TR uzantıları için işler.
 
-## 10. Sistem Devam Tablosu
+## 11. Sistem Devam Tablosu
 
 Fiyat geçmişi, manuel kur geçmişi, hosting ürünleri, SSL ürünleri, webhook log, sistem log ve lisans tabloları mevcut engine kurallarına göre korunur.
 
@@ -242,5 +263,6 @@ Fiyat geçmişi, manuel kur geçmişi, hosting ürünleri, SSL ürünleri, webho
 - SSL = ResellerClub.
 - DomainNameAPI global domain, hosting ve SSL için kullanılmaz.
 - Queue olmadan register/renew/transfer/create işlemi yapılmaz.
-- RuntimeGuard olmadan cron/provisioning/sync çalışmaz.
+- Notification queue olmadan mail gönderimi yapılmaz.
+- RuntimeGuard olmadan cron/provisioning/sync/notification çalışmaz.
 - Monitoring provider API çağrısı yapmaz; cron sonunda düşük maliyetli DB/runtime snapshot olarak çalışır.
