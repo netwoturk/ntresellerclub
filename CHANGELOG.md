@@ -1,5 +1,36 @@
 # Changelog
 
+## 2026-06-25 - Engine 12 Hosting Provisioning
+
+Branch: `codex/engine-12-hosting-provisioning`
+
+### Added
+
+- Added `NtRcHostingProductMappingManager` for PrestaShop product to ResellerClub hosting package mapping.
+- Added `NtRcHostingManager` for hosting create, renew, suspend, and unsuspend queue orchestration.
+- Added `NtRcHostingOperationQueueProcessor` to extend the existing queue processor with hosting actions.
+- Added `NtRcResellerClubHostingAdapter` as a TODO wrapper until official ResellerClub hosting endpoints are verified.
+- Added `NtRcHostingMonitoring` for active hosting count, failed hosting queue, and pending hosting provisioning metrics.
+- Added queue actions `hosting/create`, `hosting/renew`, `hosting/suspend`, and `hosting/unsuspend`.
+- Added `docs/architecture/15_HOSTING_PROVISIONING_ENGINE.md`.
+
+### Changed
+
+- `NtRcProvisioning` now detects mapped hosting products and creates hosting service + queue records instead of direct API calls.
+- Cron now uses `NtRcHostingOperationQueueProcessor` so hosting queue actions are handled while domain/customer behavior remains inherited.
+- `NtRcApiContractGuard` now allows namespaced hosting actions only for ResellerClub.
+- Current status now documents Engine 12 hosting lifecycle, TODOs, and test limitations.
+
+### Fixed
+
+- DomainNameAPI remains blocked for hosting through contract guard.
+- Hosting renew does not create provider API queue before payment confirmation.
+- ResellerClub hosting adapter sanitizes token/credential-like fields.
+
+### TODO
+
+- ResellerClub hosting create/renew/suspend/unsuspend/details endpoints are not implemented until official endpoint/resource/action details are verified.
+
 ## 2026-06-25 - BTK CSV Reporting Premium Feature
 
 Branch: `codex/feature-btk-csv-reporting`
