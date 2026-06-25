@@ -8,7 +8,7 @@ class NtRcApiContractGuard
     protected static $providerActions = array(
         'resellerclub' => array(
             'domain' => array('check', 'register', 'transfer', 'renew', 'details', 'nameserver_update', 'contact_update'),
-            'hosting' => array('create', 'renew', 'suspend', 'unsuspend', 'details'),
+            'hosting' => array('hosting/create', 'hosting/renew', 'hosting/suspend', 'hosting/unsuspend', 'hosting/details'),
             'ssl' => array('create', 'renew', 'details'),
             'customer' => array('create', 'details', 'update'),
         ),
