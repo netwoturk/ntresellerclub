@@ -152,11 +152,16 @@ CREATE TABLE IF NOT EXISTS `PREFIX_ntresellerclub_price` (
   `cost_price` DECIMAL(20,6) DEFAULT NULL,
   `sale_price` DECIMAL(20,6) DEFAULT NULL,
   `currency` VARCHAR(10) DEFAULT NULL,
+  `target_currency` VARCHAR(10) DEFAULT NULL,
   `margin_mode` VARCHAR(32) DEFAULT 'manual',
   `margin_percent` DECIMAL(20,6) DEFAULT 0,
   `margin_fixed` DECIMAL(20,6) DEFAULT 0,
   `tax_included` TINYINT(1) DEFAULT 1,
+  `tax_rate` DECIMAL(10,4) DEFAULT 20,
+  `rounding_mode` VARCHAR(32) DEFAULT 'no_round',
   `last_sync` DATETIME DEFAULT NULL,
+  `created_at` DATETIME DEFAULT NULL,
+  `updated_at` DATETIME DEFAULT NULL,
   PRIMARY KEY (`id_ntresellerclub_price`),
   UNIQUE KEY `uniq_price_code` (`provider_code`, `product_type`, `code`, `years`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
