@@ -1,16 +1,16 @@
-# Veritabanı Şeması
+# Veritabani Semasi
 
-Bu dosya NetwoTürk ResellerClub PrestaShop modülünün WHMCS benzeri servis yönetimi için kullandığı tabloları açıklar.
+Bu dosya NetwoTurk ResellerClub PrestaShop modulunun WHMCS benzeri servis yonetimi icin kullandigi tablolari aciklar.
 
 ## `ps_ntresellerclub_customer`
 
-PrestaShop müşterisi ile ResellerClub customer kaydını eşleştirir.
+PrestaShop musterisi ile ResellerClub customer kaydini eslestirir.
 
-| Alan | Açıklama |
+| Alan | Aciklama |
 |---|---|
-| `id_customer` | PrestaShop müşteri ID |
+| `id_customer` | PrestaShop musteri ID |
 | `resellerclub_customer_id` | ResellerClub customer ID |
-| `email` | Müşteri e-posta |
+| `email` | Musteri e-posta |
 | `phone` | Telefon |
 | `company` | Firma |
 | `status` | pending / active / error |
@@ -19,79 +19,61 @@ PrestaShop müşterisi ile ResellerClub customer kaydını eşleştirir.
 
 Domain sahibi/administrative/technical contact verilerini tutar.
 
-| Alan | Açıklama |
-|---|---|
-| `id_customer` | PrestaShop müşteri ID |
-| `provider_contact_id` | ResellerClub contact ID |
-| `contact_type` | domain / admin / tech / billing |
-| `firstname`, `lastname` | Contact kişi bilgisi |
-| `company` | Firma |
-| `email`, `phone`, `country` | Contact iletişim bilgileri |
-
 ## `ps_ntresellerclub_service`
 
-Müşterinin satın aldığı domain, hosting, SSL ve e-posta servislerini takip eder.
+Musterinin satin aldigi domain, hosting, SSL ve e-posta servislerini takip eder.
 
-| Alan | Açıklama |
+| Alan | Aciklama |
 |---|---|
-| `service_type` | domain / hosting / ssl / email |
-| `domain_name` | Alan adı |
-| `provider_order_id` | ResellerClub order ID |
-| `start_date` | Başlangıç tarihi |
-| `expiry_date` | Bitiş tarihi |
-| `status` | pending / active / expired / suspended / restore |
-| `renew_price` | Yenileme ücreti |
-| `transfer_price` | Transfer ücreti |
-| `restore_price` | Kurtarma ücreti |
+| `service_type` | domain / tr_domain / hosting / ssl / email |
+| `domain_name` | Alan adi |
+| `provider_order_id` | Provider order ID |
+| `provider_service_id` | Provider service ID |
+| `start_date` | Baslangic tarihi |
+| `expiry_date` | Bitis tarihi |
+| `status` | pending / provisioning / active / renewal_due / payment_required / expired / suspended / cancelled / error |
+| `renew_price` | Yenileme ucreti |
+| `transfer_price` | Transfer ucreti |
+| `restore_price` | Kurtarma ucreti |
+
+## `ps_ntresellerclub_hosting_product_mapping`
+
+PrestaShop hosting urunlerini ResellerClub hosting paketleriyle eslestirir. Hosting sadece ResellerClub uzerinden calisir.
+
+| Alan | Aciklama |
+|---|---|
+| `id_product` | PrestaShop product id |
+| `provider_code` | Sabit `resellerclub` |
+| `provider_product_id` | ResellerClub urun/paket ID |
+| `package_name` | Paket adi |
+| `billing_cycle` | monthly / quarterly / semiannual / yearly / biennial / triennial |
+| `cost_price` | Manuel maliyet |
+| `sale_price` | Manuel satis fiyati |
+| `currency` | Para birimi |
+| `active` | Aktif mapping |
 
 ## `ps_ntresellerclub_cart_domain`
 
-Domain arama modülünden gelen ve sepete bağlanan domain seçimini tutar.
-
-| Alan | Açıklama |
-|---|---|
-| `id_cart` | PrestaShop cart ID |
-| `domain_name` | Seçilen domain |
-| `years` | Kaç yıllık kayıt |
+Domain arama modulunden gelen ve sepete baglanan domain secimini tutar.
 
 ## `ps_ntresellerclub_price`
 
-ResellerClub ürün/fiyat senkronizasyon kayıtları.
-
-| Alan | Açıklama |
-|---|---|
-| `product_type` | domain / hosting / ssl |
-| `code` | tld veya ürün kodu |
-| `years` | Yıl |
-| `cost_price` | Alış fiyatı |
-| `sale_price` | Satış fiyatı |
-| `currency` | Para birimi |
+Domain/TR domain/hosting/SSL manuel veya provider kaynakli fiyat mapping kayitlarini tutar. Engine 12 hosting fiyatlari manual/mapping tabanlidir; varsayimsal ResellerClub fiyat API endpointi eklenmedi.
 
 ## `ps_ntresellerclub_notice`
 
-Yenileme bildirimlerinin tekrar gönderilmesini önler.
-
-| Alan | Açıklama |
-|---|---|
-| `id_service` | Servis ID |
-| `notice_type` | renewal / expire / restore |
-| `days_before` | 30 / 15 / 7 / 3 / 1 |
-| `sent_at` | Gönderim tarihi |
+Yenileme bildirimlerinin tekrar gonderilmesini onler.
 
 ## `ps_ntresellerclub_log`
 
-API, cron ve provisioning logları.
+API, cron ve provisioning loglari.
 
 ## `ps_ntresellerclub_license`
 
-Yıllık SaaS lisans takibi.
+Yillik SaaS lisans takibi.
 
 ## BTK CSV Reporting
 
 Premium feature key: `btk_csv_reporting`
 
-Yeni tablo eklemez. CSV raporları `ps_ntresellerclub_service`, `ps_ntresellerclub_contact_profile`, `ps_ntresellerclub_provider_customer` ve `ps_customer` kayıtlarından üretilir.
-
-CSV dosyaları başlıksızdır ve her satır şu 6 kolonu içerir: alan adı, alan adı sahibi, iletişim telefonu, iletişim e-postası, alan adı kayıt tarihi, alan adı süresinin dolma tarihi.
-
-Feature aktif değilse admin CSV indirme kapalıdır.
+Yeni tablo eklemez. CSV raporlari `ps_ntresellerclub_service`, `ps_ntresellerclub_contact_profile`, `ps_ntresellerclub_provider_customer` ve `ps_customer` kayitlarindan uretilir.
