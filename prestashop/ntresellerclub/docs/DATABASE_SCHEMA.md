@@ -27,13 +27,17 @@ Tablo: `PREFIX_ntresellerclub_provider_customer`
 | id_ntresellerclub_provider_customer | INT | Primary key |
 | id_customer | INT | PrestaShop müşteri ID |
 | provider_code | VARCHAR(64) | resellerclub/domainnameapi |
-| provider_customer_id | VARCHAR(128) | Provider tarafındaki müşteri ID |
+| provider_customer_id | VARCHAR(128) | Provider tarafındaki müşteri ID; DomainNameAPI contact hazırlığında boş kalır |
+| provider_username | VARCHAR(255) | Provider tarafındaki kullanıcı adı/e-posta |
 | email | VARCHAR(255) | Provider müşteri maili |
-| status | VARCHAR(50) | pending, active, error |
+| status | VARCHAR(50) | pending, active, contact_ready, error |
+| raw_data | MEDIUMTEXT | Hassas alanları temizlenmiş provider/queue cevabı |
 | created_at | DATETIME | Oluşturma tarihi |
 | updated_at | DATETIME | Güncelleme tarihi |
 
 Kural: Her provider için müşteri ayrı map edilir. Aynı müşteri ResellerClub ve DomainNameAPI tarafında farklı ID alabilir.
+
+DomainNameAPI için `customer/create` provider customer account oluşturmaz. Sadece TR domain contact payload hazırlığı yapar ve başarılı olursa mapping `contact_ready` olur.
 
 ## 3. Contact Profile
 
@@ -109,16 +113,27 @@ Tablo: `PREFIX_ntresellerclub_service`
 | id_ntresellerclub_service | INT | Primary key |
 | id_customer | INT | PrestaShop müşteri |
 | id_order | INT | Sipariş ID |
+| id_product | INT | Bağlı PrestaShop ürün ID |
 | provider_code | VARCHAR(64) | Provider |
 | service_type | VARCHAR(50) | domain, hosting, ssl |
 | domain_name | VARCHAR(255) | Domain |
-| provider_service_id | VARCHAR(128) | Provider servis ID |
+| provider_service_id | VARCHAR(128) | Provider servis/domain ID |
+| provider_order_id | VARCHAR(128) | Provider sipariş/order ID |
+| provider_customer_id | VARCHAR(128) | Provider customer ID varsa |
+| provider_contact_id | VARCHAR(128) | Provider contact ID varsa |
+| start_date | DATE | Servis başlangıç tarihi |
 | expiry_date | DATE | Bitiş tarihi |
 | auto_renew | TINYINT | Otomatik yenileme |
-| status | VARCHAR(50) | pending, ready, active, suspended, error |
+| status | VARCHAR(50) | pending, register_waiting, ready, active, suspended, error |
+| renew_price | DECIMAL | Yenileme fiyatı |
+| transfer_price | DECIMAL | Transfer fiyatı |
+| restore_price | DECIMAL | Restore fiyatı |
+| currency | VARCHAR(10) | Para birimi |
 | last_sync | DATETIME | Son senkronizasyon |
 | created_at | DATETIME | Oluşturma tarihi |
 | updated_at | DATETIME | Güncelleme tarihi |
+
+Kural: Başarılı domain register/renew işleminden sonra servis `active`, başarılı transfer kuyruğundan sonra `ready` durumuna alınır. Provider cevabında dönen order/service/contact/expiry değerleri hassas alanlar temizlendikten sonra kaydedilir.
 
 ## 7. Operation Queue
 
@@ -132,7 +147,7 @@ Tablo: `PREFIX_ntresellerclub_operation_queue`
 | id_service | INT | Servis ID |
 | provider_code | VARCHAR(64) | Provider |
 | service_type | VARCHAR(50) | domain, tr_domain, hosting, ssl, customer |
-| action | VARCHAR(64) | register, transfer, renew, create, details |
+| action | VARCHAR(64) | register, transfer, renew, create, details, contact_update |
 | priority | INT | 1 kritik, 4 düşük |
 | payload_json | MEDIUMTEXT | Provider payload |
 | response_json | MEDIUMTEXT | Provider cevabı |
@@ -147,6 +162,8 @@ Tablo: `PREFIX_ntresellerclub_operation_queue`
 | updated_at | DATETIME | Güncelleme tarihi |
 
 Kural: Ağır API işlemleri doğrudan çalışmaz. Önce bu tabloya eklenir.
+
+DomainNameAPI TR register queue işlenmeden önce provider customer mapping `contact_ready` olmalıdır. Hazır değilse önce `customer/create` contact hazırlık kuyruğu çalışır; register kuyruğu retry/failed kurallarını bozmadan bekler.
 
 ## 8. TR Domain Fiyatları
 
