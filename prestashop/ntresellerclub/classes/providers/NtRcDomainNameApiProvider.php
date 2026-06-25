@@ -35,7 +35,7 @@ class NtRcDomainNameApiProvider implements NtRcProviderInterface
             $result = $client->checkAvailability(array($sld), $tlds, (int)$period, 'create');
             return array('success' => true, 'data' => $this->normalizeAvailability($result));
         } catch (Exception $e) {
-            return array('success' => false, 'error' => $e->getMessage());
+            return array('success' => false, 'error' => $this->safeText($e->getMessage()));
         }
     }
 
@@ -62,15 +62,23 @@ class NtRcDomainNameApiProvider implements NtRcProviderInterface
 
             return array('success' => true, 'data' => $this->normalizeTrPrices($raw));
         } catch (Exception $e) {
-            return array('success' => false, 'error' => $e->getMessage());
+            return array('success' => false, 'error' => $this->safeText($e->getMessage()));
         }
     }
 
     public function registerDomain($domainName, $years, array $contact, array $nameservers, array $extra = array())
     {
+        if (!NtRcApiContractGuard::isDomainNameApiTrDomain($domainName)) {
+            return array('success' => false, 'message' => 'DomainNameAPI register sadece TR domain akisi icin kullanilir.');
+        }
+
         $client = $this->createClient();
         if (!$client) {
             return array('success' => false, 'error' => 'DomainNameAPI library not found');
+        }
+
+        if (!method_exists($client, 'registerWithContactInfo')) {
+            return array('success' => false, 'message' => 'DomainNameAPI SDK registerWithContactInfo metodu bulunamadi.');
         }
 
         $contacts = array(
@@ -82,37 +90,53 @@ class NtRcDomainNameApiProvider implements NtRcProviderInterface
 
         try {
             $result = $client->registerWithContactInfo($domainName, (int)$years, $contacts, $nameservers, true, false, $extra);
-            return array('success' => true, 'data' => $this->safeData($result));
+            return $this->normalizeSdkResponse($result);
         } catch (Exception $e) {
-            return array('success' => false, 'error' => $e->getMessage());
+            return array('success' => false, 'error' => $this->safeText($e->getMessage()));
         }
     }
 
-    public function renewDomain($domainName, $years)
+    public function renewDomain($domainName, $years, array $extra = array())
     {
+        if (!NtRcApiContractGuard::isDomainNameApiTrDomain($domainName)) {
+            return array('success' => false, 'message' => 'DomainNameAPI renew sadece TR domain akisi icin kullanilir.');
+        }
+
         $client = $this->createClient();
         if (!$client) {
             return array('success' => false, 'error' => 'DomainNameAPI library not found');
         }
 
+        if (!method_exists($client, 'renew')) {
+            return array('success' => false, 'message' => 'DomainNameAPI SDK renew metodu bulunamadi.');
+        }
+
         try {
-            return array('success' => true, 'data' => $this->safeData($client->renew($domainName, (int)$years)));
+            return $this->normalizeSdkResponse($client->renew($domainName, (int)$years));
         } catch (Exception $e) {
-            return array('success' => false, 'error' => $e->getMessage());
+            return array('success' => false, 'error' => $this->safeText($e->getMessage()));
         }
     }
 
-    public function transferDomain($domainName, $authCode, $years = 1)
+    public function transferDomain($domainName, $authCode, $years = 1, array $extra = array())
     {
+        if (!NtRcApiContractGuard::isDomainNameApiTrDomain($domainName)) {
+            return array('success' => false, 'message' => 'DomainNameAPI transfer sadece TR domain akisi icin kullanilir.');
+        }
+
         $client = $this->createClient();
         if (!$client) {
             return array('success' => false, 'error' => 'DomainNameAPI library not found');
         }
 
+        if (!method_exists($client, 'transfer')) {
+            return array('success' => false, 'message' => 'DomainNameAPI SDK transfer metodu bulunamadi.');
+        }
+
         try {
-            return array('success' => true, 'data' => $this->safeData($client->transfer($domainName, $authCode, (int)$years)));
+            return $this->normalizeSdkResponse($client->transfer($domainName, $authCode, (int)$years));
         } catch (Exception $e) {
-            return array('success' => false, 'error' => $e->getMessage());
+            return array('success' => false, 'error' => $this->safeText($e->getMessage()));
         }
     }
 
@@ -124,9 +148,9 @@ class NtRcDomainNameApiProvider implements NtRcProviderInterface
         }
 
         try {
-            return array('success' => true, 'data' => $this->safeData($client->getDetails($domainName)));
+            return $this->normalizeSdkResponse($client->getDetails($domainName));
         } catch (Exception $e) {
-            return array('success' => false, 'error' => $e->getMessage());
+            return array('success' => false, 'error' => $this->safeText($e->getMessage()));
         }
     }
 
@@ -147,9 +171,9 @@ class NtRcDomainNameApiProvider implements NtRcProviderInterface
         }
 
         try {
-            return array('success' => true, 'data' => $this->safeData($client->getContacts($domainName)));
+            return $this->normalizeSdkResponse($client->getContacts($domainName));
         } catch (Exception $e) {
-            return array('success' => false, 'error' => $e->getMessage());
+            return array('success' => false, 'error' => $this->safeText($e->getMessage()));
         }
     }
 
@@ -170,9 +194,9 @@ class NtRcDomainNameApiProvider implements NtRcProviderInterface
         }
 
         try {
-            return array('success' => true, 'data' => $this->safeData($client->saveContacts($domainName, $contacts)));
+            return $this->normalizeSdkResponse($client->saveContacts($domainName, $contacts));
         } catch (Exception $e) {
-            return array('success' => false, 'error' => $e->getMessage());
+            return array('success' => false, 'error' => $this->safeText($e->getMessage()));
         }
     }
 
@@ -306,6 +330,30 @@ class NtRcDomainNameApiProvider implements NtRcProviderInterface
         return new \DomainNameApi\DomainNameAPI_PHPLibrary($this->username, $this->password, $this->testMode);
     }
 
+    protected function normalizeSdkResponse($result)
+    {
+        $data = $this->safeData($result);
+        $success = true;
+        if (is_array($data) && isset($data['result'])) {
+            $success = strtoupper((string)$data['result']) === 'OK';
+        }
+
+        $response = array('success' => $success, 'data' => $data);
+        if (!$success) {
+            $response['message'] = 'DomainNameAPI islemi basarisiz.';
+            if (is_array($data)) {
+                foreach (array('message', 'Message', 'error', 'Error') as $key) {
+                    if (!empty($data[$key])) {
+                        $response['message'] = $this->safeText($data[$key]);
+                        break;
+                    }
+                }
+            }
+        }
+
+        return $response;
+    }
+
     protected function normalizeAvailability($result)
     {
         $items = array();
@@ -372,7 +420,7 @@ class NtRcDomainNameApiProvider implements NtRcProviderInterface
     protected function safeData($data)
     {
         if (!is_array($data)) {
-            return $data;
+            return is_string($data) ? $this->safeText($data) : $data;
         }
 
         foreach (array('api-key', 'api_key', 'ApiKey', 'passwd', 'password', 'Password', 'auth-code', 'auth_code', 'AuthCode') as $key) {
@@ -384,9 +432,16 @@ class NtRcDomainNameApiProvider implements NtRcProviderInterface
         foreach ($data as $key => $value) {
             if (is_array($value)) {
                 $data[$key] = $this->safeData($value);
+            } elseif (is_string($value)) {
+                $data[$key] = $this->safeText($value);
             }
         }
 
         return $data;
+    }
+
+    protected function safeText($text)
+    {
+        return preg_replace('/(api-key|api_key|auth-code|auth_code|passwd|password)=([^&\s]+)/i', '$1=***', (string)$text);
     }
 }
