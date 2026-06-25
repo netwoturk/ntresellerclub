@@ -109,7 +109,7 @@ Genişleme hedefleri:
 | Türkçe | TRY |
 | İngilizce | USD |
 | Almanca | EUR |
-| Fransızca | EUR |
+| Fransızça | EUR |
 | İspanyolca | EUR |
 | İtalyanca | EUR |
 
@@ -157,7 +157,7 @@ Loglanması yasak alanlar:
 
 ## 11. Notification & Mail Kuralı
 
-Mail gönderimi controller, provisioning, provider adapter veya operation queue action içinde doğrudan yapılmayacaktır.
+Mail gönderimi controller, provisioning, provider adapter, operation queue action, renewal scan veya service status akışı içinde doğrudan yapılmayacaktır.
 
 Doğru akış:
 
@@ -172,6 +172,10 @@ Zorunlu kurallar:
 - Mail gönderimi `NtRcRuntimeGuard::cronBatchLimit()` ile batch çalışacaktır.
 - Notification queue status değerleri `pending`, `processing`, `sent`, `failed`, `cancelled` dışına çıkmayacaktır.
 - Retry `retry_count`, `max_retries`, `last_error` alanlarıyla yönetilecektir.
+- `NtRcRenewalManager` doğrudan `Mail::Send` veya `renewal_reminder` kullanmayacak; expiry event'leri notification queue'ya yazılacaktır.
+- Domain register/transfer/renew başarıları `domain_registered`, `domain_transfer_started`, `domain_renewed` template key'leriyle queue'ya yazılacaktır.
+- Servis status değişimleri `service_suspended` ve `service_expired` için queue üzerinden müşteri bildirimi oluşturabilir.
+- Notification enqueue hatası provider queue başarısını geri almamalı; hata sanitize edilerek warning seviyesinde loglanmalıdır.
 
 ## 12. Geliştirme Kuralı
 
