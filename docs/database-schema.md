@@ -85,3 +85,13 @@ API, cron ve provisioning logları.
 ## `ps_ntresellerclub_license`
 
 Yıllık SaaS lisans takibi.
+
+## BTK CSV Reporting
+
+Premium feature key: `btk_csv_reporting`
+
+Yeni tablo eklemez. CSV raporları `ps_ntresellerclub_service`, `ps_ntresellerclub_contact_profile`, `ps_ntresellerclub_provider_customer` ve `ps_customer` kayıtlarından üretilir.
+
+CSV dosyaları başlıksızdır ve her satır şu 6 kolonu içerir: alan adı, alan adı sahibi, iletişim telefonu, iletişim e-postası, alan adı kayıt tarihi, alan adı süresinin dolma tarihi.
+
+Feature aktif değilse admin CSV indirme kapalıdır.
