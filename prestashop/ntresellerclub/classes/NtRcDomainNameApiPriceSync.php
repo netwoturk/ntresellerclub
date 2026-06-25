@@ -7,7 +7,6 @@ require_once __DIR__ . '/NtRcTrPriceManager.php';
 require_once __DIR__ . '/providers/NtRcProviderFactory.php';
 require_once __DIR__ . '/NtRcLog.php';
 require_once __DIR__ . '/NtRcRuntimeGuard.php';
-require_once __DIR__ . '/NtRcHistoryManager.php';
 
 class NtRcDomainNameApiPriceSync
 {
@@ -24,8 +23,9 @@ class NtRcDomainNameApiPriceSync
         try {
             $prices = $this->fetchPrices($provider);
         } catch (Exception $e) {
-            NtRcLog::add('error', 'dna_price_sync', 'Fetch exception: ' . $e->getMessage());
-            return array('success' => false, 'message' => 'Fiyat verisi alinirken hata olustu.', 'error' => $e->getMessage());
+            $error = $this->safeText($e->getMessage());
+            NtRcLog::add('error', 'dna_price_sync', 'Fetch exception: ' . $error);
+            return array('success' => false, 'message' => 'Fiyat verisi alinirken hata olustu.', 'error' => $error);
         }
 
         if (empty($prices)) {
@@ -53,12 +53,13 @@ class NtRcDomainNameApiPriceSync
                     'backorder' => isset($row['backorder']) ? $row['backorder'] : 0,
                 );
 
-                $changed += $this->recordChangesBeforeUpsert($tld, $currency, $costs);
-                NtRcTrPriceManager::upsertCost($tld, $currency, $costs);
+                $changed += $this->countChangesBeforeUpsert($tld, $costs);
+                NtRcTrPriceManager::upsertCost($tld, $currency, $costs, array('source' => 'dna_sync'));
                 $count++;
             } catch (Exception $e) {
-                $errors[] = $tld . ': ' . $e->getMessage();
-                NtRcLog::add('error', 'dna_price_sync', 'TLD sync error ' . $tld . ' ' . $e->getMessage());
+                $error = $this->safeText($e->getMessage());
+                $errors[] = $tld . ': ' . $error;
+                NtRcLog::add('error', 'dna_price_sync', 'TLD sync error ' . $tld . ' ' . $error);
             }
         }
 
@@ -66,7 +67,7 @@ class NtRcDomainNameApiPriceSync
         return array('success' => true, 'count' => $count, 'changed' => $changed, 'errors' => $errors);
     }
 
-    protected function recordChangesBeforeUpsert($tld, $currency, array $costs)
+    protected function countChangesBeforeUpsert($tld, array $costs)
     {
         $changed = 0;
         $existingRows = NtRcTrPriceManager::getByTld($tld);
@@ -78,9 +79,7 @@ class NtRcDomainNameApiPriceSync
         foreach ($costs as $operation => $newCost) {
             $code = $tld . ':' . $operation;
             $oldCost = isset($existing[$code]) ? (float)$existing[$code]['cost_price'] : null;
-            $oldSale = isset($existing[$code]) ? (float)$existing[$code]['sale_price'] : null;
             if ($oldCost === null || (float)$oldCost !== (float)$newCost) {
-                NtRcHistoryManager::addPriceChange('domainnameapi', 'tr_domain', $code, $oldCost, (float)$newCost, $oldSale, $oldSale, $currency, 'dna_sync');
                 $changed++;
             }
         }
@@ -98,5 +97,10 @@ class NtRcDomainNameApiPriceSync
         }
 
         return array();
+    }
+
+    protected function safeText($text)
+    {
+        return preg_replace('/(api-key|api_key|auth-code|auth_code|passwd|password|token|credential)=([^&\s]+)/i', '$1=***', (string)$text);
     }
 }
