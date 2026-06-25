@@ -35,29 +35,92 @@ class NtRcResellerClubProvider implements NtRcProviderInterface
 
     public function registerDomain($domainName, $years, array $contact, array $nameservers, array $extra = array())
     {
-        $params = array_merge($extra, array(
+        $params = array(
             'domain-name' => $domainName,
-            'years' => (int)$years,
+            'years' => max(1, (int)$years),
+            'ns' => array_values($nameservers),
+            'invoice-option' => $this->pickParam($extra, array('invoice-option', 'invoice_option'), 'NoInvoice'),
+            'auto-renew' => $this->boolParam($this->pickParam($extra, array('auto-renew', 'auto_renew'), false)),
+        );
+
+        $this->applyCustomerAndContactParams($params, $contact, $extra);
+        $this->copyOptionalDomainParams($params, $extra, array(
+            'purchase-privacy', 'protect-privacy', 'discount-amount', 'purchase-premium-dns'
         ));
+        $this->copyAttrParams($params, $extra);
 
-        return $this->safeResponse($this->client->api('domains', 'register', $params, 'POST'));
+        $missing = $this->missingRequired($params, array(
+            'domain-name', 'years', 'ns', 'customer-id', 'reg-contact-id', 'admin-contact-id',
+            'tech-contact-id', 'billing-contact-id', 'invoice-option', 'auto-renew'
+        ));
+        if (!empty($missing)) {
+            return array('success' => false, 'message' => 'ResellerClub register parametreleri eksik.', 'missing' => $missing);
+        }
+
+        return $this->normalizeDomainActionResponse($this->client->api('domains', 'register', $params, 'POST'));
     }
 
-    public function renewDomain($domainName, $years)
+    public function renewDomain($domainName, $years, array $extra = array())
     {
-        return $this->safeResponse($this->client->api('domains', 'renew', array(
-            'domain-name' => $domainName,
-            'years' => (int)$years,
-        ), 'POST'));
+        $expDate = $this->pickParam($extra, array('exp-date', 'exp_date'));
+        if (!$expDate && !empty($extra['expiry_date'])) {
+            $timestamp = strtotime($extra['expiry_date']);
+            $expDate = $timestamp ? $timestamp : null;
+        }
+
+        $params = array(
+            'order-id' => $this->pickParam($extra, array('order-id', 'order_id', 'provider_order_id', 'provider_service_id')),
+            'years' => max(1, (int)$years),
+            'exp-date' => $expDate,
+            'invoice-option' => $this->pickParam($extra, array('invoice-option', 'invoice_option'), 'NoInvoice'),
+            'auto-renew' => $this->boolParam($this->pickParam($extra, array('auto-renew', 'auto_renew'), false)),
+        );
+
+        $this->copyOptionalDomainParams($params, $extra, array(
+            'purchase-privacy', 'discount-amount', 'purchase-premium-dns'
+        ));
+        $this->copyAttrParams($params, $extra);
+
+        $missing = $this->missingRequired($params, array('order-id', 'years', 'exp-date', 'invoice-option', 'auto-renew'));
+        if (!empty($missing)) {
+            return array('success' => false, 'message' => 'ResellerClub renew parametreleri eksik.', 'missing' => $missing);
+        }
+
+        return $this->normalizeDomainActionResponse($this->client->api('domains', 'renew', $params, 'POST'));
     }
 
-    public function transferDomain($domainName, $authCode, $years = 1)
+    public function transferDomain($domainName, $authCode, $years = 1, array $extra = array())
     {
-        return $this->safeResponse($this->client->api('domains', 'transfer', array(
+        $params = array(
             'domain-name' => $domainName,
-            'auth-code' => $authCode,
-            'years' => (int)$years,
-        ), 'POST'));
+            'invoice-option' => $this->pickParam($extra, array('invoice-option', 'invoice_option'), 'NoInvoice'),
+            'auto-renew' => $this->boolParam($this->pickParam($extra, array('auto-renew', 'auto_renew'), false)),
+        );
+
+        if (trim((string)$authCode) !== '') {
+            $params['auth-code'] = $authCode;
+        }
+
+        $nameservers = $this->normalizeList($this->pickParam($extra, array('ns', 'nameservers'), array()));
+        if (!empty($nameservers)) {
+            $params['ns'] = $nameservers;
+        }
+
+        $this->applyCustomerAndContactParams($params, isset($extra['contact']) && is_array($extra['contact']) ? $extra['contact'] : array(), $extra);
+        $this->copyOptionalDomainParams($params, $extra, array(
+            'purchase-privacy', 'protect-privacy', 'purchase-premium-dns'
+        ));
+        $this->copyAttrParams($params, $extra);
+
+        $missing = $this->missingRequired($params, array(
+            'domain-name', 'customer-id', 'reg-contact-id', 'admin-contact-id',
+            'tech-contact-id', 'billing-contact-id', 'invoice-option', 'auto-renew'
+        ));
+        if (!empty($missing)) {
+            return array('success' => false, 'message' => 'ResellerClub transfer parametreleri eksik.', 'missing' => $missing);
+        }
+
+        return $this->normalizeDomainActionResponse($this->client->api('domains', 'transfer', $params, 'POST'));
     }
 
     public function getDetails($domainName)
@@ -212,6 +275,120 @@ class NtRcResellerClubProvider implements NtRcProviderInterface
         return $params;
     }
 
+    protected function applyCustomerAndContactParams(array &$params, array $contact, array $extra)
+    {
+        $params['customer-id'] = $this->pickParam($extra, array('customer-id', 'customer_id', 'provider_customer_id'));
+
+        $sharedContactId = $this->pickParam($contact, array('provider_contact_id', 'contact_id'));
+        if ($sharedContactId === null || $sharedContactId === '') {
+            $sharedContactId = $this->pickParam($extra, array('provider_contact_id', 'contact_id'));
+        }
+
+        foreach (array(
+            'reg-contact-id' => array('reg-contact-id', 'reg_contact_id', 'registrant_contact_id'),
+            'admin-contact-id' => array('admin-contact-id', 'admin_contact_id'),
+            'tech-contact-id' => array('tech-contact-id', 'tech_contact_id'),
+            'billing-contact-id' => array('billing-contact-id', 'billing_contact_id'),
+        ) as $apiKey => $keys) {
+            $value = $this->pickParam($contact, $keys);
+            if ($value === null || $value === '') {
+                $value = $this->pickParam($extra, $keys, $sharedContactId);
+            }
+            $params[$apiKey] = $value;
+        }
+    }
+
+    protected function copyOptionalDomainParams(array &$params, array $extra, array $keys)
+    {
+        foreach ($keys as $key) {
+            $altKey = str_replace('-', '_', $key);
+            $value = $this->pickParam($extra, array($key, $altKey));
+            if ($value === null || $value === '') {
+                continue;
+            }
+
+            if (in_array($key, array('purchase-privacy', 'protect-privacy', 'purchase-premium-dns'))) {
+                $params[$key] = $this->boolParam($value);
+            } else {
+                $params[$key] = $value;
+            }
+        }
+    }
+
+    protected function copyAttrParams(array &$params, array $extra)
+    {
+        foreach ($extra as $key => $value) {
+            if (preg_match('/^attr-(name|value)[0-9]+$/', (string)$key)) {
+                $params[$key] = $value;
+            }
+        }
+    }
+
+    protected function normalizeDomainActionResponse(array $response)
+    {
+        $response = $this->safeResponse($response);
+        if (empty($response['success'])) {
+            return $response;
+        }
+
+        $data = isset($response['data']) && is_array($response['data']) ? $response['data'] : array();
+        $status = '';
+        if (isset($data['actionstatus'])) {
+            $status = strtolower(trim((string)$data['actionstatus']));
+        } elseif (isset($data['status'])) {
+            $status = strtolower(trim((string)$data['status']));
+        }
+
+        if ($status !== '' && !in_array($status, array('success', 'succeeded'))) {
+            $message = isset($data['actionstatusdesc']) ? $data['actionstatusdesc'] : 'ResellerClub domain action basarisiz.';
+            $response['success'] = false;
+            $response['message'] = $message;
+        }
+
+        return $response;
+    }
+
+    protected function missingRequired(array $params, array $required)
+    {
+        $missing = array();
+        foreach ($required as $key) {
+            if (!array_key_exists($key, $params) || $params[$key] === null || $params[$key] === '' || $params[$key] === array()) {
+                $missing[] = $key;
+            }
+        }
+        return $missing;
+    }
+
+    protected function pickParam(array $data, array $keys, $default = null)
+    {
+        foreach ($keys as $key) {
+            if (array_key_exists($key, $data) && $data[$key] !== null && $data[$key] !== '') {
+                return $data[$key];
+            }
+        }
+        return $default;
+    }
+
+    protected function boolParam($value)
+    {
+        if (is_string($value)) {
+            $value = strtolower(trim($value));
+            return in_array($value, array('1', 'true', 'yes', 'on'), true) ? 'true' : 'false';
+        }
+        return $value ? 'true' : 'false';
+    }
+
+    protected function normalizeList($value)
+    {
+        if (is_array($value)) {
+            return array_values(array_filter($value, 'strlen'));
+        }
+        if (is_string($value) && trim($value) !== '') {
+            return array_values(array_filter(array_map('trim', explode(',', $value)), 'strlen'));
+        }
+        return array();
+    }
+
     protected function normalizePhone($phone)
     {
         $phone = preg_replace('/[^0-9+]/', '', (string)$phone);
@@ -282,6 +459,12 @@ class NtRcResellerClubProvider implements NtRcProviderInterface
         if (isset($response['data'])) {
             $response['data'] = $this->safeData($response['data']);
         }
+        if (isset($response['error'])) {
+            $response['error'] = $this->safeText($response['error']);
+        }
+        if (isset($response['message'])) {
+            $response['message'] = $this->safeText($response['message']);
+        }
         return $response;
     }
 
@@ -300,9 +483,16 @@ class NtRcResellerClubProvider implements NtRcProviderInterface
         foreach ($data as $key => $value) {
             if (is_array($value)) {
                 $data[$key] = $this->safeData($value);
+            } elseif (is_string($value)) {
+                $data[$key] = $this->safeText($value);
             }
         }
 
         return $data;
+    }
+
+    protected function safeText($text)
+    {
+        return preg_replace('/(api-key|api_key|auth-code|auth_code|passwd|password)=([^&\s]+)/i', '$1=***', (string)$text);
     }
 }
