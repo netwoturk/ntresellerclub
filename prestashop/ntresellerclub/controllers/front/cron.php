@@ -43,6 +43,10 @@ class NtresellerclubCronModuleFrontController extends ModuleFrontController
                 $dnaPriceSync = $sync->sync();
             }
 
+            require_once _PS_MODULE_DIR_ . 'ntresellerclub/classes/NtRcMonitoringEngine.php';
+            $monitoring = new NtRcMonitoringEngine();
+            $monitoringResult = $monitoring->run('cron');
+
             die(json_encode(array(
                 'success' => true,
                 'limit' => $limit,
@@ -50,9 +54,15 @@ class NtresellerclubCronModuleFrontController extends ModuleFrontController
                 'pending_provisioning' => $pendingResult,
                 'operations' => $operationResult,
                 'dna_price_sync' => $dnaPriceSync,
+                'monitoring' => $monitoringResult,
             )));
         } catch (Exception $e) {
-            die(json_encode(array('success' => false, 'message' => 'Cron hata olustu.', 'error' => $e->getMessage())));
+            die(json_encode(array('success' => false, 'message' => 'Cron hata olustu.', 'error' => $this->safeText($e->getMessage()))));
         }
+    }
+
+    protected function safeText($text)
+    {
+        return preg_replace('/(api-key|api_key|auth-code|auth_code|passwd|password|token|credential)=([^&\s]+)/i', '$1=***', (string)$text);
     }
 }
