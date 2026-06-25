@@ -11,9 +11,9 @@ interface NtRcProviderInterface
 
     public function registerDomain($domainName, $years, array $contact, array $nameservers, array $extra = array());
 
-    public function renewDomain($domainName, $years);
+    public function renewDomain($domainName, $years, array $extra = array());
 
-    public function transferDomain($domainName, $authCode, $years = 1);
+    public function transferDomain($domainName, $authCode, $years = 1, array $extra = array());
 
     public function getDetails($domainName);
 
