@@ -17,8 +17,10 @@ class NtRcInstaller
             && self::ensureProviderCustomerSchema()
             && self::ensureContactProfileSchema()
             && self::ensureServiceSchema()
+            && self::ensureHostingProductMappingSchema()
             && self::ensureCartDomainSchema()
             && self::ensurePricingSchema()
+            && self::ensureBillingEventSchema()
             && self::ensureMonitoringSchema()
             && self::ensureNotificationSchema();
     }
@@ -92,6 +94,54 @@ class NtRcInstaller
 
         foreach ($columns as $column => $definition) {
             if (!self::addColumnIfMissing('ntresellerclub_service', $column, $definition)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public static function ensureHostingProductMappingSchema()
+    {
+        $sql = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'ntresellerclub_hosting_product_mapping` ('
+            . '`id_ntresellerclub_hosting_product_mapping` INT UNSIGNED NOT NULL AUTO_INCREMENT,'
+            . '`id_product` INT UNSIGNED NOT NULL,'
+            . '`provider_code` VARCHAR(64) NOT NULL DEFAULT "resellerclub",'
+            . '`provider_product_id` VARCHAR(128) NOT NULL,'
+            . '`package_name` VARCHAR(128) NOT NULL,'
+            . '`billing_cycle` VARCHAR(32) NOT NULL DEFAULT "yearly",'
+            . '`cost_price` DECIMAL(20,6) DEFAULT 0,'
+            . '`sale_price` DECIMAL(20,6) DEFAULT 0,'
+            . '`currency` VARCHAR(10) DEFAULT "USD",'
+            . '`active` TINYINT(1) DEFAULT 1,'
+            . '`created_at` DATETIME NOT NULL,'
+            . '`updated_at` DATETIME DEFAULT NULL,'
+            . 'PRIMARY KEY (`id_ntresellerclub_hosting_product_mapping`),'
+            . 'UNIQUE KEY `uniq_hosting_product_provider` (`id_product`, `provider_code`),'
+            . 'KEY `idx_hosting_mapping_provider_product` (`provider_code`, `provider_product_id`),'
+            . 'KEY `idx_hosting_mapping_active` (`active`)'
+            . ') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4';
+
+        if (!Db::getInstance()->execute($sql)) {
+            return false;
+        }
+
+        $columns = array(
+            'id_product' => 'INT UNSIGNED NOT NULL AFTER `id_ntresellerclub_hosting_product_mapping`',
+            'provider_code' => 'VARCHAR(64) NOT NULL DEFAULT "resellerclub" AFTER `id_product`',
+            'provider_product_id' => 'VARCHAR(128) NOT NULL AFTER `provider_code`',
+            'package_name' => 'VARCHAR(128) NOT NULL AFTER `provider_product_id`',
+            'billing_cycle' => 'VARCHAR(32) NOT NULL DEFAULT "yearly" AFTER `package_name`',
+            'cost_price' => 'DECIMAL(20,6) DEFAULT 0 AFTER `billing_cycle`',
+            'sale_price' => 'DECIMAL(20,6) DEFAULT 0 AFTER `cost_price`',
+            'currency' => 'VARCHAR(10) DEFAULT "USD" AFTER `sale_price`',
+            'active' => 'TINYINT(1) DEFAULT 1 AFTER `currency`',
+            'created_at' => 'DATETIME NOT NULL AFTER `active`',
+            'updated_at' => 'DATETIME DEFAULT NULL AFTER `created_at`',
+        );
+
+        foreach ($columns as $column => $definition) {
+            if (!self::addColumnIfMissing('ntresellerclub_hosting_product_mapping', $column, $definition)) {
                 return false;
             }
         }
@@ -205,6 +255,32 @@ class NtRcInstaller
         }
 
         return true;
+    }
+
+    public static function ensureBillingEventSchema()
+    {
+        $sql = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'ntresellerclub_billing_event` ('
+            . '`id_ntresellerclub_billing_event` INT UNSIGNED NOT NULL AUTO_INCREMENT,'
+            . '`id_order` INT UNSIGNED DEFAULT NULL,'
+            . '`id_customer` INT UNSIGNED DEFAULT NULL,'
+            . '`id_service` INT UNSIGNED DEFAULT NULL,'
+            . '`provider_code` VARCHAR(64) DEFAULT NULL,'
+            . '`service_type` VARCHAR(50) DEFAULT NULL,'
+            . '`event_type` VARCHAR(100) NOT NULL,'
+            . '`event_status` VARCHAR(50) NOT NULL,'
+            . '`message` TEXT DEFAULT NULL,'
+            . '`metadata_json` MEDIUMTEXT DEFAULT NULL,'
+            . '`created_at` DATETIME NOT NULL,'
+            . 'PRIMARY KEY (`id_ntresellerclub_billing_event`),'
+            . 'KEY `idx_billing_event_order` (`id_order`),'
+            . 'KEY `idx_billing_event_customer` (`id_customer`),'
+            . 'KEY `idx_billing_event_service` (`id_service`),'
+            . 'KEY `idx_billing_event_provider` (`provider_code`),'
+            . 'KEY `idx_billing_event_type` (`event_type`, `event_status`),'
+            . 'KEY `idx_billing_event_created` (`created_at`)'
+            . ') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4';
+
+        return Db::getInstance()->execute($sql);
     }
 
     public static function ensureNotificationSchema()
@@ -368,10 +444,12 @@ class NtRcInstaller
             'ntresellerclub_contact_profile',
             'ntresellerclub_contact',
             'ntresellerclub_service',
+            'ntresellerclub_hosting_product_mapping',
             'ntresellerclub_cart_domain',
             'ntresellerclub_price',
             'ntresellerclub_price_history',
             'ntresellerclub_exchange_rate_history',
+            'ntresellerclub_billing_event',
             'ntresellerclub_operation_queue',
             'ntresellerclub_provider_health',
             'ntresellerclub_runtime_health',
