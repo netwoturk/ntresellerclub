@@ -9,6 +9,7 @@ require_once __DIR__ . '/classes/NtRcProvisioning.php';
 require_once __DIR__ . '/classes/NtRcFeature.php';
 require_once __DIR__ . '/classes/NtRcInstaller.php';
 require_once __DIR__ . '/classes/NtRcManualExchangeRate.php';
+require_once __DIR__ . '/classes/NtRcPricingManager.php';
 require_once __DIR__ . '/classes/NtRcExchangeRateAdminRenderer.php';
 require_once __DIR__ . '/classes/NtRcTrPriceAdminRenderer.php';
 require_once __DIR__ . '/classes/NtRcTrPriceManager.php';
@@ -67,7 +68,8 @@ class Ntresellerclub extends Module
             && Configuration::updateValue(self::CFG_MEMORY_LIMIT, '512M')
             && Configuration::updateValue(self::CFG_TIME_LIMIT, 120)
             && Configuration::updateValue(self::CFG_CRON_BATCH_LIMIT, 10)
-            && NtRcManualExchangeRate::setRate('USD', 'TRY', 40)
+            && NtRcManualExchangeRate::ensureDefaultRates()
+            && NtRcPricingManager::seedResellerClubMappings('USD')
             && $this->registerHook('actionValidateOrder')
             && $this->registerHook('displayCustomerAccount');
     }
