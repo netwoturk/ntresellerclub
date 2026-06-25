@@ -47,6 +47,34 @@ tlds=net
 tlds=org
 ```
 
+## Domain provisioning API doğrulaması
+
+### `domains/register.json`
+
+- HTTP method: `POST`
+- Zorunlu ana parametreler: `domain-name`, `years`, `ns`, `customer-id`, `reg-contact-id`, `admin-contact-id`, `tech-contact-id`, `billing-contact-id`, `invoice-option`, `auto-renew`
+- Opsiyonel: `purchase-privacy`, `protect-privacy`, `discount-amount`, `purchase-premium-dns`, `attr-nameN`, `attr-valueN`
+- Kaynak: https://manage.resellerclub.com/kb/answer/752
+
+### `domains/transfer.json`
+
+- HTTP method: `POST`
+- Zorunlu ana parametreler: `domain-name`, `customer-id`, `reg-contact-id`, `admin-contact-id`, `tech-contact-id`, `billing-contact-id`, `invoice-option`, `auto-renew`
+- `auth-code` bazı uzantılarda zorunlu, bazı uzantılarda sonradan onay e-postasıyla sağlanabilir.
+- Opsiyonel: `ns`, `purchase-privacy`, `protect-privacy`, `purchase-premium-dns`, `attr-nameN`, `attr-valueN`
+- Kaynak: https://manage.resellerclub.com/kb/answer/758
+
+### `domains/renew.json`
+
+- HTTP method: `POST`
+- Zorunlu ana parametreler: `order-id`, `years`, `exp-date`, `invoice-option`, `auto-renew`
+- Opsiyonel: `purchase-privacy`, `discount-amount`, `purchase-premium-dns`, `attr-nameN`, `attr-valueN`
+- Kaynak: https://manage.resellerclub.com/kb/answer/746
+
+## Açık doğrulama notu
+
+ResellerClub domain register/transfer için provider contact ID alanları zorunludur. Bu phase içinde varsayımsal contact create endpointi yazılmadı. Register/transfer queue çalışması için `reg-contact-id`, `admin-contact-id`, `tech-contact-id`, `billing-contact-id` değerleri mevcut payload/options içinden gelmelidir; eksikse adapter kontrollü hata döndürür ve queue retry/failed akışı çalışır.
+
 ## HTTP method kuralları
 
 - Okuma / sorgulama: GET
@@ -71,4 +99,4 @@ Ana API sınıfı `NtResellerClubApiClient` olmalıdır. Bu sınıf:
 
 ## Kritik güvenlik notu
 
-API anahtarı hiçbir zaman GitHub'a yazılmayacak. PrestaShop `Configuration` alanında saklanacak. Daha sonraki sürümlerde şifreli saklama seçeneği eklenecek.
+API anahtarı, auth-code ve şifreler hiçbir zaman GitHub'a veya loglara açık yazılmayacak. PrestaShop `Configuration` alanında saklanan provider credential değerleri response ve queue loglarından temizlenmelidir.
