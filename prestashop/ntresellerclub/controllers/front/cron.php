@@ -47,6 +47,10 @@ class NtresellerclubCronModuleFrontController extends ModuleFrontController
             $monitoring = new NtRcMonitoringEngine();
             $monitoringResult = $monitoring->run('cron');
 
+            require_once _PS_MODULE_DIR_ . 'ntresellerclub/classes/NtRcNotificationEngine.php';
+            $notification = new NtRcNotificationEngine();
+            $notificationResult = $notification->run($limit, $monitoringResult);
+
             die(json_encode(array(
                 'success' => true,
                 'limit' => $limit,
@@ -55,6 +59,7 @@ class NtresellerclubCronModuleFrontController extends ModuleFrontController
                 'operations' => $operationResult,
                 'dna_price_sync' => $dnaPriceSync,
                 'monitoring' => $monitoringResult,
+                'notifications' => $notificationResult,
             )));
         } catch (Exception $e) {
             die(json_encode(array('success' => false, 'message' => 'Cron hata olustu.', 'error' => $this->safeText($e->getMessage()))));
