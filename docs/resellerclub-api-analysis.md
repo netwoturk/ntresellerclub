@@ -1,26 +1,20 @@
-# ResellerClub API Analiz Notları
+# ResellerClub API Analiz Notlari
 
 Ana kaynak: https://manage.resellerclub.com/kb/answer/744
 
-## Kimlik doğrulama
+## Kimlik dogrulama
 
-Her API çağrısında şu parametreler zorunludur:
+Her API cagrisinda su parametreler zorunludur:
 
 - `auth-userid`: Reseller ID
-- `api-key`: API anahtarı
-- `lang-pref`: Varsayılan dil, genelde `en`
+- `api-key`: API anahtari
+- `lang-pref`: Varsayilan dil, genelde `en`
 
 ## IP whitelist
 
-ResellerClub API çağrıları için IP whitelist zorunludur. API isteğini yapan sunucunun dış IP adresi ResellerClub panelinde Settings > API alanına eklenmelidir. IP aralığı değil tekil IP kullanılmalıdır.
+ResellerClub API cagrilari icin IP whitelist zorunludur. API istegini yapan sunucunun dis IP adresi ResellerClub panelinde Settings > API alanina eklenmelidir.
 
-NetwoTürk test ortamı için doğrulanan dış IP:
-
-```text
-94.73.151.44
-```
-
-## Endpoint mantığı
+## Endpoint mantigi
 
 ### Genel API
 
@@ -30,76 +24,58 @@ https://httpapi.com/api/{resource}/{action}.json
 
 ### Domain uygunluk sorgusu
 
-ResellerClub kılavuzuna göre domain availability için özel domaincheck endpoint kullanılmalıdır:
+ResellerClub kilavuzuna gore domain availability icin ozel domaincheck endpoint kullanilmalidir:
 
 ```text
 https://domaincheck.httpapi.com/api/domains/available.json
 ```
 
-Örnek parametreler:
-
-```text
-auth-userid=1130459
-api-key=***
-domain-name=netwoturk
-tlds=com
-tlds=net
-tlds=org
-```
-
-## Domain provisioning API doğrulaması
+## Domain provisioning API dogrulamasi
 
 ### `domains/register.json`
 
 - HTTP method: `POST`
 - Zorunlu ana parametreler: `domain-name`, `years`, `ns`, `customer-id`, `reg-contact-id`, `admin-contact-id`, `tech-contact-id`, `billing-contact-id`, `invoice-option`, `auto-renew`
-- Opsiyonel: `purchase-privacy`, `protect-privacy`, `discount-amount`, `purchase-premium-dns`, `attr-nameN`, `attr-valueN`
-- Başarılı cevapta domain order ID `entityid`, action durumu `actionstatus`, customer ID `customerid` alanlarından okunabilir.
+- Basarili cevapta domain order ID `entityid`, action durumu `actionstatus`, customer ID `customerid` alanlarindan okunabilir.
 - Kaynak: https://manage.resellerclub.com/kb/answer/752
 
 ### `domains/transfer.json`
 
 - HTTP method: `POST`
 - Zorunlu ana parametreler: `domain-name`, `customer-id`, `reg-contact-id`, `admin-contact-id`, `tech-contact-id`, `billing-contact-id`, `invoice-option`, `auto-renew`
-- `auth-code` bazı uzantılarda zorunlu, bazı uzantılarda sonradan onay e-postasıyla sağlanabilir.
-- Opsiyonel: `ns`, `purchase-privacy`, `protect-privacy`, `purchase-premium-dns`, `attr-nameN`, `attr-valueN`
-- Hata cevabında `status=ERROR` döner. Transfer kullanıcı/registry girdisi bekliyorsa ResellerClub dokümanına göre `NoError` dönebilir; adapter bu durumu tekrar denenmesi gereken API hatası saymamalıdır.
+- `auth-code` bazi uzantilarda zorunlu, bazi uzantilarda sonradan onay e-postasiyla saglanabilir.
 - Kaynak: https://manage.resellerclub.com/kb/answer/758
 
 ### `domains/renew.json`
 
 - HTTP method: `POST`
 - Zorunlu ana parametreler: `order-id`, `years`, `exp-date`, `invoice-option`, `auto-renew`
-- Opsiyonel: `purchase-privacy`, `discount-amount`, `purchase-premium-dns`, `attr-nameN`, `attr-valueN`
-- Başarılı cevapta domain order ID `entityid`, action durumu `actionstatus`, customer ID `customerid` alanlarından okunabilir.
+- Basarili cevapta domain order ID `entityid`, action durumu `actionstatus`, customer ID `customerid` alanlarindan okunabilir.
 - Kaynak: https://manage.resellerclub.com/kb/answer/746
 
-## Açık doğrulama notu
+## Acik dogrulama notu
 
-ResellerClub domain register/transfer için provider contact ID alanları zorunludur. Bu phase içinde varsayımsal contact create endpointi yazılmadı. Register/transfer queue çalışması için `reg-contact-id`, `admin-contact-id`, `tech-contact-id`, `billing-contact-id` değerleri mevcut payload/options içinden gelmelidir; eksikse adapter kontrollü hata döndürür ve queue retry/failed akışı çalışır.
+ResellerClub domain register/transfer icin provider contact ID alanlari zorunludur. Varsayimsal contact create endpointi yazilmadi.
 
-## HTTP method kuralları
+## Hosting provisioning dogrulama notu
+
+Engine 12 kapsaminda ResellerClub hosting create, renew, suspend, unsuspend ve details endpoint/resource/action bilgileri bu repository icinde resmi kaynakla dogrulanamadi.
+
+Bu nedenle `NtRcResellerClubHostingAdapter` su metotlarda gercek API cagrisi yapmaz ve kontrollu TODO cevabi dondurur:
+
+- `createHosting()`
+- `renewHosting()`
+- `suspendHosting()`
+- `unsuspendHosting()`
+- `getHostingDetails()`
+
+TODO: ResellerClub resmi hosting API path, HTTP method, zorunlu parametreler, response alanlari ve lifecycle hata kodlari dogrulaninca adapter tamamlanmalidir. Dogrulama yapilmadan varsayimsal endpoint eklenmeyecektir.
+
+## HTTP method kurallari
 
 - Okuma / sorgulama: GET
-- Kayıt / oluşturma / güncelleme / silme: POST
+- Kayit / olusturma / guncelleme / silme: POST
 
-## Domain status yorumları
+## Kritik guvenlik notu
 
-- `available`: satın alınabilir
-- `regthroughus`: bizde kayıtlı
-- `regthroughothers`: başka firmada kayıtlı, transfer önerilebilir
-- `unknown`: tekrar dene / registry bağlantısı yok
-
-## Modül içindeki API katmanı
-
-Ana API sınıfı `NtResellerClubApiClient` olmalıdır. Bu sınıf:
-
-- Base URL seçimi yapar
-- Auth parametrelerini otomatik ekler
-- GET/POST isteklerini yönetir
-- JSON cevabı normalize eder
-- Hata, HTTP kodu, raw response ve request loglarını döndürür
-
-## Kritik güvenlik notu
-
-API anahtarı, auth-code ve şifreler hiçbir zaman GitHub'a veya loglara açık yazılmayacak. PrestaShop `Configuration` alanında saklanan provider credential değerleri response ve queue loglarından temizlenmelidir.
+API anahtari, auth-code ve sifreler hicbir zaman GitHub'a veya loglara acik yazilmayacak. Provider credential degerleri response ve queue loglarindan temizlenmelidir.
