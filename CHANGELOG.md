@@ -1,5 +1,32 @@
 # Changelog
 
+## 2026-06-25 - BTK CSV Reporting Premium Feature
+
+Branch: `codex/feature-btk-csv-reporting`
+
+### Added
+
+- Added `NtRcBtkCsvExportEngine` for BTK-compatible hosted-domain and registered-only-domain CSV exports.
+- Added premium feature key `btk_csv_reporting` through `NtRcLicense::hasFeature()` and `NtRcFeature::isBtkCsvReportingActive()`.
+- Added module configuration backend download panel for BTK CSV exports when the premium feature is active.
+- Added `docs/architecture/BTK_CSV_REPORTING_ENGINE.md`.
+
+### Changed
+
+- Module install now initializes `NTRC_FEATURE_BTK_CSV_REPORTING` as disabled by default.
+- Provider/license status output now shows BTK CSV Reporting feature state.
+- `DATABASE_SCHEMA.md`, root database schema summary, `ROADMAP.md`, and `CURRENT_STATUS.md` now document BTK CSV Reporting.
+
+### Fixed
+
+- BTK CSV rows are generated without a header row and with exactly six columns.
+- CSV values replace commas, semicolons, tabs, and newlines while preserving UTF-8 Turkish characters.
+- Missing contact/report values are emitted as `*`.
+
+### Removed
+
+- None.
+
 ## 2026-06-25 - Engine 11 Pricing & Currency Finalization
 
 Branch: `codex/engine-11-pricing-currency-finalization`
