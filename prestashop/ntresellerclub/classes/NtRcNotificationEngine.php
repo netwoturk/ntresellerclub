@@ -66,6 +66,39 @@ class NtRcNotificationEngine
         );
     }
 
+    public function enqueueExpiryNotification($idService, $days)
+    {
+        $days = (int)$days;
+        if (!in_array($days, $this->expiryDays, true)) {
+            return array('success' => false, 'message' => 'Desteklenmeyen expiry notification gunu.');
+        }
+
+        $service = $this->getService((int)$idService);
+        if (!$service) {
+            return array('success' => false, 'message' => 'Expiry notification icin servis bulunamadi.');
+        }
+
+        $serviceType = isset($service['service_type']) ? (string)$service['service_type'] : '';
+        if (!in_array($serviceType, array('domain', 'tr_domain'), true)) {
+            return array('success' => true, 'source' => 'skipped', 'message' => 'Expiry notification sadece domain servisleri icin hazir.');
+        }
+
+        $expiryDate = !empty($service['expiry_date']) ? $service['expiry_date'] : date('Y-m-d', strtotime('+' . $days . ' day'));
+        $templateKey = 'domain_expiring_' . $days;
+
+        return $this->enqueueServiceNotification(
+            $templateKey,
+            (int)$idService,
+            array(
+                'days_before' => $days,
+                'checked_at' => date('Y-m-d H:i:s'),
+            ),
+            'customer',
+            3,
+            'service_expiry:' . $templateKey . ':' . (int)$idService . ':' . $expiryDate
+        );
+    }
+
     public function enqueueAdminNotification($templateKey, array $variables = array(), $recipientType = 'admin', $dedupeKey = null, $priority = 2)
     {
         $recipient = $this->adminRecipient($recipientType);
@@ -133,25 +166,17 @@ class NtRcNotificationEngine
         $created = array();
 
         foreach ($this->expiryDays as $days) {
-            $templateKey = 'domain_expiring_' . (int)$days;
             $targetDate = date('Y-m-d', strtotime('+' . (int)$days . ' day'));
             $rows = Db::getInstance()->executeS(
                 'SELECT * FROM `' . _DB_PREFIX_ . 'ntresellerclub_service` '
-                . 'WHERE service_type="domain" '
+                . 'WHERE service_type IN ("domain", "tr_domain") '
                 . 'AND status IN ("active", "ready") '
                 . 'AND expiry_date="' . pSQL($targetDate) . '" '
                 . 'ORDER BY id_ntresellerclub_service ASC LIMIT 25'
             );
 
             foreach ((array)$rows as $service) {
-                $created[] = $this->enqueueServiceNotification(
-                    $templateKey,
-                    (int)$service['id_ntresellerclub_service'],
-                    array('checked_at' => date('Y-m-d H:i:s')),
-                    'customer',
-                    3,
-                    'service_expiry:' . $templateKey . ':' . (int)$service['id_ntresellerclub_service'] . ':' . $targetDate
-                );
+                $created[] = $this->enqueueExpiryNotification((int)$service['id_ntresellerclub_service'], (int)$days);
             }
         }
 
@@ -239,10 +264,15 @@ class NtRcNotificationEngine
     {
         $domain = isset($service['domain_name']) ? $service['domain_name'] : '';
         return array(
+            'id_service' => isset($service['id_ntresellerclub_service']) ? (int)$service['id_ntresellerclub_service'] : 0,
             'service_name' => $domain !== '' ? $domain : (isset($service['service_type']) ? $service['service_type'] : ''),
+            'service_type' => isset($service['service_type']) ? $service['service_type'] : '',
+            'service_status' => isset($service['status']) ? $service['status'] : '',
             'domain_name' => $domain,
             'expiry_date' => isset($service['expiry_date']) ? $service['expiry_date'] : '',
             'provider_code' => isset($service['provider_code']) ? $service['provider_code'] : '',
+            'provider_order_id' => isset($service['provider_order_id']) ? $service['provider_order_id'] : '',
+            'provider_service_id' => isset($service['provider_service_id']) ? $service['provider_service_id'] : '',
             'checked_at' => date('Y-m-d H:i:s'),
         );
     }
