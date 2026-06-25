@@ -1,5 +1,36 @@
 # Changelog
 
+## 2026-06-25 - Engine 11 Pricing & Currency Finalization
+
+Branch: `codex/engine-11-pricing-currency-finalization`
+
+### Added
+
+- Added `NtRcPricingEngine` as the central calculation engine for cost conversion, margin, tax, rounding, and standard price result output.
+- Added `NtRcPricingManager` as a generic mapping manager for domain, TR domain, hosting, and SSL pricing rows.
+- Added ResellerClub mapping seed infrastructure for global domain, hosting, and SSL placeholders without adding provider API endpoints.
+- Added `docs/architecture/14_PRICING_CURRENCY_ENGINE.md`.
+- Added pricing schema guard columns: `target_currency`, `tax_rate`, `rounding_mode`, `created_at`, and `updated_at` on `ntresellerclub_price`.
+
+### Changed
+
+- `NtRcManualExchangeRate` now supports USD -> TRY/EUR/GBP/AZN and writes rate changes to exchange-rate history.
+- `NtRcTrPriceCalculator` now delegates to `NtRcPricingEngine` while preserving backward-compatible result keys.
+- `NtRcTrPriceManager` now uses `NtRcPricingManager` for DomainNameAPI TR domain rows.
+- `NtRcDomainNameApiPriceSync` now relies on the central manager for price history writes to avoid duplicate history rows.
+- Module install now seeds default USD rates and ResellerClub mapping placeholders.
+- `install.sql`, `DATABASE_SCHEMA.md`, `API_CONTRACT_RULES.md`, `ROADMAP.md`, and `CURRENT_STATUS.md` now document Engine 11 rules.
+
+### Fixed
+
+- Pricing output is standardized for downstream sales flows.
+- DomainNameAPI price sync keeps its cron/RuntimeGuard boundary while using the finalized pricing manager.
+- Manual, percent, fixed, and hybrid margin calculations now share the same tax and rounding flow.
+
+### Removed
+
+- None.
+
 ## 2026-06-25 - Engine 10 Renewal / Service Lifecycle Notification Wiring
 
 Branch: `codex/engine-10-renewal-service-lifecycle-notification`
