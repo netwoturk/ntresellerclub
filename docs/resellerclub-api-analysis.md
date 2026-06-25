@@ -54,6 +54,7 @@ tlds=org
 - HTTP method: `POST`
 - Zorunlu ana parametreler: `domain-name`, `years`, `ns`, `customer-id`, `reg-contact-id`, `admin-contact-id`, `tech-contact-id`, `billing-contact-id`, `invoice-option`, `auto-renew`
 - Opsiyonel: `purchase-privacy`, `protect-privacy`, `discount-amount`, `purchase-premium-dns`, `attr-nameN`, `attr-valueN`
+- Başarılı cevapta domain order ID `entityid`, action durumu `actionstatus`, customer ID `customerid` alanlarından okunabilir.
 - Kaynak: https://manage.resellerclub.com/kb/answer/752
 
 ### `domains/transfer.json`
@@ -62,6 +63,7 @@ tlds=org
 - Zorunlu ana parametreler: `domain-name`, `customer-id`, `reg-contact-id`, `admin-contact-id`, `tech-contact-id`, `billing-contact-id`, `invoice-option`, `auto-renew`
 - `auth-code` bazı uzantılarda zorunlu, bazı uzantılarda sonradan onay e-postasıyla sağlanabilir.
 - Opsiyonel: `ns`, `purchase-privacy`, `protect-privacy`, `purchase-premium-dns`, `attr-nameN`, `attr-valueN`
+- Hata cevabında `status=ERROR` döner. Transfer kullanıcı/registry girdisi bekliyorsa ResellerClub dokümanına göre `NoError` dönebilir; adapter bu durumu tekrar denenmesi gereken API hatası saymamalıdır.
 - Kaynak: https://manage.resellerclub.com/kb/answer/758
 
 ### `domains/renew.json`
@@ -69,6 +71,7 @@ tlds=org
 - HTTP method: `POST`
 - Zorunlu ana parametreler: `order-id`, `years`, `exp-date`, `invoice-option`, `auto-renew`
 - Opsiyonel: `purchase-privacy`, `discount-amount`, `purchase-premium-dns`, `attr-nameN`, `attr-valueN`
+- Başarılı cevapta domain order ID `entityid`, action durumu `actionstatus`, customer ID `customerid` alanlarından okunabilir.
 - Kaynak: https://manage.resellerclub.com/kb/answer/746
 
 ## Açık doğrulama notu
