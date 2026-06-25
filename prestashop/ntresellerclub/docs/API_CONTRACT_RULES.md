@@ -57,8 +57,9 @@ Aşağıdaki işlemler doğrudan çalıştırılmayacaktır:
 | Hosting create | Yasak |
 | SSL create | Yasak |
 | Provider customer create | Yasak |
+| Mail gönderimi | Yasak |
 
-Bu işlemler önce `ntresellerclub_operation_queue` tablosuna alınacak, sonra cron ile işlenecektir.
+Bu işlemler önce ilgili queue tablosuna alınacak, sonra cron ile işlenecektir.
 
 ## 5. Shared Hosting Güvenlik Kuralı
 
@@ -68,7 +69,7 @@ Ağır işlemler mutlaka `NtRcRuntimeGuard` ile başlamalıdır.
 NtRcRuntimeGuard::beforeHeavyProcess('context_name');
 ```
 
-Cron, queue, provisioning, price sync ve renewal işlemlerinde batch limit uygulanmalıdır.
+Cron, queue, provisioning, price sync, renewal ve notification mail işlemlerinde batch limit uygulanmalıdır.
 
 Varsayılan limitler:
 
@@ -150,8 +151,29 @@ Loglanması yasak alanlar:
 - Lisans anahtarı
 - Müşteri ödeme verisi
 - Auth code
+- Token
+- Credential
+- Raw request
 
-## 11. Geliştirme Kuralı
+## 11. Notification & Mail Kuralı
+
+Mail gönderimi controller, provisioning, provider adapter veya operation queue action içinde doğrudan yapılmayacaktır.
+
+Doğru akış:
+
+```text
+Event -> NtRcNotificationEngine -> ntresellerclub_notification_queue -> Cron -> Mail::Send
+```
+
+Zorunlu kurallar:
+
+- Mail body, subject, variables ve notification log değerleri sanitize edilecektir.
+- Customer, admin ve technical_admin alıcı tipleri ayrılacaktır.
+- Mail gönderimi `NtRcRuntimeGuard::cronBatchLimit()` ile batch çalışacaktır.
+- Notification queue status değerleri `pending`, `processing`, `sent`, `failed`, `cancelled` dışına çıkmayacaktır.
+- Retry `retry_count`, `max_retries`, `last_error` alanlarıyla yönetilecektir.
+
+## 12. Geliştirme Kuralı
 
 Yeni özellik eklenirken önce şu kontrol yapılmalıdır:
 
@@ -162,5 +184,6 @@ Yeni özellik eklenirken önce şu kontrol yapılmalıdır:
 5. Shared hostingde 500 hatası riski var mı?
 6. Hata loglanıyor mu?
 7. Çoklu para birimi ve çoklu dil bozuluyor mu?
+8. Mail gönderimi varsa notification queue üzerinden mi gidiyor?
 
 Bu sorulardan biri olumsuzsa kod üretime alınmayacaktır.
