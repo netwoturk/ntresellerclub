@@ -18,7 +18,8 @@ class NtRcInstaller
             && self::ensureContactProfileSchema()
             && self::ensureServiceSchema()
             && self::ensureCartDomainSchema()
-            && self::ensureMonitoringSchema();
+            && self::ensureMonitoringSchema()
+            && self::ensureNotificationSchema();
     }
 
     protected static function executeSqlFile($sqlFile)
@@ -185,6 +186,82 @@ class NtRcInstaller
         return true;
     }
 
+    public static function ensureNotificationSchema()
+    {
+        $queries = array(
+            'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'ntresellerclub_notification_template` ('
+                . '`id_ntresellerclub_notification_template` INT UNSIGNED NOT NULL AUTO_INCREMENT,'
+                . '`template_key` VARCHAR(100) NOT NULL,'
+                . '`lang_iso` VARCHAR(5) NOT NULL,'
+                . '`recipient_type` VARCHAR(32) NOT NULL DEFAULT "customer",'
+                . '`subject` VARCHAR(255) NOT NULL,'
+                . '`body_html` MEDIUMTEXT DEFAULT NULL,'
+                . '`body_text` MEDIUMTEXT DEFAULT NULL,'
+                . '`is_active` TINYINT(1) DEFAULT 1,'
+                . '`created_at` DATETIME NOT NULL,'
+                . '`updated_at` DATETIME DEFAULT NULL,'
+                . 'PRIMARY KEY (`id_ntresellerclub_notification_template`),'
+                . 'UNIQUE KEY `uniq_notification_template` (`template_key`, `lang_iso`, `recipient_type`),'
+                . 'KEY `idx_notification_template_key` (`template_key`),'
+                . 'KEY `idx_notification_template_lang` (`lang_iso`)'
+                . ') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4',
+            'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'ntresellerclub_notification_queue` ('
+                . '`id_ntresellerclub_notification_queue` INT UNSIGNED NOT NULL AUTO_INCREMENT,'
+                . '`template_key` VARCHAR(100) NOT NULL,'
+                . '`lang_iso` VARCHAR(5) NOT NULL DEFAULT "en",'
+                . '`recipient_type` VARCHAR(32) NOT NULL DEFAULT "customer",'
+                . '`id_customer` INT UNSIGNED DEFAULT NULL,'
+                . '`id_service` INT UNSIGNED DEFAULT NULL,'
+                . '`to_email` VARCHAR(255) NOT NULL,'
+                . '`to_name` VARCHAR(255) DEFAULT NULL,'
+                . '`subject` VARCHAR(255) NOT NULL,'
+                . '`body_html` MEDIUMTEXT DEFAULT NULL,'
+                . '`body_text` MEDIUMTEXT DEFAULT NULL,'
+                . '`variables_json` MEDIUMTEXT DEFAULT NULL,'
+                . '`dedupe_key` VARCHAR(191) DEFAULT NULL,'
+                . '`priority` INT UNSIGNED NOT NULL DEFAULT 3,'
+                . '`status` VARCHAR(32) NOT NULL DEFAULT "pending",'
+                . '`retry_count` INT UNSIGNED NOT NULL DEFAULT 0,'
+                . '`max_retries` INT UNSIGNED NOT NULL DEFAULT 3,'
+                . '`last_error` TEXT DEFAULT NULL,'
+                . '`lock_token` VARCHAR(128) DEFAULT NULL,'
+                . '`locked_at` DATETIME DEFAULT NULL,'
+                . '`available_at` DATETIME DEFAULT NULL,'
+                . '`sent_at` DATETIME DEFAULT NULL,'
+                . '`created_at` DATETIME NOT NULL,'
+                . '`updated_at` DATETIME DEFAULT NULL,'
+                . 'PRIMARY KEY (`id_ntresellerclub_notification_queue`),'
+                . 'UNIQUE KEY `uniq_notification_dedupe` (`dedupe_key`),'
+                . 'KEY `idx_notification_queue_status` (`status`, `priority`),'
+                . 'KEY `idx_notification_queue_customer` (`id_customer`),'
+                . 'KEY `idx_notification_queue_service` (`id_service`),'
+                . 'KEY `idx_notification_queue_template` (`template_key`)'
+                . ') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4',
+            'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'ntresellerclub_notification_log` ('
+                . '`id_ntresellerclub_notification_log` INT UNSIGNED NOT NULL AUTO_INCREMENT,'
+                . '`id_notification_queue` INT UNSIGNED DEFAULT NULL,'
+                . '`template_key` VARCHAR(100) DEFAULT NULL,'
+                . '`recipient_type` VARCHAR(32) DEFAULT NULL,'
+                . '`to_email` VARCHAR(255) DEFAULT NULL,'
+                . '`status` VARCHAR(32) NOT NULL,'
+                . '`message` TEXT DEFAULT NULL,'
+                . '`created_at` DATETIME NOT NULL,'
+                . 'PRIMARY KEY (`id_ntresellerclub_notification_log`),'
+                . 'KEY `idx_notification_log_queue` (`id_notification_queue`),'
+                . 'KEY `idx_notification_log_status` (`status`),'
+                . 'KEY `idx_notification_log_template` (`template_key`)'
+                . ') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4'
+        );
+
+        foreach ($queries as $query) {
+            if (!Db::getInstance()->execute($query)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     public static function ensureContactProfileSchema()
     {
         $sql = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'ntresellerclub_contact_profile` ('
@@ -278,6 +355,9 @@ class NtRcInstaller
             'ntresellerclub_provider_health',
             'ntresellerclub_runtime_health',
             'ntresellerclub_provider_statistics',
+            'ntresellerclub_notification_template',
+            'ntresellerclub_notification_queue',
+            'ntresellerclub_notification_log',
             'ntresellerclub_notice',
             'ntresellerclub_log',
             'ntresellerclub_license'
