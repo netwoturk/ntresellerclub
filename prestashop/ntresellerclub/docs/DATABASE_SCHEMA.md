@@ -1,289 +1,95 @@
-# NetwoTürk ResellerClub Modülü - Final Veritabanı Şeması V1
+# NetwoTurk ResellerClub Modulu - Veritabani Semasi
 
-Bu doküman ntresellerclub modülünün final veritabanı mimarisini tanımlar. Kod geliştirirken tablo adları, alanlar ve ilişkiler bu plana göre ilerlemelidir.
+Bu dokuman ntresellerclub modulunun temel veritabani mimarisini tanimlar.
 
-## 1. Provider Tanımları
+## Provider Tanimlari
 
 Tablo: `PREFIX_ntresellerclub_provider`
 
-| Alan | Tip | Açıklama |
-|---|---|---|
-| id_ntresellerclub_provider | INT | Primary key |
-| provider_code | VARCHAR(64) | resellerclub, domainnameapi |
-| provider_name | VARCHAR(128) | Provider adı |
-| provider_type | VARCHAR(64) | domain, hosting, ssl, mixed |
-| is_enabled | TINYINT | Aktif/pasif |
-| is_licensed | TINYINT | Lisans durumu |
-| config_json | MEDIUMTEXT | Hassas alanları temizlenmiş provider ayarları |
-| created_at | DATETIME | Oluşturma tarihi |
-| updated_at | DATETIME | Güncelleme tarihi |
+Provider kayitlari `resellerclub` ve `domainnameapi` ayrimini tutar. Hosting icin tek izinli provider `resellerclub` olmalidir.
 
-Kural: Provider dışı servis çalıştırılamaz.
-
-## 2. Provider Customer Mapping
+## Provider Customer Mapping
 
 Tablo: `PREFIX_ntresellerclub_provider_customer`
 
-| Alan | Tip | Açıklama |
-|---|---|---|
-| id_ntresellerclub_provider_customer | INT | Primary key |
-| id_customer | INT | PrestaShop müşteri ID |
-| provider_code | VARCHAR(64) | resellerclub/domainnameapi |
-| provider_customer_id | VARCHAR(128) | Provider tarafındaki müşteri ID; DomainNameAPI contact hazırlığında boş kalır |
-| provider_username | VARCHAR(255) | Provider tarafındaki kullanıcı adı/e-posta |
-| email | VARCHAR(255) | Provider müşteri maili |
-| status | VARCHAR(50) | pending, active, contact_ready, error |
-| raw_data | MEDIUMTEXT | Hassas alanları temizlenmiş provider/queue cevabı |
-| created_at | DATETIME | Oluşturma tarihi |
-| updated_at | DATETIME | Güncelleme tarihi |
+PrestaShop musterisi ile provider customer/contact hazirlik kayitlarini eslestirir.
 
-DomainNameAPI için `customer/create` provider customer account oluşturmaz. Sadece TR domain contact payload hazırlığı yapar ve başarılı olursa mapping `contact_ready` olur.
-
-## 3. Contact Profile
+## Contact Profile
 
 Tablo: `PREFIX_ntresellerclub_contact_profile`
 
-| Alan | Tip | Açıklama |
-|---|---|---|
-| id_ntresellerclub_contact_profile | INT | Primary key |
-| id_customer | INT | PrestaShop müşteri ID |
-| profile_type | VARCHAR(50) | personal/company |
-| company_name | VARCHAR(255) | Firma adı |
-| first_name | VARCHAR(128) | Ad |
-| last_name | VARCHAR(128) | Soyad |
-| tax_number | VARCHAR(64) | VKN |
-| tax_office | VARCHAR(128) | Vergi dairesi |
-| tc_number | VARCHAR(64) | TC kimlik |
-| address | TEXT | Adres |
-| city | VARCHAR(128) | Şehir |
-| state | VARCHAR(128) | İlçe/eyalet |
-| country_iso | VARCHAR(5) | Ülke ISO |
-| postcode | VARCHAR(32) | Posta kodu |
-| phone | VARCHAR(64) | Telefon |
-| email | VARCHAR(255) | E-posta |
-| is_default | TINYINT | Varsayılan profil |
-| created_at | DATETIME | Oluşturma tarihi |
-| updated_at | DATETIME | Güncelleme tarihi |
+Musteri contact profilini tutar.
 
-V1 kuralı: 1 müşteri için varsayılan tek contact yeterlidir.
-
-## 4. TLD Routing
+## TLD Routing
 
 Tablo: `PREFIX_ntresellerclub_tld_route`
 
-| Alan | Tip | Açıklama |
-|---|---|---|
-| id_ntresellerclub_tld_route | INT | Primary key |
-| tld | VARCHAR(64) | com, net, com.tr vb. |
-| provider_code | VARCHAR(64) | resellerclub/domainnameapi |
-| is_enabled | TINYINT | Aktif/pasif |
-| priority | INT | Öncelik |
-| created_at | DATETIME | Oluşturma tarihi |
-| updated_at | DATETIME | Güncelleme tarihi |
+Global domainler ResellerClub, TR domainler DomainNameAPI tarafina yonlenir.
 
-Zorunlu yönlendirme: global domainler ResellerClub, TR domainler DomainNameAPI.
-
-## 5. Domain Sepeti
-
-Tablo: `PREFIX_ntresellerclub_cart_domain`
-
-| Alan | Tip | Açıklama |
-|---|---|---|
-| id_ntresellerclub_cart_domain | INT | Primary key |
-| id_cart | INT | PrestaShop cart ID |
-| domain_name | VARCHAR(255) | Alan adı |
-| provider_code | VARCHAR(64) | Seçilen provider |
-| years | INT | Tescil yılı |
-| options_json | MEDIUMTEXT | Nameserver, extra vb. |
-| created_at | DATETIME | Oluşturma tarihi |
-| updated_at | DATETIME | Güncelleme tarihi |
-
-## 6. Servisler
+## Servisler
 
 Tablo: `PREFIX_ntresellerclub_service`
 
-| Alan | Tip | Açıklama |
-|---|---|---|
-| id_ntresellerclub_service | INT | Primary key |
-| id_customer | INT | PrestaShop müşteri |
-| id_order | INT | Sipariş ID |
-| id_product | INT | Bağlı PrestaShop ürün ID |
-| provider_code | VARCHAR(64) | Provider |
-| service_type | VARCHAR(50) | domain, tr_domain, hosting, ssl |
-| domain_name | VARCHAR(255) | Domain |
-| provider_service_id | VARCHAR(128) | Provider servis/domain ID |
-| provider_order_id | VARCHAR(128) | Provider sipariş/order ID |
-| provider_customer_id | VARCHAR(128) | Provider customer ID varsa |
-| provider_contact_id | VARCHAR(128) | Provider contact ID varsa |
-| start_date | DATE | Servis başlangıç tarihi |
-| expiry_date | DATE | Bitiş tarihi |
-| auto_renew | TINYINT | Otomatik yenileme |
-| status | VARCHAR(50) | pending, register_waiting, ready, active, suspended, expired, error, cancelled |
-| renew_price | DECIMAL | Yenileme fiyatı |
-| transfer_price | DECIMAL | Transfer fiyatı |
-| restore_price | DECIMAL | Restore fiyatı |
-| currency | VARCHAR(10) | Para birimi |
-| last_sync | DATETIME | Son senkronizasyon |
-| created_at | DATETIME | Oluşturma tarihi |
-| updated_at | DATETIME | Güncelleme tarihi |
+| Alan | Aciklama |
+|---|---|
+| `id_customer` | PrestaShop musteri |
+| `id_order` | Siparis ID |
+| `id_product` | Bagli PrestaShop urun ID |
+| `provider_code` | Provider |
+| `service_type` | domain, tr_domain, hosting, ssl |
+| `domain_name` | Domain |
+| `provider_service_id` | Provider servis/domain ID |
+| `provider_order_id` | Provider siparis/order ID |
+| `start_date` | Servis baslangic tarihi |
+| `expiry_date` | Bitis tarihi |
+| `status` | pending, provisioning, register_waiting, ready, active, renewal_due, payment_required, suspended, expired, error, cancelled |
+| `renew_price` | Yenileme fiyati |
+| `currency` | Para birimi |
 
-## 7. Operation Queue
+## Operation Queue
 
 Tablo: `PREFIX_ntresellerclub_operation_queue`
 
-| Alan | Tip | Açıklama |
-|---|---|---|
-| id_ntresellerclub_operation_queue | INT | Primary key |
-| id_order | INT | Sipariş ID |
-| id_customer | INT | Müşteri ID |
-| id_service | INT | Servis ID |
-| provider_code | VARCHAR(64) | Provider |
-| service_type | VARCHAR(50) | domain, tr_domain, hosting, ssl, customer |
-| action | VARCHAR(64) | register, transfer, renew, create, details, contact_update |
-| priority | INT | 1 kritik, 4 düşük |
-| payload_json | MEDIUMTEXT | Provider payload |
-| response_json | MEDIUMTEXT | Provider cevabı |
-| status | VARCHAR(50) | pending, processing, done, failed |
-| retry_count | INT | Deneme sayısı |
-| max_retries | INT | Maksimum deneme |
-| last_error | TEXT | Son hata |
-| lock_token | VARCHAR(128) | Cron lock token |
-| locked_at | DATETIME | Lock zamanı |
-| processed_at | DATETIME | İşlem bitişi |
-| created_at | DATETIME | Oluşturma tarihi |
-| updated_at | DATETIME | Güncelleme tarihi |
+Agir API islemleri dogrudan calismaz. Once bu tabloya eklenir.
 
-Kural: Ağır API işlemleri doğrudan çalışmaz. Önce bu tabloya eklenir.
+Hosting action degerleri:
 
-## 8. Monitoring & Health
+- `hosting/create`
+- `hosting/renew`
+- `hosting/suspend`
+- `hosting/unsuspend`
 
-Tablo: `PREFIX_ntresellerclub_provider_health`
+## Hosting Product Mapping
 
-Provider bazlı enabled/licensed durumunu, queue sayıları, sanitize edilmiş son hata ve son kontrol zamanını tutar.
+Tablo: `PREFIX_ntresellerclub_hosting_product_mapping`
 
-Tablo: `PREFIX_ntresellerclub_runtime_health`
+PrestaShop hosting urunlerini ResellerClub paket/maliyet/satis mapping kayitlarina baglar. Hosting fiyatlari bu manuel/mapping tablosundan calisir; varsayimsal ResellerClub fiyat API endpoint'i kullanilmaz.
 
-Runtime memory, peak memory, batch limit, SAPI, queue pending/processing/failed ve cron zamanını tutar.
-
-Tablo: `PREFIX_ntresellerclub_provider_statistics`
-
-Provider bazlı günlük queue toplamlarını, retry sayılarını ve son başarılı/failed zamanlarını tutar.
-
-## 9. Notification & Mail
-
-Tablo: `PREFIX_ntresellerclub_notification_template`
-
-Dil ve alıcı tipine göre notification template tutar.
-
-Tablo: `PREFIX_ntresellerclub_notification_queue`
-
-Mail gönderiminden önce bekleyen notification job kayıtlarını tutar. Durumlar: `pending`, `processing`, `sent`, `failed`, `cancelled`.
-
-Tablo: `PREFIX_ntresellerclub_notification_log`
-
-Mail denemelerini ve sanitize edilmiş sonucu tutar. Raw provider request, api key, password, auth-code, token veya credential saklamaz.
-
-Kural: Mail gönderimi doğrudan yapılmaz; `ntresellerclub_notification_queue` içine yazılır ve cron sonunda `Mail::Send` ile batch gönderilir.
-
-## 10. Pricing & Currency
-
-Tablo: `PREFIX_ntresellerclub_price`
-
-DomainNameAPI TR domain, ResellerClub global domain, hosting ve SSL maliyet/satış mapping kayıtlarını tutar.
-
-| Alan | Tip | Açıklama |
-|---|---|---|
-| id_ntresellerclub_price | INT | Primary key |
-| provider_code | VARCHAR(64) | domainnameapi/resellerclub |
-| product_type | VARCHAR(50) | domain, tr_domain, hosting, ssl |
-| code | VARCHAR(100) | com:register, com.tr:renew, hosting:default:create, ssl:default:renew vb. |
-| years | INT | Süre/yıl |
-| cost_price | DECIMAL(20,6) | Provider/manual maliyet |
-| sale_price | DECIMAL(20,6) | Manual satış fiyatı veya admin baz değeri |
-| currency | VARCHAR(10) | Maliyet para birimi |
-| target_currency | VARCHAR(10) | Satış hedef para birimi |
-| margin_mode | VARCHAR(32) | manual, percent, fixed, hybrid |
-| margin_percent | DECIMAL(20,6) | Yüzde kar |
-| margin_fixed | DECIMAL(20,6) | Sabit kar |
-| tax_included | TINYINT | Satış fiyatı KDV dahil mi |
-| tax_rate | DECIMAL(10,4) | KDV oranı |
-| rounding_mode | VARCHAR(32) | no_round, nearest_1, nearest_5, nearest_10, psychological_99 |
-| last_sync | DATETIME | Son maliyet senkronizasyonu |
-| created_at | DATETIME | Oluşturma tarihi |
-| updated_at | DATETIME | Güncelleme tarihi |
-
-Standart hesaplama sonucu `NtRcPricingEngine` tarafından şu alanlarla döner:
-
-- `cost_price`
-- `cost_currency`
-- `converted_cost`
-- `target_currency`
-- `margin_amount`
-- `tax_amount`
-- `sale_price_without_tax`
-- `sale_price_with_tax`
-- `rounding_mode`
-- `final_sale_price`
-
-Tablo: `PREFIX_ntresellerclub_price_history`
-
-| Alan | Açıklama |
+| Alan | Aciklama |
 |---|---|
-| provider_code/product_type/code | Değişen fiyat kaydı |
-| old_cost_price/new_cost_price | Eski/yeni maliyet |
-| old_sale_price/new_sale_price | Eski/yeni satış |
-| currency | Para birimi |
-| change_source | dna_sync, pricing_upsert, admin vb. |
-| created_at | Değişim zamanı |
+| `id_product` | PrestaShop product id |
+| `provider_code` | Sabit `resellerclub` |
+| `provider_product_id` | ResellerClub urun/paket ID |
+| `package_name` | Paket adi |
+| `billing_cycle` | monthly, quarterly, semiannual, yearly, biennial, triennial |
+| `cost_price` | Manuel maliyet |
+| `sale_price` | Manuel satis fiyati |
+| `currency` | Para birimi |
+| `active` | Aktif mapping |
 
-Tablo: `PREFIX_ntresellerclub_exchange_rate_history`
+## Monitoring & Health
 
-Manuel kur değişimlerini tutar. USD -> TRY/EUR/GBP/AZN desteklenir; ileride para birimi bazlı genişletilebilir.
+`NtRcHostingMonitoring::summary()` su metrikleri dashboard/monitoring katmani icin okunabilir hale getirir:
 
-Engine 11 notu: ResellerClub fiyat mapping altyapısı `ntresellerclub_price` içinde hazırdır. Bu engine ResellerClub için doğrulanmamış fiyat API endpoint'i eklemez.
+- `active_hosting_count`
+- `failed_hosting_queue`
+- `pending_hosting_provisioning`
 
-## 11. TR Domain Fiyatları
+## Notification & Mail
 
-TR domain maliyet ve satış fiyatı satırları artık merkezi Pricing & Currency yapısını kullanır. DomainNameAPI maliyet sync sadece TR uzantıları için çalışır ve cron/RuntimeGuard akışı bozulmaz.
+Mail gonderimi dogrudan yapilmaz; `ntresellerclub_notification_queue` icine yazilir ve cron sonunda batch gonderilir.
 
-## 12. Sistem Devam Tablosu
-
-Fiyat geçmişi, manuel kur geçmişi, hosting ürünleri, SSL ürünleri, webhook log, sistem log ve lisans tabloları mevcut engine kurallarına göre korunur.
-
-## 13. BTK CSV Reporting
-
-Feature key: `btk_csv_reporting`
-
-BTK CSV Reporting yeni tablo eklemez. Rapor çıktıları mevcut tablolardan okunur:
-
-- `PREFIX_ntresellerclub_service`
-- `PREFIX_ntresellerclub_contact_profile`
-- `PREFIX_ntresellerclub_provider_customer`
-- `PREFIX_customer`
-
-CSV dosyaları:
-
-- Barındırılan Alan Adları: `service_type = hosting` olan raporlanabilir servisler; aynı domain için tescil servisi varsa kayıt / bitiş tarihi tescil servisinden alınır.
-- Tescil Edilen Alan Adları: `service_type IN (domain, tr_domain)` olan, ancak aynı domain için hosting servisi bulunmayan raporlanabilir servisler.
-
-Raporlanabilir servis statüleri:
-
-- `active`
-- `ready`
-- `suspended`
-
-CSV kolon sırası:
-
-1. alan adı
-2. alan adı sahibi
-3. iletişim telefonu
-4. iletişim e-postası
-5. alan adı kayıt tarihi
-6. alan adı süresinin dolma tarihi
-
-Başlık satırı yoktur. Her satır 6 kolon olmalıdır. Boş veri için `*` kullanılır. Virgül ve noktalı virgül veri içinde `-` ile değiştirilir. Tarihler `gg.aa.yyyy` formatında üretilir.
-
-Kural: `NTRC_FEATURE_BTK_CSV_REPORTING` / `btk_csv_reporting` aktif değilse admin CSV indirme kapalıdır.
+Engine 12 hosting create/renew basarilari `hosting_created` ve `hosting_renewed` template key'leriyle notification queue'ya baglidir.
 
 ## Final Kurallar
 
@@ -291,10 +97,7 @@ Kural: `NTRC_FEATURE_BTK_CSV_REPORTING` / `btk_csv_reporting` aktif değilse adm
 - TR domain = DomainNameAPI.
 - Hosting = ResellerClub.
 - SSL = ResellerClub.
-- DomainNameAPI global domain, hosting ve SSL için kullanılmaz.
-- Queue olmadan register/renew/transfer/create işlemi yapılmaz.
-- Notification queue olmadan mail gönderimi yapılmaz.
-- Pricing engine olmadan satış fiyatı hesaplanmaz.
-- BTK CSV Reporting premium feature aktif olmadan BTK CSV indirilemez.
-- RuntimeGuard olmadan cron/provisioning/sync/notification çalışmaz.
-- Monitoring provider API çağrısı yapmaz; cron sonunda düşük maliyetli DB/runtime snapshot olarak çalışır.
+- DomainNameAPI global domain, hosting ve SSL icin kullanilmaz.
+- Queue olmadan register/renew/transfer/create islemi yapilmaz.
+- Notification queue olmadan mail gonderimi yapilmaz.
+- Pricing engine veya manuel mapping olmadan satis fiyati hesaplanmaz.
