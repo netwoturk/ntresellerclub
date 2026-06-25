@@ -74,7 +74,6 @@ class NtRcResellerClubProvider implements NtRcProviderInterface
             return array('success' => false, 'message' => 'Customer email zorunludur.');
         }
 
-        // TODO: ResellerClub customer search filtreleri canlı API dokümanıyla tekrar doğrulanmalı.
         $response = $this->client->api('customers', 'search', array(
             'username' => $email,
             'no-of-records' => 10,
@@ -90,19 +89,19 @@ class NtRcResellerClubProvider implements NtRcProviderInterface
             'success' => true,
             'found' => $customerId ? true : false,
             'provider_customer_id' => $customerId,
+            'provider_username' => $email,
             'data' => $this->safeData($response['data']),
         );
     }
 
     public function createCustomer(array $payload)
     {
-        $params = $this->buildCustomerParams($payload);
+        $params = $this->buildCustomerParams($payload, true);
         if (empty($params['username'])) {
             return array('success' => false, 'message' => 'Customer email zorunludur.');
         }
 
-        // TODO: ResellerClub customers/signup zorunlu alanlari canlı API dokümanıyla tekrar doğrulanmalı.
-        $response = $this->client->api('customers', 'signup', $params, 'POST');
+        $response = $this->client->api('customers', 'v2/signup', $params, 'POST');
         if (empty($response['success'])) {
             return $this->safeResponse($response);
         }
@@ -115,6 +114,7 @@ class NtRcResellerClubProvider implements NtRcProviderInterface
         return array(
             'success' => true,
             'provider_customer_id' => $customerId,
+            'provider_username' => $params['username'],
             'data' => $this->safeData($response['data']),
         );
     }
@@ -126,27 +126,25 @@ class NtRcResellerClubProvider implements NtRcProviderInterface
             return array('success' => false, 'message' => 'Provider customer ID zorunludur.');
         }
 
-        $params = $this->buildCustomerParams($payload);
+        $params = $this->buildCustomerParams($payload, false);
         $params['customer-id'] = $providerCustomerId;
 
-        // TODO: ResellerClub customers/modify parametreleri canlı API dokümanıyla tekrar doğrulanmalı.
         return $this->safeResponse($this->client->api('customers', 'modify', $params, 'POST'));
     }
 
-    public function getCustomer($providerCustomerId)
+    public function getCustomer($username)
     {
-        $providerCustomerId = trim((string)$providerCustomerId);
-        if ($providerCustomerId === '') {
-            return array('success' => false, 'message' => 'Provider customer ID zorunludur.');
+        $username = trim((string)$username);
+        if ($username === '') {
+            return array('success' => false, 'message' => 'Customer username zorunludur.');
         }
 
-        // TODO: ResellerClub customers/details parametre adı canlı API dokümanıyla tekrar doğrulanmalı.
         return $this->safeResponse($this->client->api('customers', 'details', array(
-            'customer-id' => $providerCustomerId,
+            'username' => $username,
         ), 'GET'));
     }
 
-    protected function buildCustomerParams(array $payload)
+    protected function buildCustomerParams(array $payload, $includePassword)
     {
         $contact = isset($payload['contact_profile']) && is_array($payload['contact_profile']) ? $payload['contact_profile'] : array();
         $email = isset($payload['email']) ? $payload['email'] : (isset($contact['email']) ? $contact['email'] : '');
@@ -154,29 +152,64 @@ class NtRcResellerClubProvider implements NtRcProviderInterface
         $lastName = isset($payload['lastname']) ? $payload['lastname'] : (isset($contact['last_name']) ? $contact['last_name'] : '');
         $name = trim($firstName . ' ' . $lastName);
         $phoneParts = $this->normalizePhone(isset($contact['phone']) ? $contact['phone'] : '');
+        $company = isset($contact['company_name']) ? trim((string)$contact['company_name']) : '';
 
-        $password = isset($payload['provider_password']) ? $payload['provider_password'] : '';
-        if ($password === '' && class_exists('Tools')) {
-            $password = Tools::passwdGen(16);
-        }
-        if ($password === '') {
-            $password = sha1(uniqid('', true));
+        if ($company === '') {
+            $company = $name;
         }
 
-        return array(
+        $params = array(
             'username' => $email,
-            'passwd' => $password,
             'name' => $name,
-            'company' => isset($contact['company_name']) ? $contact['company_name'] : '',
+            'company' => $company,
             'address-line-1' => isset($contact['address']) ? $contact['address'] : '',
             'city' => isset($contact['city']) ? $contact['city'] : '',
-            'state' => isset($contact['state']) && $contact['state'] !== '' ? $contact['state'] : 'NA',
+            'state' => isset($contact['state']) && $contact['state'] !== '' ? $contact['state'] : 'Not Applicable',
             'country' => isset($contact['country_iso']) ? $contact['country_iso'] : '',
             'zipcode' => isset($contact['postcode']) ? $contact['postcode'] : '',
             'phone-cc' => $phoneParts['cc'],
             'phone' => $phoneParts['number'],
             'lang-pref' => Configuration::get('NTRC_LANG_PREF') ?: 'en',
         );
+
+        foreach (array(
+            'address-line-2' => 'address_2',
+            'address-line-3' => 'address_3',
+            'other-state' => 'other_state',
+            'mobile-cc' => 'mobile_cc',
+            'mobile' => 'mobile',
+            'fax-cc' => 'fax_cc',
+            'fax' => 'fax',
+            'vat-id' => 'vat_id',
+            'indian-gst-id' => 'indian_gst_id',
+            'russia-vat-id' => 'russia_vat_id',
+            'australia-gst-id' => 'australia_gst_id',
+            'newzealand-gst-id' => 'newzealand_gst_id',
+            'singapore-gst-id' => 'singapore_gst_id',
+        ) as $apiKey => $payloadKey) {
+            if (isset($contact[$payloadKey]) && trim((string)$contact[$payloadKey]) !== '') {
+                $params[$apiKey] = $contact[$payloadKey];
+            }
+        }
+
+        if ($includePassword) {
+            $password = isset($payload['provider_password']) ? $payload['provider_password'] : '';
+            if ($password === '' && class_exists('Tools')) {
+                $password = Tools::passwdGen(16);
+            }
+            if ($password === '') {
+                $password = sha1(uniqid('', true));
+            }
+            $params['passwd'] = $password;
+
+            foreach (array('sms-consent', 'accept-policy', 'marketing-email-consent') as $optionalBool) {
+                if (array_key_exists($optionalBool, $payload)) {
+                    $params[$optionalBool] = $payload[$optionalBool] ? 'true' : 'false';
+                }
+            }
+        }
+
+        return $params;
     }
 
     protected function normalizePhone($phone)
@@ -258,7 +291,7 @@ class NtRcResellerClubProvider implements NtRcProviderInterface
             return $data;
         }
 
-        foreach (array('api-key', 'api_key', 'passwd', 'password', 'auth-code', 'auth_code') as $key) {
+        foreach (array('api-key', 'api_key', 'ApiKey', 'passwd', 'password', 'Password', 'auth-code', 'auth_code', 'AuthCode') as $key) {
             if (isset($data[$key])) {
                 unset($data[$key]);
             }
