@@ -8,6 +8,7 @@ require_once __DIR__ . '/NtRcApiContractGuard.php';
 require_once __DIR__ . '/NtRcRuntimeGuard.php';
 require_once __DIR__ . '/NtRcProviderCustomerManager.php';
 require_once __DIR__ . '/NtRcServiceRepository.php';
+require_once __DIR__ . '/NtRcNotificationEngine.php';
 require_once __DIR__ . '/providers/NtRcProviderFactory.php';
 require_once __DIR__ . '/NtRcLog.php';
 
@@ -270,6 +271,57 @@ class NtRcOperationQueueProcessor
         }
 
         NtRcServiceRepository::markProvisioned($idService, $fields);
+        $this->enqueueDomainLifecycleNotification($item, $payload, $fields, $idService);
+    }
+
+    protected function enqueueDomainLifecycleNotification(array $item, array $payload, array $fields, $idService)
+    {
+        $templateKey = $this->domainLifecycleTemplate((string)$item['action']);
+        if (!$templateKey) {
+            return;
+        }
+
+        try {
+            $domain = isset($payload['domain']) ? $payload['domain'] : (isset($payload['domain_name']) ? $payload['domain_name'] : '');
+            $years = isset($payload['years']) ? (int)$payload['years'] : 1;
+            $dedupeSeed = !empty($fields['provider_order_id']) ? $fields['provider_order_id'] : (!empty($fields['provider_service_id']) ? $fields['provider_service_id'] : (int)$item['id_ntresellerclub_operation_queue']);
+            $engine = new NtRcNotificationEngine();
+            $result = $engine->enqueueServiceNotification(
+                $templateKey,
+                (int)$idService,
+                array(
+                    'domain_name' => $domain,
+                    'action' => $item['action'],
+                    'years' => $years,
+                    'provider_order_id' => !empty($fields['provider_order_id']) ? $fields['provider_order_id'] : '',
+                    'provider_service_id' => !empty($fields['provider_service_id']) ? $fields['provider_service_id'] : '',
+                    'expiry_date' => !empty($fields['expiry_date']) ? $fields['expiry_date'] : '',
+                    'queue_id' => (int)$item['id_ntresellerclub_operation_queue'],
+                    'checked_at' => date('Y-m-d H:i:s'),
+                ),
+                'customer',
+                2,
+                'domain_lifecycle:' . $templateKey . ':' . (int)$idService . ':' . $dedupeSeed
+            );
+
+            if (empty($result['success'])) {
+                $message = isset($result['message']) ? $this->safeText($result['message']) : 'Notification queue kaydi olusturulamadi.';
+                NtRcLog::add('warning', 'operation_queue_processor', 'Domain lifecycle notification failed queue=' . (int)$item['id_ntresellerclub_operation_queue'] . ' ' . $message);
+            }
+        } catch (Exception $e) {
+            NtRcLog::add('warning', 'operation_queue_processor', 'Domain lifecycle notification exception queue=' . (int)$item['id_ntresellerclub_operation_queue'] . ' ' . $this->safeText($e->getMessage()));
+        }
+    }
+
+    protected function domainLifecycleTemplate($action)
+    {
+        $map = array(
+            'register' => 'domain_registered',
+            'transfer' => 'domain_transfer_started',
+            'renew' => 'domain_renewed',
+        );
+
+        return isset($map[$action]) ? $map[$action] : null;
     }
 
     protected function afterFailure(array $item, array $payload, $error)
@@ -398,7 +450,7 @@ class NtRcOperationQueueProcessor
             return is_string($response) ? $this->safeText($response) : $response;
         }
 
-        foreach (array('raw', 'last_url', 'api-key', 'api_key', 'ApiKey', 'passwd', 'password', 'Password', 'auth-code', 'auth_code', 'AuthCode') as $key) {
+        foreach (array('raw', 'last_url', 'api-key', 'api_key', 'ApiKey', 'passwd', 'password', 'Password', 'auth-code', 'auth_code', 'AuthCode', 'token', 'Token', 'credential', 'Credential') as $key) {
             if (isset($response[$key])) {
                 unset($response[$key]);
             }
@@ -423,6 +475,6 @@ class NtRcOperationQueueProcessor
 
     protected function safeText($text)
     {
-        return preg_replace('/(api-key|api_key|auth-code|auth_code|passwd|password)=([^&\s]+)/i', '$1=***', (string)$text);
+        return preg_replace('/(api-key|api_key|auth-code|auth_code|passwd|password|token|credential)=([^&\s]+)/i', '$1=***', (string)$text);
     }
 }
