@@ -22,13 +22,7 @@ class NtRcHostingManager
         }
 
         $domainName = $this->extractDomainName($product);
-        $idService = NtRcServiceRepository::createHostingService(
-            (int)$order->id_customer,
-            (int)$order->id,
-            $idProduct,
-            $domainName,
-            $mapping
-        );
+        $idService = $this->createHostingService($order, $idProduct, $domainName, $mapping);
 
         if ($idService <= 0) {
             NtRcLog::add('error', 'hosting_provisioning', 'Hosting service insert failed order=' . (int)$order->id . ' product=' . $idProduct);
@@ -116,6 +110,46 @@ class NtRcHostingManager
             3,
             $priority
         );
+    }
+
+    protected function createHostingService(Order $order, $idProduct, $domainName, array $mapping)
+    {
+        $billingCycle = isset($mapping['billing_cycle']) ? $mapping['billing_cycle'] : 'yearly';
+        $ok = Db::getInstance()->insert('ntresellerclub_service', array(
+            'id_customer' => (int)$order->id_customer,
+            'id_order' => (int)$order->id,
+            'id_product' => (int)$idProduct,
+            'provider_code' => pSQL(self::PROVIDER_CODE),
+            'service_type' => pSQL('hosting'),
+            'domain_name' => $domainName !== '' ? pSQL($domainName) : null,
+            'provider_service_id' => null,
+            'provider_order_id' => null,
+            'provider_customer_id' => null,
+            'provider_contact_id' => null,
+            'start_date' => date('Y-m-d'),
+            'expiry_date' => $this->expiryFromBillingCycle($billingCycle),
+            'status' => pSQL('provisioning'),
+            'renew_price' => isset($mapping['sale_price']) ? (float)$mapping['sale_price'] : 0,
+            'currency' => !empty($mapping['currency']) ? pSQL($mapping['currency']) : null,
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ));
+
+        return $ok ? (int)Db::getInstance()->Insert_ID() : 0;
+    }
+
+    protected function expiryFromBillingCycle($billingCycle)
+    {
+        $map = array(
+            'monthly' => '+1 month',
+            'quarterly' => '+3 months',
+            'semiannual' => '+6 months',
+            'yearly' => '+1 year',
+            'biennial' => '+2 years',
+            'triennial' => '+3 years',
+        );
+        $billingCycle = strtolower(trim((string)$billingCycle));
+        return date('Y-m-d', strtotime(isset($map[$billingCycle]) ? $map[$billingCycle] : '+1 year'));
     }
 
     protected function buildCreatePayload(Order $order, array $product, array $mapping, $idService, $domainName)
