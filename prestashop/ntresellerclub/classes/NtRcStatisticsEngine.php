@@ -4,6 +4,7 @@ if (!defined('_PS_VERSION_')) {
 }
 
 require_once __DIR__ . '/NtRcInstaller.php';
+require_once __DIR__ . '/NtRcBillingMonitoring.php';
 require_once __DIR__ . '/providers/NtRcProviderRegistry.php';
 
 class NtRcStatisticsEngine
@@ -27,6 +28,30 @@ class NtRcStatisticsEngine
         }
 
         return array('success' => true, 'metric_date' => $metricDate, 'providers' => $rows);
+    }
+
+    public function hostingSummary()
+    {
+        NtRcInstaller::ensureServiceSchema();
+        NtRcInstaller::ensureOperationQueueSchema();
+
+        return array(
+            'active_hosting_count' => (int)Db::getInstance()->getValue(
+                'SELECT COUNT(*) FROM `' . _DB_PREFIX_ . 'ntresellerclub_service` WHERE service_type="hosting" AND status="active"'
+            ),
+            'failed_hosting_queue' => (int)Db::getInstance()->getValue(
+                'SELECT COUNT(*) FROM `' . _DB_PREFIX_ . 'ntresellerclub_operation_queue` WHERE service_type="hosting" AND status="failed"'
+            ),
+            'pending_hosting_provisioning' => (int)Db::getInstance()->getValue(
+                'SELECT COUNT(*) FROM `' . _DB_PREFIX_ . 'ntresellerclub_service` WHERE service_type="hosting" AND status IN ("pending", "provisioning")'
+            ),
+        );
+    }
+
+    public function billingSummary()
+    {
+        NtRcInstaller::ensureBillingEventSchema();
+        return NtRcBillingMonitoring::summary();
     }
 
     public function queueSummary($providerCode = null)
@@ -87,6 +112,7 @@ class NtRcStatisticsEngine
             'avg_retry' => round($avgRetry, 4),
             'last_success_at' => $this->lastQueueDate($providerCode, 'done'),
             'last_failure_at' => $this->lastQueueDate($providerCode, 'failed'),
+            'hosting' => $providerCode === 'resellerclub' ? $this->hostingSummary() : array(),
         );
     }
 
