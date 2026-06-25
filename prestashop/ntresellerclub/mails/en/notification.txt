@@ -1,0 +1,3 @@
+{notification_subject}
+
+{notification_body_text}
