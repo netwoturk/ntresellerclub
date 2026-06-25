@@ -14,47 +14,37 @@ This root roadmap is the repository-level continuation file for Codex engine wor
 | 08 | Monitoring & Health | Completed in `codex/engine-08-monitoring-health` |
 | 09 | Notification & Mail | Completed in `codex/engine-09-notification-mail` |
 | 10 | Renewal / Service Lifecycle Notification Wiring | Completed in `codex/engine-10-renewal-service-lifecycle-notification` |
+| 11 | Pricing & Currency Finalization | Completed in `codex/engine-11-pricing-currency-finalization` |
 
-## Engine 09 - Notification & Mail
-
-### Scope
-
-- Central notification template registry
-- TR/EN/DE/FR/ES/IT default template seed
-- Customer, admin, and technical-admin recipient types
-- Notification queue with pending/processing/sent/failed/cancelled statuses
-- Retry fields and sanitized last error tracking
-- PrestaShop `Mail::Send` wrapper through module mail templates
-- Cron-based batch sending with RuntimeGuard limits
-- Monitoring integration for failed queue and provider health warnings
-- Service expiry notification preparation for renewal flows
-
-### Acceptance Criteria
-
-- Mail is never sent directly from provisioning, provider, queue, or monitoring logic.
-- Events are inserted into `ntresellerclub_notification_queue` first.
-- Cron processes pending notifications with batch limits.
-- Credentials, auth codes, tokens, raw requests, and passwords are sanitized from body/log output.
-- No admin UI/template is included in this engine.
-
-## Engine 10 - Renewal / Service Lifecycle Notification Wiring
+## Engine 11 - Pricing & Currency Finalization
 
 ### Scope
 
-- Route renewal reminders through `NtRcNotificationEngine` instead of direct `Mail::Send`.
-- Reuse notification queue dedupe for 30/15/7/1 day domain expiry events.
-- Queue customer notifications after successful domain register, transfer, and renew queue actions.
-- Queue service lifecycle notifications when service status changes to suspended or expired.
-- Keep provider queue success/retry behavior independent from notification enqueue failures.
-- Document legacy `ntresellerclub_notice` as unused by the new renewal notification flow.
+- Central pricing calculation through `NtRcPricingEngine`.
+- Generic price mapping through `NtRcPricingManager` for domain, TR domain, hosting, and SSL rows.
+- DomainNameAPI TR domain pricing strengthened without changing the cron/provider boundary.
+- ResellerClub global domain, hosting, and SSL mapping placeholders prepared without speculative API endpoints.
+- Manual USD rates generalized for TRY, EUR, GBP, and AZN.
+- Margin models preserved: manual, percent, fixed, hybrid.
+- Tax included/excluded calculation and currency-level future tax override support.
+- Rounding modes: no_round, nearest_1, nearest_5, nearest_10, psychological_99.
+- Standard calculation result format for downstream sales flows.
+- Price and exchange-rate history write paths preserved.
 
 ### Acceptance Criteria
 
-- `NtRcRenewalManager` does not call `Mail::Send` directly.
-- Domain lifecycle events use `domain_registered`, `domain_transfer_started`, and `domain_renewed` template keys.
-- Suspended/expired service notifications use `service_suspended` and `service_expired` template keys.
-- Notification failures are sanitized and warning-logged without rolling back provider success.
-- RuntimeGuard and batch limits remain unchanged.
+- Price calculation returns `cost_price`, `cost_currency`, `converted_cost`, `target_currency`, `margin_amount`, `tax_amount`, `sale_price_without_tax`, `sale_price_with_tax`, `rounding_mode`, and `final_sale_price`.
+- DomainNameAPI price fetching stays cron/RuntimeGuard guarded.
+- ResellerClub pricing infrastructure does not invent API endpoints.
+- Existing TR price admin/backend paths remain backward compatible.
+- No new admin UI is introduced.
+
+## Previous Engines
+
+| Engine | Name | Notes |
+|---|---|---|
+| 09 | Notification & Mail | Queue-based mail delivery and notification templates |
+| 10 | Renewal / Service Lifecycle Notification Wiring | Renewal and lifecycle events connected to notification queue |
 
 ## Next Engines
 
@@ -62,11 +52,11 @@ This root roadmap is the repository-level continuation file for Codex engine wor
 |---|---|---|
 | 06 | Hosting | ResellerClub-only hosting provisioning |
 | 07 | SSL | ResellerClub-only SSL provisioning |
-| 11 | Billing | Billing, payment-required notification, and invoice integration |
-| 12 | Webhook | Provider webhook ingestion |
-| 13 | Reporting | Admin/customer reports |
-| 14 | Statistics | Advanced statistics and dashboards |
-| 15 | Customer Dashboard | Customer service panel expansion |
-| 16 | Admin Dashboard | Admin monitoring and operations UI |
-| 17 | Security | Hardening and sensitive-data review |
-| 18 | Production Hardening | Production readiness pass |
+| 12 | Billing | Billing, payment-required notification, and invoice integration |
+| 13 | Webhook | Provider webhook ingestion |
+| 14 | Reporting | Admin/customer reports |
+| 15 | Statistics | Advanced statistics and dashboards |
+| 16 | Customer Dashboard | Customer service panel expansion |
+| 17 | Admin Dashboard | Admin monitoring and operations UI |
+| 18 | Security | Hardening and sensitive-data review |
+| 19 | Production Hardening | Production readiness pass |
