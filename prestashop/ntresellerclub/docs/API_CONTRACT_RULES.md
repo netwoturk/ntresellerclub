@@ -109,7 +109,7 @@ Genişleme hedefleri:
 | Türkçe | TRY |
 | İngilizce | USD |
 | Almanca | EUR |
-| Fransızca | EUR |
+| Fransizca | EUR |
 | İspanyolca | EUR |
 | İtalyanca | EUR |
 
