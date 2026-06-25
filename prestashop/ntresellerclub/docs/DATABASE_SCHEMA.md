@@ -165,79 +165,74 @@ Kural: Ağır API işlemleri doğrudan çalışmaz. Önce bu tabloya eklenir.
 
 DomainNameAPI TR register queue işlenmeden önce provider customer mapping `contact_ready` olmalıdır. Hazır değilse önce `customer/create` contact hazırlık kuyruğu çalışır; register kuyruğu retry/failed kurallarını bozmadan bekler.
 
-## 8. TR Domain Fiyatları
+## 8. Monitoring & Health
 
-Tablo: `PREFIX_ntresellerclub_price`
+Tablo: `PREFIX_ntresellerclub_provider_health`
 
 | Alan | Tip | Açıklama |
 |---|---|---|
-| id_ntresellerclub_price | INT | Primary key |
-| provider_code | VARCHAR(64) | domainnameapi |
-| product_type | VARCHAR(50) | tr_domain |
-| code | VARCHAR(100) | com.tr:register vb. |
-| currency | VARCHAR(10) | USD |
-| cost_price | DECIMAL | Alış fiyatı |
-| sale_price | DECIMAL | Manuel satış fiyatı |
-| margin_mode | VARCHAR(50) | manual, percent, fixed, hybrid |
-| margin_percent | DECIMAL | Yüzde kar |
-| margin_fixed | DECIMAL | Sabit kar |
-| last_sync | DATETIME | Son sync |
+| id_ntresellerclub_provider_health | INT | Primary key |
+| provider_code | VARCHAR(64) | Provider kodu |
+| status | VARCHAR(32) | ok, warning, disabled, unlicensed |
+| is_enabled | TINYINT | Provider aktif mi |
+| is_licensed | TINYINT | Provider lisanslı mı |
+| queue_pending | INT | Provider pending queue sayısı |
+| queue_failed | INT | Provider failed queue sayısı |
+| last_error | TEXT | Sanitize edilmiş son hata |
+| response_time_ms | INT | Health snapshot ölçüm süresi |
+| checked_at | DATETIME | Kontrol zamanı |
+| created_at | DATETIME | Kayıt zamanı |
+
+Tablo: `PREFIX_ntresellerclub_runtime_health`
+
+| Alan | Tip | Açıklama |
+|---|---|---|
+| id_ntresellerclub_runtime_health | INT | Primary key |
+| context | VARCHAR(64) | cron, admin, manual vb. |
+| status | VARCHAR(32) | ok, warning |
+| memory_limit | VARCHAR(32) | PHP memory limit |
+| memory_usage_bytes | BIGINT | Anlık memory kullanımı |
+| memory_peak_bytes | BIGINT | Peak memory kullanımı |
+| max_execution_time | INT | PHP execution time |
+| batch_limit | INT | RuntimeGuard batch limiti |
+| php_sapi | VARCHAR(64) | PHP SAPI |
+| queue_pending | INT | Pending queue toplamı |
+| queue_processing | INT | Processing queue toplamı |
+| queue_failed | INT | Failed queue toplamı |
+| last_cron_at | DATETIME | Son cron işaret zamanı |
+| checked_at | DATETIME | Kontrol zamanı |
+| created_at | DATETIME | Kayıt zamanı |
+
+Tablo: `PREFIX_ntresellerclub_provider_statistics`
+
+| Alan | Tip | Açıklama |
+|---|---|---|
+| id_ntresellerclub_provider_statistics | INT | Primary key |
+| provider_code | VARCHAR(64) | Provider kodu |
+| metric_date | DATE | Günlük metrik tarihi |
+| total_queue | INT | Toplam queue |
+| pending_queue | INT | Pending queue |
+| processing_queue | INT | Processing queue |
+| done_queue | INT | Done queue |
+| failed_queue | INT | Failed queue |
+| retry_queue | INT | Retry almış queue |
+| avg_retry | DECIMAL | Ortalama retry |
+| last_success_at | DATETIME | Son başarılı queue zamanı |
+| last_failure_at | DATETIME | Son failed queue zamanı |
 | created_at | DATETIME | Oluşturma tarihi |
 | updated_at | DATETIME | Güncelleme tarihi |
 
-## 9. Fiyat Geçmişi
+Kural: Monitoring Engine cron sonunda otomatik çalışır, provider API çağrısı yapmaz, sadece DB/runtime sinyallerini yazar. Hassas alanlar `last_error`, log ve response çıktılarında sanitize edilir.
 
-Tablo: `PREFIX_ntresellerclub_price_history`
+## 9. TR Domain Fiyatları
 
-Maliyet ve satış fiyatı değişimlerini kayıt altında tutar.
+Tablo: `PREFIX_ntresellerclub_price`
 
-## 10. Manuel Kur Geçmişi
+TR domain maliyet ve satış fiyatı satırlarını tutar. Fiyat motoru DomainNameAPI maliyetlerini sadece TR uzantıları için işler.
 
-Tablo: `PREFIX_ntresellerclub_exchange_rate_history`
+## 10. Sistem Devam Tablosu
 
-Manuel kur değişimlerinin geçmişini tutar.
-
-## 11. Hosting Ürünleri
-
-Tablo: `PREFIX_ntresellerclub_hosting_product`
-
-| Alan | Açıklama |
-|---|---|
-| id_ntresellerclub_hosting_product | Primary key |
-| provider_code | resellerclub |
-| provider_product_id | ResellerClub ürün ID |
-| package_name | Paket adı |
-| billing_cycle | Aylık/yıllık |
-| cost_price | Maliyet |
-| sale_price | Satış |
-| currency | Para birimi |
-| active | Aktif/pasif |
-
-Kural: Hosting sadece ResellerClub üzerinden yönetilir.
-
-## 12. SSL Ürünleri
-
-Tablo: `PREFIX_ntresellerclub_ssl_product`
-
-SSL ürünleri sadece ResellerClub provider üzerinden yönetilir.
-
-## 13. Webhook Log
-
-Tablo: `PREFIX_ntresellerclub_webhook_log`
-
-Provider webhook event kayıtları için kullanılır.
-
-## 14. Sistem Log
-
-Tablo: `PREFIX_ntresellerclub_log`
-
-Modül içi hata, bilgi ve uyarı loglarını tutar.
-
-## 15. Lisans
-
-Tablo: `PREFIX_ntresellerclub_license`
-
-NetwoTürk yıllık lisans ve feature erişimlerini tutar.
+Fiyat geçmişi, manuel kur geçmişi, hosting ürünleri, SSL ürünleri, webhook log, sistem log ve lisans tabloları mevcut engine kurallarına göre korunur.
 
 ## Final Kurallar
 
@@ -248,3 +243,4 @@ NetwoTürk yıllık lisans ve feature erişimlerini tutar.
 - DomainNameAPI global domain, hosting ve SSL için kullanılmaz.
 - Queue olmadan register/renew/transfer/create işlemi yapılmaz.
 - RuntimeGuard olmadan cron/provisioning/sync çalışmaz.
+- Monitoring provider API çağrısı yapmaz; cron sonunda düşük maliyetli DB/runtime snapshot olarak çalışır.
