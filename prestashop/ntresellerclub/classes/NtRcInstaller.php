@@ -16,7 +16,8 @@ class NtRcInstaller
         return self::ensureOperationQueueSchema()
             && self::ensureProviderCustomerSchema()
             && self::ensureContactProfileSchema()
-            && self::ensureServiceSchema();
+            && self::ensureServiceSchema()
+            && self::ensureCartDomainSchema();
     }
 
     protected static function executeSqlFile($sqlFile)
@@ -88,6 +89,22 @@ class NtRcInstaller
 
         foreach ($columns as $column => $definition) {
             if (!self::addColumnIfMissing('ntresellerclub_service', $column, $definition)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public static function ensureCartDomainSchema()
+    {
+        $columns = array(
+            'options_json' => 'MEDIUMTEXT DEFAULT NULL AFTER `years`',
+            'updated_at' => 'DATETIME DEFAULT NULL AFTER `created_at`',
+        );
+
+        foreach ($columns as $column => $definition) {
+            if (!self::addColumnIfMissing('ntresellerclub_cart_domain', $column, $definition)) {
                 return false;
             }
         }
