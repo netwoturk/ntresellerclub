@@ -4,67 +4,70 @@ Tarih: 2026-06-25
 
 ## Son Engine
 
-Engine 09 - Notification & Mail Engine
+Engine 10 - Renewal / Service Lifecycle Notification Wiring
 
 ## Son Branch
 
-`codex/engine-09-notification-mail`
+`codex/engine-10-renewal-service-lifecycle-notification`
 
 ## Tamamlananlar
 
-- Merkezi notification backend altyapısı eklendi.
-- `NtRcNotificationEngine`, `NtRcMailTemplateManager` ve `NtRcNotificationQueueManager` class'ları oluşturuldu.
-- Notification template, queue ve log tabloları installer schema guard ile `install.sql` içine eklendi.
-- Template sistemi TR, EN, DE, FR, ES, IT dilleri için backend seed akışıyla hazırlandı.
-- Domain, hosting, SSL, renewal, ödeme, suspension/expiry, queue failed ve provider down template key listesi tanımlandı.
-- Mail gönderimi doğrudan ağır işlem içinde yapılmayacak şekilde `ntresellerclub_notification_queue` üzerinden batch işleme bağlandı.
-- PrestaShop `Mail::Send` uyumlu `notification.html` ve `notification.txt` wrapper şablonları tüm desteklenen diller için eklendi.
-- Customer, admin ve technical_admin alıcı tipleri backend queue seviyesinde ayrıldı.
-- Notification queue status akışı `pending`, `processing`, `sent`, `failed`, `cancelled` olarak tanımlandı.
-- Retry alanları `retry_count`, `max_retries`, `last_error` ile eklendi.
-- Cron sonunda Monitoring Engine çıktısından sonra Notification Engine çalışacak şekilde entegrasyon yapıldı.
-- Failed operation queue ve provider health DOWN/WARNING/ERROR durumları admin notification üretebilir hale getirildi.
-- Domain expiry için 30/15/7/1 gün kala customer notification altyapısı hazırlandı.
-- Mail subject/body/variables, retry error ve notification log mesajları credential-like değerleri maskeleyecek şekilde sanitize edildi.
-- Notification & Mail architecture dokümanı eklendi.
-- `DATABASE_SCHEMA.md`, `API_CONTRACT_RULES.md`, `ROADMAP.md` ve `CHANGELOG.md` Engine 09 kapsamıyla güncellendi.
+- Engine 09 notification altyapısı gerçek renewal ve servis lifecycle olaylarına bağlandı.
+- `NtRcRenewalManager` doğrudan `Mail::Send` / `renewal_reminder` kullanmayacak şekilde güncellendi.
+- Renewal scan artık 30/15/7/1 gün domain expiry event'lerini `NtRcNotificationEngine::enqueueExpiryNotification()` üzerinden notification queue'ya yazar.
+- `NtRcNotificationEngine::enqueueExpiryNotification()` merkezi expiry helper olarak eklendi.
+- Notification expiry taraması `domain` ve `tr_domain` servislerini destekleyecek şekilde merkezi helper'a taşındı.
+- Başarılı domain `register`, `transfer`, `renew` queue işlemlerinden sonra müşteri notification event'i oluşturuldu.
+- Domain lifecycle template mapping eklendi: `domain_registered`, `domain_transfer_started`, `domain_renewed`.
+- `NtRcServiceRepository::updateStatus()` status değişimi `suspended` veya `expired` olduğunda customer notification queue oluşturur hale getirildi.
+- Notification enqueue başarısızlığı provider queue başarısını geri almayacak şekilde best-effort / warning-log yaklaşımıyla bağlandı.
+- Provider response sanitization operation queue tarafında token/credential benzeri alanları da kaldıracak şekilde genişletildi.
+- `docs/architecture/13_RENEWAL_SERVICE_LIFECYCLE_NOTIFICATION_WIRING.md` eklendi.
+- `ROADMAP.md`, `CHANGELOG.md`, `DATABASE_SCHEMA.md`, `API_CONTRACT_RULES.md` Engine 10 kapsamıyla güncellendi.
+
+## Database Değişikliği
+
+- Yeni tablo eklenmedi.
+- Engine 10 mevcut `ntresellerclub_notification_template`, `ntresellerclub_notification_queue`, `ntresellerclub_notification_log` tablolarını kullanır.
+- Eski `ntresellerclub_notice` tablosu geriye uyumluluk için bırakıldı; Engine 10 yeni renewal notice kaydı yazmaz.
 
 ## Devam Edenler
 
-- Admin template/panel bilinçli olarak eklenmedi; bu engine backend, manager, tablo ve dokümantasyon kapsamındadır.
-- Hosting, SSL, payment, suspension ve service expired event'lerinin gerçek workflow hook'ları ileriki engine'lerde `NtRcNotificationEngine::enqueueServiceNotification()` üzerinden bağlanacak.
-- `NTRC_TECHNICAL_ADMIN_EMAIL` için admin ayar ekranı yok; değer yoksa `PS_SHOP_EMAIL` fallback kullanılır.
-- Queue retention/cleanup politikası ileriki admin dashboard veya maintenance engine kapsamında netleştirilecek.
+- `payment_required` event'i henüz gerçek billing/payment workflow'una bağlanmadı.
+- Hosting/SSL created/renewed notification event'leri, ilgili provisioning engine'leri tamamlandığında bağlanacak.
+- Admin notification template UI hâlâ yok; backend template seed ve queue altyapısı kullanılıyor.
 
 ## Sıradaki Engine
 
-Öneri: Engine 10 - Renewal / Service Lifecycle Notification Wiring. Notification altyapısı hazır olduğu için renewal, suspension, expiry ve payment-required olaylarının gerçek servis yaşam döngüsüne bağlanması mantıklı sonraki adımdır.
+Öneri: Engine 06 - Hosting Provisioning veya Engine 11 - Billing / Payment Required Wiring. Notification altyapısı hazır olduğu için hosting provisioning ve billing event bağlantısı iki doğal sonraki yoldur.
 
 ## Bilinen Riskler
 
 - PHP CLI bu çalışma ortamında bulunmadığı için `php -l` lint çalıştırılamadı.
-- `Mail::Send` gerçek SMTP/PrestaShop runtime içinde test edilmedi; branch üzerinde statik entegrasyon kontrolü yapıldı.
-- Notification queue batch işlemi shared hosting uyumu için limitlidir; çok yüksek backlog için birden fazla cron turu gerekir.
-- Technical admin e-postası config fallback ile çalışır; ayrı admin UI olmadığı için özel adres yönetimi henüz yoktur.
+- Gerçek PrestaShop runtime, SMTP ve provider sandbox çalıştırması bu ortamda yapılamadı.
+- Notification enqueue best-effort çalışır; mail kuyruğu yazılamazsa provider operasyonu başarılı kalır ve warning log üretilir.
+- Raw GitHub CDN kısa süre eski blob döndürebilir; doğrulamada GitHub contents API ve branch head esas alındı.
 
 ## Son Test
 
-- GitHub raw dosyaları üzerinden yeni class, cron, installer, SQL ve doküman dosyalarının branch'te varlığı doğrulandı.
-- Yeni PHP dosyalarında kaba `{}` ve `()` dengesi kontrol edildi.
-- `Mail::Send`, `NtRcRuntimeGuard::beforeHeavyProcess`, `cronBatchLimit`, notification status listesi, recipient type listesi ve template key listesi statik olarak doğrulandı.
-- `install.sql` ve `NtRcInstaller.php` içinde `ntresellerclub_notification_template`, `ntresellerclub_notification_queue`, `ntresellerclub_notification_log` tabloları doğrulandı.
-- TR, EN, DE, FR, ES, IT için `notification.html` ve `notification.txt` mail wrapper dosyaları doğrulandı.
-- Credential-like değerlerin mail/log/retry error içine düz yazılmasını engelleyen sanitize helper'ları kontrol edildi.
+- GitHub branch farkı `codex/engine-09-notification-mail...codex/engine-10-renewal-service-lifecycle-notification` üzerinden doğrulandı.
+- Yeni/değişen PHP dosyalarında kaba `{}` ve `()` dengesi kontrol edildi.
+- `NtRcRenewalManager` içinde `Mail::Send`, `renewal_reminder` ve `ntresellerclub_notice` kullanımının kaldırıldığı doğrulandı.
+- `NtRcNotificationEngine::enqueueExpiryNotification()` ve lifecycle template key mapping satırları doğrulandı.
+- `NtRcOperationQueueProcessor` içinde `domain_registered`, `domain_transfer_started`, `domain_renewed` mapping'i doğrulandı.
+- `NtRcServiceRepository` içinde `service_suspended`, `service_expired` status mapping'i doğrulandı.
+- `NtRcNotificationQueueManager` dışında doğrudan `Mail::Send` kalmadığı kontrol edildi.
+- Credential-like değerleri maskeleyen safeText/sanitize alanları kontrol edildi.
 
 ## Son Commit
 
-Bu `CURRENT_STATUS.md` kaydı Engine 09 final durumunu temsil eder.
+Bu `CURRENT_STATUS.md` kaydı Engine 10 final durumunu temsil eder.
 
 ## Son Doküman Güncellemesi
 
 - `CHANGELOG.md`
 - `CURRENT_STATUS.md`
 - `ROADMAP.md`
-- `docs/architecture/12_NOTIFICATION_MAIL_ENGINE.md`
+- `docs/architecture/13_RENEWAL_SERVICE_LIFECYCLE_NOTIFICATION_WIRING.md`
 - `prestashop/ntresellerclub/docs/API_CONTRACT_RULES.md`
 - `prestashop/ntresellerclub/docs/DATABASE_SCHEMA.md`
