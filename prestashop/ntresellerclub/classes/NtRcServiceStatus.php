@@ -9,9 +9,13 @@ class NtRcServiceStatus
     {
         $map = array(
             'pending' => 'Beklemede',
+            'provisioning' => 'Kurulumda',
             'ready' => 'Hazir',
             'register_waiting' => 'Kayit Bekliyor',
             'active' => 'Aktif',
+            'renewal_due' => 'Yenileme Bekliyor',
+            'payment_required' => 'Odeme Gerekli',
+            'provider_credit_required' => 'Provider Kredi Gerekli',
             'suspended' => 'Askida',
             'expired' => 'Suresi Doldu',
             'error' => 'Hata',
@@ -23,11 +27,11 @@ class NtRcServiceStatus
 
     public static function isRenewable($status)
     {
-        return in_array($status, array('active', 'expired', 'ready'));
+        return in_array($status, array('active', 'expired', 'ready', 'renewal_due', 'payment_required'));
     }
 
     public static function isManageable($status)
     {
-        return in_array($status, array('active', 'ready', 'register_waiting'));
+        return in_array($status, array('active', 'ready', 'register_waiting', 'renewal_due', 'payment_required', 'provider_credit_required', 'suspended'));
     }
 }
