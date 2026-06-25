@@ -25,7 +25,7 @@ class NtresellerclubCronModuleFrontController extends ModuleFrontController
 
             require_once _PS_MODULE_DIR_ . 'ntresellerclub/classes/NtRcRenewalManager.php';
             require_once _PS_MODULE_DIR_ . 'ntresellerclub/classes/NtRcPendingProvisioning.php';
-            require_once _PS_MODULE_DIR_ . 'ntresellerclub/classes/NtRcHostingOperationQueueProcessor.php';
+            require_once _PS_MODULE_DIR_ . 'ntresellerclub/classes/NtRcBillingOperationQueueProcessor.php';
 
             $renewalManager = new NtRcRenewalManager();
             $renewalResult = $renewalManager->scan();
@@ -33,7 +33,7 @@ class NtresellerclubCronModuleFrontController extends ModuleFrontController
             $pendingManager = new NtRcPendingProvisioning();
             $pendingResult = $pendingManager->process($limit);
 
-            $operationManager = new NtRcHostingOperationQueueProcessor();
+            $operationManager = new NtRcBillingOperationQueueProcessor();
             $operationResult = $operationManager->process($limit);
 
             $dnaPriceSync = array('success' => false, 'message' => 'DomainNameAPI pasif.');
