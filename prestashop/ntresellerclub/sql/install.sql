@@ -179,6 +179,67 @@ CREATE TABLE IF NOT EXISTS `PREFIX_ntresellerclub_operation` (
   KEY `idx_operation_status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE IF NOT EXISTS `PREFIX_ntresellerclub_provider_health` (
+  `id_ntresellerclub_provider_health` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `provider_code` VARCHAR(64) NOT NULL,
+  `status` VARCHAR(32) NOT NULL,
+  `is_enabled` TINYINT(1) DEFAULT 0,
+  `is_licensed` TINYINT(1) DEFAULT 0,
+  `queue_pending` INT UNSIGNED DEFAULT 0,
+  `queue_failed` INT UNSIGNED DEFAULT 0,
+  `last_error` TEXT DEFAULT NULL,
+  `response_time_ms` INT UNSIGNED DEFAULT 0,
+  `checked_at` DATETIME NOT NULL,
+  `created_at` DATETIME NOT NULL,
+  PRIMARY KEY (`id_ntresellerclub_provider_health`),
+  KEY `idx_provider_health_provider` (`provider_code`),
+  KEY `idx_provider_health_status` (`status`),
+  KEY `idx_provider_health_checked` (`checked_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `PREFIX_ntresellerclub_runtime_health` (
+  `id_ntresellerclub_runtime_health` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `context` VARCHAR(64) NOT NULL,
+  `status` VARCHAR(32) NOT NULL,
+  `memory_limit` VARCHAR(32) DEFAULT NULL,
+  `memory_usage_bytes` BIGINT UNSIGNED DEFAULT 0,
+  `memory_peak_bytes` BIGINT UNSIGNED DEFAULT 0,
+  `max_execution_time` INT UNSIGNED DEFAULT 0,
+  `batch_limit` INT UNSIGNED DEFAULT 0,
+  `php_sapi` VARCHAR(64) DEFAULT NULL,
+  `queue_pending` INT UNSIGNED DEFAULT 0,
+  `queue_processing` INT UNSIGNED DEFAULT 0,
+  `queue_failed` INT UNSIGNED DEFAULT 0,
+  `last_cron_at` DATETIME DEFAULT NULL,
+  `checked_at` DATETIME NOT NULL,
+  `created_at` DATETIME NOT NULL,
+  PRIMARY KEY (`id_ntresellerclub_runtime_health`),
+  KEY `idx_runtime_health_context` (`context`),
+  KEY `idx_runtime_health_status` (`status`),
+  KEY `idx_runtime_health_checked` (`checked_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `PREFIX_ntresellerclub_provider_statistics` (
+  `id_ntresellerclub_provider_statistics` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `provider_code` VARCHAR(64) NOT NULL,
+  `metric_date` DATE NOT NULL,
+  `total_queue` INT UNSIGNED DEFAULT 0,
+  `pending_queue` INT UNSIGNED DEFAULT 0,
+  `processing_queue` INT UNSIGNED DEFAULT 0,
+  `done_queue` INT UNSIGNED DEFAULT 0,
+  `failed_queue` INT UNSIGNED DEFAULT 0,
+  `retry_queue` INT UNSIGNED DEFAULT 0,
+  `avg_retry` DECIMAL(10,4) DEFAULT 0,
+  `last_success_at` DATETIME DEFAULT NULL,
+  `last_failure_at` DATETIME DEFAULT NULL,
+  `created_at` DATETIME NOT NULL,
+  `updated_at` DATETIME DEFAULT NULL,
+  PRIMARY KEY (`id_ntresellerclub_provider_statistics`),
+  UNIQUE KEY `uniq_provider_statistics_day` (`provider_code`, `metric_date`),
+  KEY `idx_provider_statistics_provider` (`provider_code`),
+  KEY `idx_provider_statistics_date` (`metric_date`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE IF NOT EXISTS `PREFIX_ntresellerclub_notice` (
   `id_ntresellerclub_notice` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `id_service` INT UNSIGNED NOT NULL,
