@@ -103,6 +103,11 @@ class NtRcOperationQueueProcessor
             return $provider->transferDomain($domain, $authCode, $years);
         }
 
+        if ($action === 'contact_update' && $domain && method_exists($provider, 'saveContacts')) {
+            $contacts = isset($payload['contacts']) && is_array($payload['contacts']) ? $payload['contacts'] : array();
+            return $provider->saveContacts($domain, $contacts);
+        }
+
         return array('success' => false, 'message' => 'Bu action icin provider metodu tanimli degil.');
     }
 
@@ -119,8 +124,14 @@ class NtRcOperationQueueProcessor
         if ($item['provider_code'] === 'domainnameapi') {
             $domainName = isset($payload['domain_name']) ? $payload['domain_name'] : '';
             if (!$domainName || !NtRcApiContractGuard::isDomainNameApiTrDomain($domainName)) {
-                return array('success' => false, 'message' => 'DomainNameAPI customer akisi sadece TR domain icin kullanilir.');
+                return array('success' => false, 'message' => 'DomainNameAPI customer akisi sadece TR domain contact hazirligi icin kullanilir.');
             }
+
+            if (method_exists($provider, 'createCustomer')) {
+                return $provider->createCustomer($payload);
+            }
+
+            return array('success' => false, 'message' => 'DomainNameAPI contact hazirlik adapteri tanimli degil.');
         }
 
         if (method_exists($provider, 'searchCustomer')) {
@@ -133,6 +144,7 @@ class NtRcOperationQueueProcessor
                     'success' => true,
                     'source' => 'existing_provider_customer',
                     'provider_customer_id' => $search['provider_customer_id'],
+                    'provider_username' => isset($search['provider_username']) ? $search['provider_username'] : $email,
                     'data' => isset($search['data']) ? $search['data'] : array(),
                 );
             }
@@ -151,12 +163,22 @@ class NtRcOperationQueueProcessor
             return;
         }
 
-        $providerCustomerId = $this->extractProviderCustomerId($response);
-        if (!$providerCustomerId || empty($payload['id_customer'])) {
+        if (empty($payload['id_customer'])) {
             return;
         }
 
-        NtRcProviderCustomerManager::markActive((int)$payload['id_customer'], $item['provider_code'], $providerCustomerId, $response);
+        if ($item['provider_code'] === 'domainnameapi' && isset($response['source']) && $response['source'] === 'domain_contact_prepared') {
+            NtRcProviderCustomerManager::markContactPrepared((int)$payload['id_customer'], $item['provider_code'], $response);
+            return;
+        }
+
+        $providerCustomerId = $this->extractProviderCustomerId($response);
+        if (!$providerCustomerId) {
+            return;
+        }
+
+        $providerUsername = isset($response['provider_username']) ? $response['provider_username'] : (isset($payload['email']) ? $payload['email'] : null);
+        NtRcProviderCustomerManager::markActive((int)$payload['id_customer'], $item['provider_code'], $providerCustomerId, $response, $providerUsername);
     }
 
     protected function extractProviderCustomerId(array $response)
@@ -184,7 +206,7 @@ class NtRcOperationQueueProcessor
             return $response;
         }
 
-        foreach (array('raw', 'last_url', 'api-key', 'api_key', 'passwd', 'password', 'auth-code', 'auth_code') as $key) {
+        foreach (array('raw', 'last_url', 'api-key', 'api_key', 'ApiKey', 'passwd', 'password', 'Password', 'auth-code', 'auth_code', 'AuthCode') as $key) {
             if (isset($response[$key])) {
                 unset($response[$key]);
             }
