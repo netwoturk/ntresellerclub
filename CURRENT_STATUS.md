@@ -1,81 +1,71 @@
 # Current Status
 
-Tarih: 2026-06-25
+Date: 2026-06-26
 
-## Son Çalışma
+## Last Work
 
-Engine 12 - Hosting Provisioning Engine
+Engine 13 - Billing & Order Orchestrator
 
-## Son Branch
+## Last Branch
 
-`codex/engine-12-hosting-provisioning`
+`codex/engine-13-billing-order-orchestrator`
 
-## Tamamlananlar
+## Completed
 
-- Hosting backend provisioning altyapısı ResellerClub-only olarak hazırlandı.
-- `NtRcHostingProductMappingManager` eklendi.
-- `NtRcHostingManager` eklendi.
-- `NtRcHostingOperationQueueProcessor` eklendi.
-- `NtRcResellerClubHostingAdapter` TODO wrapper eklendi.
-- `NtRcHostingMonitoring` eklendi.
-- PrestaShop product id -> ResellerClub provider product/package mapping tablosu eklendi.
-- Sipariş sonrası hosting create doğrudan API çağırmaz; `hosting/create` operation queue oluşturur.
-- Provider contract guard hosting action'ları için sadece ResellerClub'a izin verir.
-- Hosting lifecycle status seti tamamlandı: `pending`, `provisioning`, `active`, `renewal_due`, `payment_required`, `suspended`, `expired`, `cancelled`, `error`.
-- Hosting renew ödeme doğrulanmadan provider queue oluşturmaz; servis `payment_required` durumuna alınır ve notification altyapısına bağlanır.
-- Hosting suspend / unsuspend queue action'ları hazırlandı.
-- Başarılı hosting create/renew response işleme altyapısı servis kaydını ve notification queue'yu günceller.
-- Hosting monitoring summary active hosting count, failed hosting queue ve pending hosting provisioning metriklerini döndürür.
-- Hosting fiyatları manuel/mapping tablosu üzerinden çalışır; ResellerClub fiyat API endpointi eklenmedi.
-- Admin UI eklenmedi.
+- Central order orchestration was added through `NtRcOrderOrchestrator`.
+- `NtRcProvisioning` now delegates order hook work to the orchestrator.
+- Provisioning starts only for paid/accepted PrestaShop order states.
+- Unpaid, cancelled, refunded, failed, chargeback, and payment-error orders are skipped without provider queue creation.
+- Domain, TR domain, hosting, and SSL products are classified through the same order flow.
+- Duplicate provisioning is guarded by order, product, service type, domain, and provider.
+- Billing event history was added with sanitized metadata.
+- Provider credit shortage is treated as `provider_credit_required`, not as a customer payment failure.
+- Cron now uses `NtRcBillingOperationQueueProcessor` to detect provider credit/balance errors.
+- Backend monitoring exposes billing/order metrics without adding admin UI.
+- Installer, install SQL, and uninstall SQL include `ntresellerclub_billing_event`.
 
-## Database Değişikliği
+## Database Changes
 
-Yeni tablo:
+New table:
 
-- `ntresellerclub_hosting_product_mapping`
+- `ntresellerclub_billing_event`
 
-Alanlar:
+Key fields:
 
-- `id_product`
+- `id_order`
+- `id_customer`
+- `id_service`
 - `provider_code`
-- `provider_product_id`
-- `package_name`
-- `billing_cycle`
-- `cost_price`
-- `sale_price`
-- `currency`
-- `active`
+- `service_type`
+- `event_type`
+- `event_status`
+- `message`
+- `metadata_json`
 - `created_at`
-- `updated_at`
 
 ## TODO
 
-- ResellerClub hosting create/renew/suspend/unsuspend/details endpointleri resmi kaynakla doğrulanınca `NtRcResellerClubHostingAdapter` gerçek API çağrısı yapacak şekilde tamamlanmalıdır.
-- Payment provider/invoice entegrasyonu sonraki engine kapsamında `payment_required` akışını gerçek ödeme durumuna bağlamalıdır.
+- Verify and implement real ResellerClub SSL endpoint/resource/action details before executing SSL provider calls.
+- Connect provider-credit retry operations to the future Admin Operations UI.
+- Connect renewal payment confirmation to the future billing/invoice engine.
 
-## Bilinen Riskler
+## Known Risks
 
-- Bu ortamda PHP CLI bulunmadığı için `php -l` çalıştırılamadı.
-- Gerçek PrestaShop runtime testi ve gerçek ResellerClub hosting API testi yapılamadı.
-- ResellerClub hosting endpointleri doğrulanmadığı için adapter kontrollü TODO/hata döndürür.
-- Hosting domain bilgisi product reference veya custom alanlardan standart gelmiyorsa servis `domain_name` boş kalabilir; product mapping yine queue oluşturur.
+- PHP runtime and real PrestaShop runtime tests were not available in this environment.
+- Product classification depends on existing mapping/reference/domain fields; non-standard catalog data may need admin mapping.
+- Provider credit detection uses sanitized error text pattern matching and may need provider-specific error-code refinement after live API responses are observed.
 
-## Son Test
+## Last Test
 
-- Değişen PHP dosyalarında kaba `{}` ve `()` denge kontrolü yapıldı.
-- Contract guard içinde DomainNameAPI hosting yasağı korundu.
-- Queue action değerleri `hosting/create`, `hosting/renew`, `hosting/suspend`, `hosting/unsuspend` olarak statik kontrol edildi.
-- Credential, password, api-key, auth-code, token ve credential sanitize kuralları gözden geçirildi.
+- New and changed PHP files passed a brace/parenthesis balance check.
+- `php -l` could not be run because PHP CLI is not available in this workspace.
+- Order state mapping, duplicate guard, provider-credit status path, and credential sanitization were statically reviewed.
 
-## Son Doküman Güncellemesi
+## Last Documentation Update
 
 - `CHANGELOG.md`
 - `CURRENT_STATUS.md`
 - `ROADMAP.md`
-- `docs/architecture/15_HOSTING_PROVISIONING_ENGINE.md`
-- `docs/database-schema.md`
-- `docs/resellerclub-api-analysis.md`
+- `docs/architecture/16_BILLING_ORDER_ORCHESTRATOR.md`
 - `prestashop/ntresellerclub/docs/API_CONTRACT_RULES.md`
 - `prestashop/ntresellerclub/docs/DATABASE_SCHEMA.md`
-- `prestashop/ntresellerclub/docs/ROADMAP.md`
