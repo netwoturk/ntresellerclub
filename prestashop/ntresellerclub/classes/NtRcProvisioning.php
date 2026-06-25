@@ -8,6 +8,7 @@ require_once __DIR__ . '/NtRcDomainManager.php';
 require_once __DIR__ . '/NtRcCartDomain.php';
 require_once __DIR__ . '/NtRcProviderCustomerManager.php';
 require_once __DIR__ . '/NtRcRuntimeGuard.php';
+require_once __DIR__ . '/NtRcHostingManager.php';
 require_once __DIR__ . '/NtRcLog.php';
 require_once __DIR__ . '/providers/NtRcTldRouteManager.php';
 
@@ -32,6 +33,7 @@ class NtRcProvisioning
         $results = array();
         $processedDomains = array();
         $domainManager = new NtRcDomainManager($this->module);
+        $hostingManager = new NtRcHostingManager();
         $cartDomains = NtRcCartDomain::getDomainsByCart((int)$order->id_cart);
         $limit = NtRcRuntimeGuard::cronBatchLimit(10);
         $processed = 0;
@@ -79,6 +81,13 @@ class NtRcProvisioning
             }
 
             try {
+                $hostingResult = $hostingManager->maybeProvisionHosting($order, $product);
+                if (empty($hostingResult['skipped'])) {
+                    $results[] = $hostingResult;
+                    $processed++;
+                    continue;
+                }
+
                 $result = $domainManager->maybeProvisionDomain($order, $product, array('success' => true));
                 $results[] = $result;
                 if (empty($result['skipped'])) {
