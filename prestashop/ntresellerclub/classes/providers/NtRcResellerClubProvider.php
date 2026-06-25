@@ -332,17 +332,19 @@ class NtRcResellerClubProvider implements NtRcProviderInterface
         }
 
         $data = isset($response['data']) && is_array($response['data']) ? $response['data'] : array();
-        $status = '';
-        if (isset($data['actionstatus'])) {
-            $status = strtolower(trim((string)$data['actionstatus']));
-        } elseif (isset($data['status'])) {
-            $status = strtolower(trim((string)$data['status']));
+
+        if (isset($data['status']) && strtoupper(trim((string)$data['status'])) === 'ERROR') {
+            $response['success'] = false;
+            $response['message'] = isset($data['message']) ? $data['message'] : (isset($data['error']) ? $data['error'] : 'ResellerClub domain action basarisiz.');
+            return $response;
         }
 
-        if ($status !== '' && !in_array($status, array('success', 'succeeded'))) {
-            $message = isset($data['actionstatusdesc']) ? $data['actionstatusdesc'] : 'ResellerClub domain action basarisiz.';
-            $response['success'] = false;
-            $response['message'] = $message;
+        if (isset($data['actionstatus'])) {
+            $status = strtolower(trim((string)$data['actionstatus']));
+            if (in_array($status, array('failed', 'failure', 'error', 'cancelled', 'canceled'), true)) {
+                $response['success'] = false;
+                $response['message'] = isset($data['actionstatusdesc']) ? $data['actionstatusdesc'] : 'ResellerClub domain action basarisiz.';
+            }
         }
 
         return $response;
