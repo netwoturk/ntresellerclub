@@ -82,12 +82,15 @@ Varsayılan limitler:
 
 ## 6. Fiyat Kuralı
 
-DomainNameAPI TR domain fiyatlarını USD maliyet olarak verebilir. Satış fiyatı şu akışla hesaplanmalıdır:
+Tüm domain, hosting ve SSL satış fiyatı hesapları merkezi fiyat motorundan geçmelidir.
 
-1. DomainNameAPI maliyet USD alınır.
-2. Manuel kur motoru hedef para birimine çevirir.
-3. Kar modeli uygulanır.
-4. Son kullanıcıya satış fiyatı gösterilir.
+Doğru akış:
+
+```text
+Provider/manual cost -> NtRcPricingManager -> NtRcPricingEngine -> standart fiyat sonucu
+```
+
+DomainNameAPI TR domain fiyatlarını USD maliyet olarak verebilir. Ağır fiyat çekme işlemi cron ve RuntimeGuard dışına çıkarılmayacaktır. ResellerClub global domain, hosting ve SSL fiyatları için bu engine varsayımsal API endpoint eklemez; sadece doğrulanmış veya manuel maliyetlerin yazılacağı mapping altyapısını hazırlar.
 
 Desteklenen fiyat modları:
 
@@ -98,9 +101,43 @@ Desteklenen fiyat modları:
 | fixed | Maliyete sabit kar eklenir |
 | hybrid | Sabit + yüzde kar uygulanır |
 
+Desteklenen rounding modları:
+
+| Mod | Açıklama |
+|---|---|
+| no_round | Sadece para hassasiyetine yuvarlar |
+| nearest_1 | En yakın 1 birime yuvarlar |
+| nearest_5 | En yakın 5 birime yuvarlar |
+| nearest_10 | En yakın 10 birime yuvarlar |
+| psychological_99 | Vergi dahil görünür fiyatı .99 formatına taşır |
+
+Standart fiyat sonucu şu alanları içermelidir:
+
+- `cost_price`
+- `cost_currency`
+- `converted_cost`
+- `target_currency`
+- `margin_amount`
+- `tax_amount`
+- `sale_price_without_tax`
+- `sale_price_with_tax`
+- `rounding_mode`
+- `final_sale_price`
+
+Fiyat geçmişi `ntresellerclub_price_history`, kur geçmişi `ntresellerclub_exchange_rate_history` içine yazılmaya devam edecektir.
+
 ## 7. Çoklu Para Birimi Kuralı
 
 Fiyat motoru sadece TRY için sabitlenmeyecektir. Varsayılan hedef para birimi PrestaShop varsayılan para biriminden alınmalıdır.
+
+Manuel kur sistemi şu para birimlerini destekler:
+
+| Kur | Kural |
+|---|---|
+| USD -> TRY | Desteklenir |
+| USD -> EUR | Desteklenir |
+| USD -> GBP | Desteklenir |
+| USD -> AZN | Desteklenir |
 
 Genişleme hedefleri:
 
@@ -189,5 +226,6 @@ Yeni özellik eklenirken önce şu kontrol yapılmalıdır:
 6. Hata loglanıyor mu?
 7. Çoklu para birimi ve çoklu dil bozuluyor mu?
 8. Mail gönderimi varsa notification queue üzerinden mi gidiyor?
+9. Fiyat hesaplaması merkezi pricing engine sonucunu mu kullanıyor?
 
 Bu sorulardan biri olumsuzsa kod üretime alınmayacaktır.
