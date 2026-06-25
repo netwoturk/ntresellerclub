@@ -82,7 +82,7 @@ class NtRcDomainNameApiProvider implements NtRcProviderInterface
 
         try {
             $result = $client->registerWithContactInfo($domainName, (int)$years, $contacts, $nameservers, true, false, $extra);
-            return array('success' => true, 'data' => $result);
+            return array('success' => true, 'data' => $this->safeData($result));
         } catch (Exception $e) {
             return array('success' => false, 'error' => $e->getMessage());
         }
@@ -96,7 +96,7 @@ class NtRcDomainNameApiProvider implements NtRcProviderInterface
         }
 
         try {
-            return array('success' => true, 'data' => $client->renew($domainName, (int)$years));
+            return array('success' => true, 'data' => $this->safeData($client->renew($domainName, (int)$years)));
         } catch (Exception $e) {
             return array('success' => false, 'error' => $e->getMessage());
         }
@@ -110,7 +110,7 @@ class NtRcDomainNameApiProvider implements NtRcProviderInterface
         }
 
         try {
-            return array('success' => true, 'data' => $client->transfer($domainName, $authCode, (int)$years));
+            return array('success' => true, 'data' => $this->safeData($client->transfer($domainName, $authCode, (int)$years)));
         } catch (Exception $e) {
             return array('success' => false, 'error' => $e->getMessage());
         }
@@ -124,7 +124,53 @@ class NtRcDomainNameApiProvider implements NtRcProviderInterface
         }
 
         try {
-            return array('success' => true, 'data' => $client->getDetails($domainName));
+            return array('success' => true, 'data' => $this->safeData($client->getDetails($domainName)));
+        } catch (Exception $e) {
+            return array('success' => false, 'error' => $e->getMessage());
+        }
+    }
+
+    public function getContacts($domainName)
+    {
+        $domainName = trim((string)$domainName);
+        if ($domainName === '') {
+            return array('success' => false, 'message' => 'DomainNameAPI contact sorgusu icin domain zorunludur.');
+        }
+
+        $client = $this->createClient();
+        if (!$client) {
+            return array('success' => false, 'error' => 'DomainNameAPI library not found');
+        }
+
+        if (!method_exists($client, 'getContacts')) {
+            return array('success' => false, 'message' => 'DomainNameAPI SDK getContacts metodu bulunamadi.');
+        }
+
+        try {
+            return array('success' => true, 'data' => $this->safeData($client->getContacts($domainName)));
+        } catch (Exception $e) {
+            return array('success' => false, 'error' => $e->getMessage());
+        }
+    }
+
+    public function saveContacts($domainName, array $contacts)
+    {
+        $domainName = trim((string)$domainName);
+        if ($domainName === '') {
+            return array('success' => false, 'message' => 'DomainNameAPI contact guncelleme icin domain zorunludur.');
+        }
+
+        $client = $this->createClient();
+        if (!$client) {
+            return array('success' => false, 'error' => 'DomainNameAPI library not found');
+        }
+
+        if (!method_exists($client, 'saveContacts')) {
+            return array('success' => false, 'message' => 'DomainNameAPI SDK saveContacts metodu bulunamadi.');
+        }
+
+        try {
+            return array('success' => true, 'data' => $this->safeData($client->saveContacts($domainName, $contacts)));
         } catch (Exception $e) {
             return array('success' => false, 'error' => $e->getMessage());
         }
@@ -137,8 +183,12 @@ class NtRcDomainNameApiProvider implements NtRcProviderInterface
             return array('success' => false, 'message' => 'Customer email zorunludur.');
         }
 
-        // TODO: DomainNameAPI PHP SDK customer/contact arama metodu resmi dokümanla doğrulanınca buraya bağlanacak.
-        return array('success' => true, 'found' => false, 'provider_customer_id' => null, 'message' => 'DomainNameAPI customer search adapter dogrulama bekliyor.');
+        return array(
+            'success' => true,
+            'found' => false,
+            'provider_customer_id' => null,
+            'message' => 'DomainNameAPI tarafinda provider customer account aramasi kullanilmiyor; TR domain contact hazirligi yapilir.',
+        );
     }
 
     public function createCustomer(array $payload)
@@ -148,8 +198,19 @@ class NtRcDomainNameApiProvider implements NtRcProviderInterface
             return $guard;
         }
 
-        // TODO: DomainNameAPI PHP SDK customer/contact create metodu resmi dokümanla doğrulanınca buraya bağlanacak.
-        return array('success' => false, 'message' => 'DomainNameAPI customer/contact create adapter dogrulama bekliyor.');
+        $contacts = $this->buildDomainContactsFromPayload($payload);
+        if (empty($contacts['Administrative']) || empty($contacts['Billing']) || empty($contacts['Technical']) || empty($contacts['Registrant'])) {
+            return array('success' => false, 'message' => 'DomainNameAPI TR domain contact payload hazirlanamadi.');
+        }
+
+        return array(
+            'success' => true,
+            'source' => 'domain_contact_prepared',
+            'provider_customer_id' => null,
+            'domain_name' => isset($payload['domain_name']) ? $payload['domain_name'] : null,
+            'data' => array('contacts' => $contacts),
+            'message' => 'DomainNameAPI customer/create kuyrugu provider customer account olusturmaz; TR domain contact payload hazirlar.',
+        );
     }
 
     public function updateCustomer($providerCustomerId, array $payload)
@@ -159,24 +220,80 @@ class NtRcDomainNameApiProvider implements NtRcProviderInterface
             return $guard;
         }
 
-        // TODO: DomainNameAPI PHP SDK customer/contact update metodu resmi dokümanla doğrulanınca buraya bağlanacak.
-        return array('success' => false, 'message' => 'DomainNameAPI customer/contact update adapter dogrulama bekliyor.');
+        $domainName = isset($payload['domain_name']) ? $payload['domain_name'] : '';
+        $contacts = $this->buildDomainContactsFromPayload($payload);
+        return $this->saveContacts($domainName, $contacts);
     }
 
     public function getCustomer($providerCustomerId)
     {
-        // TODO: DomainNameAPI PHP SDK customer/contact details metodu resmi dokümanla doğrulanınca buraya bağlanacak.
-        return array('success' => false, 'message' => 'DomainNameAPI customer/contact details adapter dogrulama bekliyor.');
+        $domainName = trim((string)$providerCustomerId);
+        if ($domainName === '') {
+            return array('success' => false, 'message' => 'DomainNameAPI contact sorgusu icin domain zorunludur.');
+        }
+
+        return $this->getContacts($domainName);
     }
 
     protected function guardTrCustomerPayload(array $payload)
     {
         $domainName = isset($payload['domain_name']) ? $payload['domain_name'] : '';
         if (!$domainName || !NtRcApiContractGuard::isDomainNameApiTrDomain($domainName)) {
-            return array('success' => false, 'message' => 'DomainNameAPI customer akisi sadece TR domain icin kullanilir.');
+            return array('success' => false, 'message' => 'DomainNameAPI customer akisi sadece TR domain contact hazirligi icin kullanilir.');
         }
 
         return array('success' => true);
+    }
+
+    protected function buildDomainContactsFromPayload(array $payload)
+    {
+        $profile = isset($payload['contact_profile']) && is_array($payload['contact_profile']) ? $payload['contact_profile'] : array();
+        $firstName = isset($payload['firstname']) ? $payload['firstname'] : (isset($profile['first_name']) ? $profile['first_name'] : '');
+        $lastName = isset($payload['lastname']) ? $payload['lastname'] : (isset($profile['last_name']) ? $profile['last_name'] : '');
+        $phone = $this->splitPhone(isset($profile['phone']) ? $profile['phone'] : '');
+
+        $contact = array(
+            'FirstName' => $firstName,
+            'LastName' => $lastName,
+            'Company' => isset($profile['company_name']) && $profile['company_name'] !== '' ? $profile['company_name'] : trim($firstName . ' ' . $lastName),
+            'EMail' => isset($payload['email']) ? $payload['email'] : (isset($profile['email']) ? $profile['email'] : ''),
+            'AddressLine1' => isset($profile['address']) ? $profile['address'] : '',
+            'AddressLine2' => isset($profile['address_2']) ? $profile['address_2'] : '',
+            'AddressLine3' => isset($profile['address_3']) ? $profile['address_3'] : '',
+            'City' => isset($profile['city']) ? $profile['city'] : '',
+            'Country' => isset($profile['country_iso']) ? $profile['country_iso'] : '',
+            'Fax' => isset($profile['fax']) ? $profile['fax'] : '',
+            'FaxCountryCode' => isset($profile['fax_cc']) ? $profile['fax_cc'] : '',
+            'Phone' => $phone['number'],
+            'PhoneCountryCode' => $phone['cc'],
+            'Type' => 'Contact',
+            'ZipCode' => isset($profile['postcode']) ? $profile['postcode'] : '',
+            'State' => isset($profile['state']) ? $profile['state'] : '',
+        );
+
+        return array(
+            'Administrative' => $contact,
+            'Billing' => $contact,
+            'Technical' => $contact,
+            'Registrant' => $contact,
+        );
+    }
+
+    protected function splitPhone($phone)
+    {
+        $phone = preg_replace('/[^0-9+]/', '', (string)$phone);
+        $cc = '90';
+        $number = ltrim($phone, '+');
+
+        if (strpos($phone, '+') === 0) {
+            $digits = substr($phone, 1);
+            if (strlen($digits) > 10) {
+                $cc = substr($digits, 0, strlen($digits) - 10);
+                $number = substr($digits, -10);
+            }
+        }
+
+        return array('cc' => $cc, 'number' => $number);
     }
 
     protected function createClient()
@@ -203,7 +320,7 @@ class NtRcDomainNameApiProvider implements NtRcProviderInterface
                 'provider' => $this->getCode(),
                 'price' => isset($row['Price']) ? $row['Price'] : null,
                 'currency' => isset($row['Currency']) ? $row['Currency'] : null,
-                'raw' => $row,
+                'raw' => $this->safeData($row),
             );
         }
         return $items;
@@ -250,5 +367,26 @@ class NtRcDomainNameApiProvider implements NtRcProviderInterface
             }
         }
         return 0;
+    }
+
+    protected function safeData($data)
+    {
+        if (!is_array($data)) {
+            return $data;
+        }
+
+        foreach (array('api-key', 'api_key', 'ApiKey', 'passwd', 'password', 'Password', 'auth-code', 'auth_code', 'AuthCode') as $key) {
+            if (isset($data[$key])) {
+                unset($data[$key]);
+            }
+        }
+
+        foreach ($data as $key => $value) {
+            if (is_array($value)) {
+                $data[$key] = $this->safeData($value);
+            }
+        }
+
+        return $data;
     }
 }
