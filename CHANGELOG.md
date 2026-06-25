@@ -1,5 +1,35 @@
 # Changelog
 
+## 2026-06-25 - Engine 10 Renewal / Service Lifecycle Notification Wiring
+
+Branch: `codex/engine-10-renewal-service-lifecycle-notification`
+
+### Added
+
+- Added `docs/architecture/13_RENEWAL_SERVICE_LIFECYCLE_NOTIFICATION_WIRING.md`.
+- Added `NtRcNotificationEngine::enqueueExpiryNotification()` as a reusable domain expiry notification helper.
+- Added domain lifecycle notification enqueueing after successful register, transfer, and renew queue actions.
+- Added service lifecycle notification enqueueing for suspended and expired status changes.
+
+### Changed
+
+- `NtRcRenewalManager` now queues expiry notifications through Notification Engine instead of sending `renewal_reminder` mail directly.
+- `NtRcNotificationEngine::enqueueExpiryNotifications()` now reuses the central expiry helper and includes `tr_domain` services.
+- Notification service variables now include service ID, service type, service status, provider order ID, and provider service ID.
+- `NtRcOperationQueueProcessor` keeps provider queue success independent from notification enqueue failures.
+- `NtRcServiceRepository::updateStatus()` now emits queue-based lifecycle notifications for customer-facing suspended/expired transitions.
+- `ROADMAP.md`, `DATABASE_SCHEMA.md`, `API_CONTRACT_RULES.md`, and `CURRENT_STATUS.md` now document Engine 10 rules.
+
+### Fixed
+
+- Renewal scan no longer sends mail directly from a heavy cron path.
+- Renewal reminders no longer depend on the legacy `ntresellerclub_notice` write path.
+- Provider response sanitization now also removes token/credential-like fields in the operation queue processor.
+
+### Removed
+
+- Direct `Mail::Send` usage from `NtRcRenewalManager`.
+
 ## 2026-06-25 - Engine 09 Notification & Mail
 
 Branch: `codex/engine-09-notification-mail`
