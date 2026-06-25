@@ -12,7 +12,8 @@ This root roadmap is the repository-level continuation file for Codex engine wor
 | 04 | Runtime | Completed baseline |
 | 05 | Domain Provisioning | Completed in `codex/phase-07-domain-provisioning-engine` |
 | 08 | Monitoring & Health | Completed in `codex/engine-08-monitoring-health` |
-| 09 | Notification & Mail | In progress in `codex/engine-09-notification-mail` |
+| 09 | Notification & Mail | Completed in `codex/engine-09-notification-mail` |
+| 10 | Renewal / Service Lifecycle Notification Wiring | Completed in `codex/engine-10-renewal-service-lifecycle-notification` |
 
 ## Engine 09 - Notification & Mail
 
@@ -36,14 +37,32 @@ This root roadmap is the repository-level continuation file for Codex engine wor
 - Credentials, auth codes, tokens, raw requests, and passwords are sanitized from body/log output.
 - No admin UI/template is included in this engine.
 
+## Engine 10 - Renewal / Service Lifecycle Notification Wiring
+
+### Scope
+
+- Route renewal reminders through `NtRcNotificationEngine` instead of direct `Mail::Send`.
+- Reuse notification queue dedupe for 30/15/7/1 day domain expiry events.
+- Queue customer notifications after successful domain register, transfer, and renew queue actions.
+- Queue service lifecycle notifications when service status changes to suspended or expired.
+- Keep provider queue success/retry behavior independent from notification enqueue failures.
+- Document legacy `ntresellerclub_notice` as unused by the new renewal notification flow.
+
+### Acceptance Criteria
+
+- `NtRcRenewalManager` does not call `Mail::Send` directly.
+- Domain lifecycle events use `domain_registered`, `domain_transfer_started`, and `domain_renewed` template keys.
+- Suspended/expired service notifications use `service_suspended` and `service_expired` template keys.
+- Notification failures are sanitized and warning-logged without rolling back provider success.
+- RuntimeGuard and batch limits remain unchanged.
+
 ## Next Engines
 
 | Engine | Name | Notes |
 |---|---|---|
 | 06 | Hosting | ResellerClub-only hosting provisioning |
 | 07 | SSL | ResellerClub-only SSL provisioning |
-| 10 | Renewal | Renewal automation expansion |
-| 11 | Billing | Billing and invoice integration |
+| 11 | Billing | Billing, payment-required notification, and invoice integration |
 | 12 | Webhook | Provider webhook ingestion |
 | 13 | Reporting | Admin/customer reports |
 | 14 | Statistics | Advanced statistics and dashboards |
