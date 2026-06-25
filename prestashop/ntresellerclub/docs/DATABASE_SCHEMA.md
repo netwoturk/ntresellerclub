@@ -250,6 +250,41 @@ TR domain maliyet ve satış fiyatı satırları artık merkezi Pricing & Curren
 
 Fiyat geçmişi, manuel kur geçmişi, hosting ürünleri, SSL ürünleri, webhook log, sistem log ve lisans tabloları mevcut engine kurallarına göre korunur.
 
+## 13. BTK CSV Reporting
+
+Feature key: `btk_csv_reporting`
+
+BTK CSV Reporting yeni tablo eklemez. Rapor çıktıları mevcut tablolardan okunur:
+
+- `PREFIX_ntresellerclub_service`
+- `PREFIX_ntresellerclub_contact_profile`
+- `PREFIX_ntresellerclub_provider_customer`
+- `PREFIX_customer`
+
+CSV dosyaları:
+
+- Barındırılan Alan Adları: `service_type = hosting` olan raporlanabilir servisler; aynı domain için tescil servisi varsa kayıt / bitiş tarihi tescil servisinden alınır.
+- Tescil Edilen Alan Adları: `service_type IN (domain, tr_domain)` olan, ancak aynı domain için hosting servisi bulunmayan raporlanabilir servisler.
+
+Raporlanabilir servis statüleri:
+
+- `active`
+- `ready`
+- `suspended`
+
+CSV kolon sırası:
+
+1. alan adı
+2. alan adı sahibi
+3. iletişim telefonu
+4. iletişim e-postası
+5. alan adı kayıt tarihi
+6. alan adı süresinin dolma tarihi
+
+Başlık satırı yoktur. Her satır 6 kolon olmalıdır. Boş veri için `*` kullanılır. Virgül ve noktalı virgül veri içinde `-` ile değiştirilir. Tarihler `gg.aa.yyyy` formatında üretilir.
+
+Kural: `NTRC_FEATURE_BTK_CSV_REPORTING` / `btk_csv_reporting` aktif değilse admin CSV indirme kapalıdır.
+
 ## Final Kurallar
 
 - Global domain = ResellerClub.
@@ -260,5 +295,6 @@ Fiyat geçmişi, manuel kur geçmişi, hosting ürünleri, SSL ürünleri, webho
 - Queue olmadan register/renew/transfer/create işlemi yapılmaz.
 - Notification queue olmadan mail gönderimi yapılmaz.
 - Pricing engine olmadan satış fiyatı hesaplanmaz.
+- BTK CSV Reporting premium feature aktif olmadan BTK CSV indirilemez.
 - RuntimeGuard olmadan cron/provisioning/sync/notification çalışmaz.
 - Monitoring provider API çağrısı yapmaz; cron sonunda düşük maliyetli DB/runtime snapshot olarak çalışır.
