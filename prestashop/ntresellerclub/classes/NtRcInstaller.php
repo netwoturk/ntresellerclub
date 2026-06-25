@@ -15,7 +15,8 @@ class NtRcInstaller
 
         return self::ensureOperationQueueSchema()
             && self::ensureProviderCustomerSchema()
-            && self::ensureContactProfileSchema();
+            && self::ensureContactProfileSchema()
+            && self::ensureServiceSchema();
     }
 
     protected static function executeSqlFile($sqlFile)
@@ -65,6 +66,28 @@ class NtRcInstaller
 
         foreach ($columns as $column => $definition) {
             if (!self::addColumnIfMissing('ntresellerclub_provider_customer', $column, $definition)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public static function ensureServiceSchema()
+    {
+        $columns = array(
+            'provider_service_id' => 'VARCHAR(128) DEFAULT NULL AFTER `domain_name`',
+            'provider_order_id' => 'VARCHAR(128) DEFAULT NULL AFTER `provider_service_id`',
+            'provider_customer_id' => 'VARCHAR(128) DEFAULT NULL AFTER `provider_order_id`',
+            'provider_contact_id' => 'VARCHAR(128) DEFAULT NULL AFTER `provider_customer_id`',
+            'start_date' => 'DATE DEFAULT NULL AFTER `provider_contact_id`',
+            'expiry_date' => 'DATE DEFAULT NULL AFTER `start_date`',
+            'last_sync' => 'DATETIME DEFAULT NULL AFTER `currency`',
+            'updated_at' => 'DATETIME DEFAULT NULL AFTER `created_at`',
+        );
+
+        foreach ($columns as $column => $definition) {
+            if (!self::addColumnIfMissing('ntresellerclub_service', $column, $definition)) {
                 return false;
             }
         }
