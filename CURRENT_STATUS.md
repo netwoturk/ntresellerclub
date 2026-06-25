@@ -75,11 +75,12 @@ Raporlanabilir statüler:
 
 ## Son Test
 
-- GitHub branch farkı `codex/engine-11-pricing-currency-finalization...codex/feature-btk-csv-reporting` üzerinden doğrulanacak.
-- Yeni/değişen PHP dosyalarında kaba `{}` ve `()` dengesi kontrol edilecek.
-- CSV zorunlu metotlarının bulunduğu kontrol edilecek.
-- Feature kapalıyken admin download erişiminin kapalı olduğu statik olarak kontrol edilecek.
-- Credential, password, api-key, auth-code ve token benzeri alanların CSV export içinde okunmadığı/loglanmadığı taranacak.
+- GitHub branch farkı `codex/engine-11-pricing-currency-finalization...codex/feature-btk-csv-reporting` üzerinden doğrulandı.
+- Yeni/değişen PHP dosyalarında kaba `{}` ve `()` dengesi kontrol edildi.
+- CSV zorunlu metotlarının bulunduğu kontrol edildi.
+- Feature kapalıyken admin download erişiminin kapalı olduğu statik olarak kontrol edildi.
+- Credential, password, api-key, auth-code ve token benzeri alanların CSV export içinde okunmadığı/loglanmadığı tarandı.
+- Türkçe admin stringlerinin UTF-8 olarak korunduğu geri okuma ile doğrulandı.
 
 ## Son Commit
 
