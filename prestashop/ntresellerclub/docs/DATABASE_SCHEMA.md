@@ -106,7 +106,7 @@ Tablo: `PREFIX_ntresellerclub_service`
 | id_order | INT | Sipariş ID |
 | id_product | INT | Bağlı PrestaShop ürün ID |
 | provider_code | VARCHAR(64) | Provider |
-| service_type | VARCHAR(50) | domain, hosting, ssl |
+| service_type | VARCHAR(50) | domain, tr_domain, hosting, ssl |
 | domain_name | VARCHAR(255) | Domain |
 | provider_service_id | VARCHAR(128) | Provider servis/domain ID |
 | provider_order_id | VARCHAR(128) | Provider sipariş/order ID |
@@ -115,7 +115,7 @@ Tablo: `PREFIX_ntresellerclub_service`
 | start_date | DATE | Servis başlangıç tarihi |
 | expiry_date | DATE | Bitiş tarihi |
 | auto_renew | TINYINT | Otomatik yenileme |
-| status | VARCHAR(50) | pending, register_waiting, ready, active, suspended, error |
+| status | VARCHAR(50) | pending, register_waiting, ready, active, suspended, expired, error, cancelled |
 | renew_price | DECIMAL | Yenileme fiyatı |
 | transfer_price | DECIMAL | Transfer fiyatı |
 | restore_price | DECIMAL | Restore fiyatı |
@@ -244,6 +244,16 @@ Notification template key listesi:
 - service_expired
 
 Kural: Mail gönderimi doğrudan yapılmaz; `ntresellerclub_notification_queue` içine yazılır ve cron sonunda `Mail::Send` ile batch gönderilir.
+
+Engine 10 notu: Renewal hatırlatmaları, domain lifecycle başarıları ve suspended/expired servis status bildirimleri yeni tablo eklemeden bu notification queue ve dedupe yapısını kullanır.
+
+Dedupe formatları:
+
+- `service_expiry:{template_key}:{id_service}:{expiry_date}`
+- `domain_lifecycle:{template_key}:{id_service}:{provider_order_or_service_or_queue_id}`
+- `service_status:{template_key}:{id_service}:{expiry_date_or_day}`
+
+Legacy notu: `PREFIX_ntresellerclub_notice` eski renewal reminder akışından kalabilir. Engine 10 bu tabloya yeni kayıt yazmaz; geriye uyumluluk ve eski kurulumlar için kaldırılmamıştır.
 
 ## 10. TR Domain Fiyatları
 
