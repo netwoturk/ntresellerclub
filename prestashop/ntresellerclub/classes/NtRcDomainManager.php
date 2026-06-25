@@ -156,11 +156,13 @@ class NtRcDomainManager
             $extra['customer-id'] = $providerCustomer['provider_customer_id'];
         }
 
-        if (!isset($extra['invoice-option']) && !isset($extra['invoice_option'])) {
-            $extra['invoice-option'] = 'NoInvoice';
-        }
-        if (!isset($extra['auto-renew']) && !isset($extra['auto_renew'])) {
-            $extra['auto-renew'] = false;
+        if ($providerCode !== 'domainnameapi') {
+            if (!isset($extra['invoice-option']) && !isset($extra['invoice_option'])) {
+                $extra['invoice-option'] = 'NoInvoice';
+            }
+            if (!isset($extra['auto-renew']) && !isset($extra['auto_renew'])) {
+                $extra['auto-renew'] = false;
+            }
         }
 
         $contact = $providerCode === 'domainnameapi'
@@ -168,7 +170,7 @@ class NtRcDomainManager
             : $this->buildResellerClubContactIds($options, $providerCustomer);
 
         if ($providerCode === 'domainnameapi') {
-            $extra = array_merge($extra, $this->buildTrabisAttributes($profile, $options));
+            $extra = $this->filterDomainNameApiExtra(array_merge($extra, $this->buildTrabisAttributes($profile, $options)));
         }
 
         return array(
@@ -306,6 +308,17 @@ class NtRcDomainManager
         }
 
         return $extra;
+    }
+
+    protected function filterDomainNameApiExtra(array $extra)
+    {
+        $filtered = array();
+        foreach (array('TRABISDOMAINCATEGORY', 'TRABISCITIZIENID', 'TRABISNAMESURNAME', 'TRABISCOUNTRYID', 'TRABISCOUNTRYNAME', 'TRABISCITYID', 'TRABISCITYNAME') as $key) {
+            if (isset($extra[$key]) && $extra[$key] !== '') {
+                $filtered[$key] = $extra[$key];
+            }
+        }
+        return $filtered;
     }
 
     protected function extractExtraOptions(array $options)
