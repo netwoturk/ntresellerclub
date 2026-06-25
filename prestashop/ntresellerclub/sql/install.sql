@@ -135,7 +135,9 @@ CREATE TABLE IF NOT EXISTS `PREFIX_ntresellerclub_cart_domain` (
   `domain_name` VARCHAR(255) NOT NULL,
   `provider_code` VARCHAR(64) DEFAULT NULL,
   `years` INT UNSIGNED DEFAULT 1,
+  `options_json` MEDIUMTEXT DEFAULT NULL,
   `created_at` DATETIME NOT NULL,
+  `updated_at` DATETIME DEFAULT NULL,
   PRIMARY KEY (`id_ntresellerclub_cart_domain`),
   KEY `idx_id_cart` (`id_cart`),
   KEY `idx_cart_provider` (`provider_code`)
