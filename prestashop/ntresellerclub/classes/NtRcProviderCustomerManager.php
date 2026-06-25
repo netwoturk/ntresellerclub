@@ -31,6 +31,10 @@ class NtRcProviderCustomerManager
             return array('success' => true, 'provider_code' => $providerCode, 'provider_customer_id' => $row['provider_customer_id'], 'source' => 'existing');
         }
 
+        if ($providerCode === 'domainnameapi' && $row && $row['status'] === 'contact_ready') {
+            return array('success' => true, 'provider_code' => $providerCode, 'provider_customer_id' => null, 'source' => 'contact_ready');
+        }
+
         $profileResult = NtRcContactProfileManager::ensureDefault((int)$idCustomer);
         if (empty($profileResult['success'])) {
             return $profileResult;
@@ -95,13 +99,31 @@ class NtRcProviderCustomerManager
         );
     }
 
-    public static function markActive($idCustomer, $providerCode, $providerCustomerId, array $rawData = array())
+    public static function markActive($idCustomer, $providerCode, $providerCustomerId, array $rawData = array(), $providerUsername = null)
+    {
+        self::ensureSchema();
+
+        $fields = array(
+            'provider_customer_id' => pSQL($providerCustomerId),
+            'status' => pSQL('active'),
+            'raw_data' => pSQL(json_encode($rawData)),
+            'updated_at' => date('Y-m-d H:i:s'),
+        );
+
+        if ($providerUsername !== null) {
+            $fields['provider_username'] = pSQL($providerUsername);
+        }
+
+        return Db::getInstance()->update('ntresellerclub_provider_customer', $fields, 'id_customer=' . (int)$idCustomer . ' AND provider_code="' . pSQL($providerCode) . '"');
+    }
+
+    public static function markContactPrepared($idCustomer, $providerCode, array $rawData = array())
     {
         self::ensureSchema();
 
         return Db::getInstance()->update('ntresellerclub_provider_customer', array(
-            'provider_customer_id' => pSQL($providerCustomerId),
-            'status' => pSQL('active'),
+            'provider_customer_id' => null,
+            'status' => pSQL('contact_ready'),
             'raw_data' => pSQL(json_encode($rawData)),
             'updated_at' => date('Y-m-d H:i:s'),
         ), 'id_customer=' . (int)$idCustomer . ' AND provider_code="' . pSQL($providerCode) . '"');
