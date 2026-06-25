@@ -15,6 +15,27 @@ This root roadmap is the repository-level continuation file for Codex engine wor
 | 09 | Notification & Mail | Completed in `codex/engine-09-notification-mail` |
 | 10 | Renewal / Service Lifecycle Notification Wiring | Completed in `codex/engine-10-renewal-service-lifecycle-notification` |
 | 11 | Pricing & Currency Finalization | Completed in `codex/engine-11-pricing-currency-finalization` |
+| Feature | BTK CSV Reporting Premium | Completed in `codex/feature-btk-csv-reporting` |
+
+## Premium Feature - BTK CSV Reporting
+
+### Scope
+
+- Premium feature key: `btk_csv_reporting`.
+- Backend CSV export engine through `NtRcBtkCsvExportEngine`.
+- Hosted Domains CSV includes hosting services, with registration dates from matching domain/tr_domain services when present.
+- Registered Domains CSV includes domain/tr_domain services that do not have a matching hosting service.
+- CSV format is headerless, UTF-8, six columns, and uses `gg.aa.yyyy` date format.
+- Admin configuration page download bridge is available only when the premium feature is active.
+- No provider API calls and no new database tables.
+
+### Acceptance Criteria
+
+- `exportHostedDomainsCsv()` and `exportRegisteredOnlyDomainsCsv()` produce rows with exactly six columns.
+- `sanitizeCsvValue()` replaces comma and semicolon data with `-`.
+- `formatBtkDate()` returns `15.11.2026` style dates.
+- Missing values are emitted as `*`.
+- `btk_csv_reporting` inactive state blocks admin CSV access.
 
 ## Engine 11 - Pricing & Currency Finalization
 
