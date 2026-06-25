@@ -2,80 +2,94 @@
 
 Tarih: 2026-06-25
 
-## Son Engine
+## Son Çalışma
 
-Engine 11 - Pricing & Currency Engine Finalization
+Ek Özellik - BTK CSV Reporting Premium Feature
 
 ## Son Branch
 
-`codex/engine-11-pricing-currency-finalization`
+`codex/feature-btk-csv-reporting`
 
 ## Tamamlananlar
 
-- Merkezi fiyat, kur, kar marjı, KDV ve yuvarlama hesaplaması için `NtRcPricingEngine` eklendi.
-- DomainNameAPI TR domain fiyat hesaplama akışı merkezi pricing engine'e bağlandı.
-- `NtRcTrPriceCalculator` geriye uyumlu facade olarak korunup merkezi engine'e yönlendirildi.
-- `NtRcPricingManager` ile domain, hosting ve SSL fiyat kayıtları için ortak backend manager eklendi.
-- ResellerClub global domain / hosting / SSL fiyat mapping altyapısı hazırlandı; doğrulanmamış fiyat API endpoint'i eklenmedi.
-- Manuel kur sistemi `USD -> TRY`, `USD -> EUR`, `USD -> GBP`, `USD -> AZN` hedeflerini destekleyecek şekilde genelleştirildi.
-- Kar modelleri `manual`, `percent`, `fixed`, `hybrid` olarak korundu.
-- KDV dahil / hariç hesaplama ve ileride ülke / para birimi bazlı genişletilebilir vergi oranı desteği eklendi.
-- Yuvarlama modları `no_round`, `nearest_1`, `nearest_5`, `nearest_10`, `psychological_99` olarak eklendi.
-- Fiyat hesaplama sonucu standart alanlarla döner hale getirildi: `cost_price`, `cost_currency`, `converted_cost`, `target_currency`, `margin_amount`, `tax_amount`, `sale_price_without_tax`, `sale_price_with_tax`, `rounding_mode`, `final_sale_price`.
-- Fiyat geçmişi ve kur geçmişi yazımı korunup merkezi manager üzerinden devam edecek şekilde güçlendirildi.
-- DomainNameAPI fiyat senkronizasyonunda credential benzeri alanların loglanmaması için hata metni sanitization genişletildi.
-- `docs/architecture/14_PRICING_CURRENCY_ENGINE.md` eklendi.
-- `ROADMAP.md`, `CHANGELOG.md`, `API_CONTRACT_RULES.md` ve `DATABASE_SCHEMA.md` Engine 11 kapsamıyla güncellendi.
+- `btk_csv_reporting` premium feature key'i lisans/feature kontrolüne eklendi.
+- `NtRcLicense::hasFeature('btk_csv_reporting')` ve `NtRcFeature::isBtkCsvReportingActive()` hazırlandı.
+- `NtRcBtkCsvExportEngine` eklendi.
+- BTK formatında iki CSV üretim akışı hazırlandı:
+  - Barındırılan Alan Adları
+  - Tescil Edilen Alan Adları
+- CSV çıktısı başlıksız, UTF-8, 6 kolonlu ve `gg.aa.yyyy` tarih formatında üretilecek şekilde hazırlandı.
+- Virgül, noktalı virgül, satır sonu ve tab karakterleri CSV verisinden temizlenecek şekilde sanitize edildi.
+- Eksik veri için `*` fallback'i kullanıldı.
+- Admin modül konfigürasyon ekranına feature aktifken CSV indirme backend köprüsü eklendi.
+- Feature aktif değilse admin CSV erişimi kapalı uyarısı verir.
+- Büyük veri için batch okuma mantığı eklendi; default batch 500, üst sınır 1000 satırdır.
+- `docs/architecture/BTK_CSV_REPORTING_ENGINE.md` eklendi.
+- `CHANGELOG.md`, `ROADMAP.md`, `DATABASE_SCHEMA.md` ve kök `docs/database-schema.md` güncellendi.
 
 ## Database Değişikliği
 
 - Yeni tablo eklenmedi.
-- Mevcut `ntresellerclub_price` tablosu genişletildi:
-  - `target_currency`
-  - `tax_rate`
-  - `rounding_mode`
-  - `created_at`
-  - `updated_at`
-- Mevcut `tax_included` alanı korunur; kurulu modüllerde eksikse installer guard tarafından eklenir.
-- `ntresellerclub_price_history` ve `ntresellerclub_exchange_rate_history` geçmiş kayıtları korunur.
+- BTK CSV Reporting şu mevcut tablolardan okur:
+  - `ntresellerclub_service`
+  - `ntresellerclub_contact_profile`
+  - `ntresellerclub_provider_customer`
+  - `customer`
+- Yeni configuration key:
+  - `NTRC_FEATURE_BTK_CSV_REPORTING`
+
+## CSV Kapsamı
+
+Barındırılan Alan Adları:
+
+- `service_type = hosting` olan raporlanabilir servisler.
+- Aynı domain için `domain` veya `tr_domain` tescil servisi varsa kayıt ve bitiş tarihi tescil servisinden alınır.
+- Sadece hosting hizmeti verilen domainler de listelenir.
+
+Tescil Edilen Alan Adları:
+
+- `service_type IN (domain, tr_domain)` olan raporlanabilir servisler.
+- Aynı domain için hosting servisi varsa bu CSV'ye alınmaz.
+
+Raporlanabilir statüler:
+
+- `active`
+- `ready`
+- `suspended`
 
 ## Devam Edenler
 
-- Admin UI yazılmadı; Engine 11 sadece backend engine, manager, schema guard ve dokümantasyon kapsamındadır.
-- ResellerClub fiyatlarını gerçek API'den senkronize eden endpoint eklenmedi; resmi ve doğrulanmış kontrat netleşene kadar mapping kayıtları manuel / ileride doğrulanmış sync ile doldurulacak.
-- Hosting ve SSL tarafında gerçek satış / yenileme akışları ileride ilgili provisioning veya billing engine'lerinde pricing manager'ı kullanacak.
-- Ülke bazlı gelişmiş vergi kuralları için altyapı hazır, ancak kapsamlı tax rule tablosu bu engine'de eklenmedi.
+- Ayrı gelişmiş admin controller / streaming download controller ileride eklenebilir.
+- BTK'nin ileride zorunlu kılabileceği ek kolon veya dosya adlandırma standardı gelirse doküman ve engine güncellenmelidir.
 
 ## Sıradaki Engine
 
-Öneri: Engine 12 - Hosting Provisioning veya Billing / Payment Required Wiring. Pricing altyapısı hazırlandığı için hosting/SSL satış fiyatlarının gerçek servis akışlarına bağlanması doğal sonraki adımdır.
+Öneri: Engine 12 - Hosting Provisioning veya Billing / Payment Required Wiring. BTK raporlama backend'i hazır olduğu için asıl servis yaşam döngüsü ve faturalama akışlarının tamamlanması doğal sonraki adımdır.
 
 ## Bilinen Riskler
 
 - PHP CLI bu çalışma ortamında bulunmadığı için `php -l` lint çalıştırılamadı.
-- Gerçek PrestaShop runtime ve provider sandbox çalıştırması bu ortamda yapılamadı.
-- Varsayılan kur değerleri kurulum başlangıcı için placeholder/manual default'tur; production'da admin tarafından güncellenmelidir.
-- ResellerClub mapping kayıtları başlangıçta sıfır maliyetli placeholder olarak seed edilir; gerçek satış öncesi manuel veya doğrulanmış sync ile doldurulmalıdır.
+- Gerçek PrestaShop admin runtime testi bu ortamda yapılamadı.
+- Telefon bilgisi contact profile içinde yoksa CSV'de `*` döner.
+- Hosting-domain eşleşmesi domain adı üzerinden yapılır; farklı yazılmış domain kayıtları ayrı satır kabul edilir.
 
 ## Son Test
 
-- GitHub branch farkı `codex/engine-10-renewal-service-lifecycle-notification...codex/engine-11-pricing-currency-finalization` üzerinden doğrulandı.
-- Yeni/değişen PHP dosyalarında kaba `{}` ve `()` dengesi kontrol edildi.
-- `NtRcPricingEngine` standart sonuç alanlarının kod ve dokümanda bulunduğu doğrulandı.
-- `NtRcManualExchangeRate` içinde desteklenen USD hedefleri `TRY`, `EUR`, `GBP`, `AZN` olarak doğrulandı.
-- ResellerClub için yeni ve doğrulanmamış pricing API endpoint'i eklenmediği kontrol edildi.
-- DomainNameAPI fiyat senkronizasyon loglarında credential-like değerlerin sanitize edildiği kontrol edildi.
-- Credential, password, api-key, auth-code ve token benzeri alanların yeni pricing sınıflarında loglanmadığı tarandı.
+- GitHub branch farkı `codex/engine-11-pricing-currency-finalization...codex/feature-btk-csv-reporting` üzerinden doğrulanacak.
+- Yeni/değişen PHP dosyalarında kaba `{}` ve `()` dengesi kontrol edilecek.
+- CSV zorunlu metotlarının bulunduğu kontrol edilecek.
+- Feature kapalıyken admin download erişiminin kapalı olduğu statik olarak kontrol edilecek.
+- Credential, password, api-key, auth-code ve token benzeri alanların CSV export içinde okunmadığı/loglanmadığı taranacak.
 
 ## Son Commit
 
-Bu `CURRENT_STATUS.md` kaydı Engine 11 final durumunu temsil eder.
+Bu `CURRENT_STATUS.md` kaydı BTK CSV Reporting premium feature final durumunu temsil eder.
 
 ## Son Doküman Güncellemesi
 
 - `CHANGELOG.md`
 - `CURRENT_STATUS.md`
 - `ROADMAP.md`
-- `docs/architecture/14_PRICING_CURRENCY_ENGINE.md`
-- `prestashop/ntresellerclub/docs/API_CONTRACT_RULES.md`
+- `docs/architecture/BTK_CSV_REPORTING_ENGINE.md`
+- `docs/database-schema.md`
 - `prestashop/ntresellerclub/docs/DATABASE_SCHEMA.md`
