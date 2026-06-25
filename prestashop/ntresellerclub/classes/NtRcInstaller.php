@@ -18,6 +18,7 @@ class NtRcInstaller
             && self::ensureContactProfileSchema()
             && self::ensureServiceSchema()
             && self::ensureCartDomainSchema()
+            && self::ensurePricingSchema()
             && self::ensureMonitoringSchema()
             && self::ensureNotificationSchema();
     }
@@ -107,6 +108,26 @@ class NtRcInstaller
 
         foreach ($columns as $column => $definition) {
             if (!self::addColumnIfMissing('ntresellerclub_cart_domain', $column, $definition)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public static function ensurePricingSchema()
+    {
+        $columns = array(
+            'target_currency' => 'VARCHAR(10) DEFAULT NULL AFTER `currency`',
+            'tax_included' => 'TINYINT(1) DEFAULT 1 AFTER `margin_fixed`',
+            'tax_rate' => 'DECIMAL(10,4) DEFAULT 20 AFTER `tax_included`',
+            'rounding_mode' => 'VARCHAR(32) DEFAULT "no_round" AFTER `tax_rate`',
+            'created_at' => 'DATETIME DEFAULT NULL AFTER `rounding_mode`',
+            'updated_at' => 'DATETIME DEFAULT NULL AFTER `created_at`',
+        );
+
+        foreach ($columns as $column => $definition) {
+            if (!self::addColumnIfMissing('ntresellerclub_price', $column, $definition)) {
                 return false;
             }
         }
