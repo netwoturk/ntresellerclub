@@ -107,6 +107,7 @@ CREATE TABLE IF NOT EXISTS `PREFIX_ntresellerclub_service` (
   `provider_code` VARCHAR(64) DEFAULT NULL,
   `service_type` VARCHAR(50) NOT NULL,
   `domain_name` VARCHAR(255) DEFAULT NULL,
+  `provider_service_id` VARCHAR(128) DEFAULT NULL,
   `provider_order_id` VARCHAR(128) DEFAULT NULL,
   `provider_customer_id` VARCHAR(128) DEFAULT NULL,
   `provider_contact_id` VARCHAR(128) DEFAULT NULL,
