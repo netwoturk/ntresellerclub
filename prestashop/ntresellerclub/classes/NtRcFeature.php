@@ -3,6 +3,8 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+require_once __DIR__ . '/NtRcLicense.php';
+
 class NtRcFeature
 {
     public static function isCoreActive()
@@ -23,6 +25,11 @@ class NtRcFeature
     public static function isHostingManagerActive()
     {
         return self::isCoreActive() && (bool)Configuration::get('NTRC_FEATURE_HOSTING');
+    }
+
+    public static function isBtkCsvReportingActive()
+    {
+        return self::isCoreActive() && NtRcLicense::hasFeature(NtRcLicense::FEATURE_BTK_CSV_REPORTING);
     }
 
     public static function providerEnabled($providerCode)
