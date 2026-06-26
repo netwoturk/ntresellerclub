@@ -100,7 +100,7 @@ When provider credit is insufficient:
 - customer order is not cancelled
 - customer payment state is not changed
 
-Admin adds provider credit and retries the failed/provider-credit queue from operations.
+Admin adds provider credit and retries the failed/provider-credit queue from operations. `NtRcOperationQueueManager::retryFailed()` accepts both `failed` and `provider_credit_required` queue states so retry can resume the same queue after NetwoTurk tops up the provider account.
 
 ## Payment Required
 
@@ -108,7 +108,9 @@ Renewal or extra paid actions must not create provider API queues before PrestaS
 
 - service status `payment_required`
 - notification `payment_required`
-- billing event `payment_required`
+- billing event `renewal_payment_required`
+
+Domain and hosting renew helpers keep provider queue creation blocked until payment confirmation is explicitly passed by the future billing/invoice engine.
 
 ## Monitoring
 
@@ -145,4 +147,4 @@ Safe fields are IDs, provider/service types, safe statuses, safe messages, and s
 
 - SSL provider adapter execution remains pending until verified ResellerClub SSL endpoint/resource/action details are available.
 - Provider credit retry UX should be connected to the future Admin Operations UI.
-- Renewal payment confirmation should be connected to the future billing/invoice engine once PrestaShop invoice/payment references are finalized.
+- Renewal payment confirmation references should be connected to the future billing/invoice engine once PrestaShop invoice/payment references are finalized.
