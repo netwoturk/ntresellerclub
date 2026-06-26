@@ -79,12 +79,12 @@ class NtRcNotificationEngine
         }
 
         $serviceType = isset($service['service_type']) ? (string)$service['service_type'] : '';
-        if (!in_array($serviceType, array('domain', 'tr_domain'), true)) {
-            return array('success' => true, 'source' => 'skipped', 'message' => 'Expiry notification sadece domain servisleri icin hazir.');
+        if (!in_array($serviceType, array('domain', 'tr_domain', 'ssl'), true)) {
+            return array('success' => true, 'source' => 'skipped', 'message' => 'Expiry notification sadece domain ve SSL servisleri icin hazir.');
         }
 
         $expiryDate = !empty($service['expiry_date']) ? $service['expiry_date'] : date('Y-m-d', strtotime('+' . $days . ' day'));
-        $templateKey = 'domain_expiring_' . $days;
+        $templateKey = $serviceType === 'ssl' ? 'ssl_expired' : 'domain_expiring_' . $days;
 
         return $this->enqueueServiceNotification(
             $templateKey,
@@ -169,7 +169,7 @@ class NtRcNotificationEngine
             $targetDate = date('Y-m-d', strtotime('+' . (int)$days . ' day'));
             $rows = Db::getInstance()->executeS(
                 'SELECT * FROM `' . _DB_PREFIX_ . 'ntresellerclub_service` '
-                . 'WHERE service_type IN ("domain", "tr_domain") '
+                . 'WHERE service_type IN ("domain", "tr_domain", "ssl") '
                 . 'AND status IN ("active", "ready") '
                 . 'AND expiry_date="' . pSQL($targetDate) . '" '
                 . 'ORDER BY id_ntresellerclub_service ASC LIMIT 25'
@@ -273,6 +273,7 @@ class NtRcNotificationEngine
             'provider_code' => isset($service['provider_code']) ? $service['provider_code'] : '',
             'provider_order_id' => isset($service['provider_order_id']) ? $service['provider_order_id'] : '',
             'provider_service_id' => isset($service['provider_service_id']) ? $service['provider_service_id'] : '',
+            'ssl_certificate_number' => isset($service['ssl_certificate_number']) ? $service['ssl_certificate_number'] : '',
             'checked_at' => date('Y-m-d H:i:s'),
         );
     }

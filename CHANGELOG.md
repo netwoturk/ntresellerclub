@@ -1,5 +1,35 @@
 # Changelog
 
+## 2026-06-26 - Engine 14 SSL Provisioning
+
+Branch: `codex/engine-14-ssl-provisioning`
+
+### Added
+
+- Added `NtRcSslProductMappingManager` and `ntresellerclub_ssl_product_mapping` for PrestaShop product to ResellerClub SSL product mapping.
+- Added `NtRcSslManager` for SSL create, renew, reissue, cancel, details, and download queue orchestration.
+- Added `NtRcSslOperationQueueProcessor` and `NtRcResellerClubSslAdapter`.
+- Added SSL monitoring metrics through `NtRcSslMonitoring`, `NtRcStatisticsEngine::sslSummary()`, and dashboard `ssl` summary output.
+- Added `docs/architecture/17_SSL_PROVISIONING_ENGINE.md`.
+
+### Changed
+
+- `NtRcOrderOrchestrator` now routes mapped SSL products through `NtRcSslManager`.
+- `NtRcBillingOperationQueueProcessor` now extends the SSL-aware queue processor path.
+- API contract now uses namespaced SSL queue actions: `ssl/create`, `ssl/renew`, `ssl/reissue`, `ssl/cancel`, `ssl/details`, and `ssl/download`.
+- Notification templates now include `ssl_expired` and `ssl_reissue_required`.
+- Service schema now includes safe `ssl_certificate_number` storage.
+
+### Fixed
+
+- DomainNameAPI remains blocked for SSL through contract guard.
+- SSL renew does not create provider API queue before payment confirmation.
+- ResellerClub SSL adapter does not call unverified endpoints and sanitizes CSR/private-key/certificate-like fields.
+
+### TODO
+
+- Real ResellerClub SSL endpoint execution remains TODO until official endpoint/resource/action details are verified.
+
 ## 2026-06-26 - Engine 13 Billing & Order Orchestrator
 
 Branch: `codex/engine-13-billing-order-orchestrator`

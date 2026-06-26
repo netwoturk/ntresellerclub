@@ -17,6 +17,8 @@ This root roadmap is the repository-level continuation file for Codex engine wor
 | 11 | Pricing & Currency Finalization | Completed in `codex/engine-11-pricing-currency-finalization` |
 | Feature | BTK CSV Reporting Premium | Completed in `codex/feature-btk-csv-reporting` |
 | 12 | Hosting Provisioning | Completed in `codex/engine-12-hosting-provisioning` |
+| 13 | Billing / Order Orchestrator | Completed in `codex/engine-13-billing-order-orchestrator` |
+| 14 | SSL Provisioning | Completed in `codex/engine-14-ssl-provisioning` |
 
 ## Engine 12 - Hosting Provisioning
 
@@ -42,8 +44,6 @@ This root roadmap is the repository-level continuation file for Codex engine wor
 
 | Engine | Name | Notes |
 |---|---|---|
-| 13 | Billing / Payment Wiring | Connect payment confirmation, invoices, and `payment_required` remediation |
-| 14 | SSL Provisioning | ResellerClub-only SSL provisioning |
 | 15 | Webhook | Provider webhook ingestion |
 | 16 | Reporting | Admin/customer reports |
 | 17 | Customer Dashboard | Customer service panel expansion |

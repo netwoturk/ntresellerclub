@@ -64,7 +64,7 @@ class NtRcServiceRepository
     {
         $data = array('status' => isset($fields['status']) ? $fields['status'] : 'active');
 
-        foreach (array('provider_service_id', 'provider_order_id', 'provider_customer_id', 'provider_contact_id', 'expiry_date') as $key) {
+        foreach (array('provider_service_id', 'provider_order_id', 'provider_customer_id', 'provider_contact_id', 'ssl_certificate_number', 'expiry_date') as $key) {
             if (array_key_exists($key, $fields) && $fields[$key] !== null && $fields[$key] !== '') {
                 $data[$key] = $fields[$key];
             }

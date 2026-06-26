@@ -40,6 +40,7 @@ Asagidaki islemler dogrudan calistirilmayacaktir:
 | Hosting renew | Yasak |
 | Hosting suspend/unsuspend | Yasak |
 | SSL create | Yasak |
+| SSL renew/reissue/cancel/details/download | Yasak |
 | Provider customer create | Yasak |
 | Mail gonderimi | Yasak |
 
@@ -63,11 +64,32 @@ Odeme alinmadan `domain/renew`, `tr_domain/renew` veya `hosting/renew` provider 
 
 ResellerClub hosting endpointleri resmi kaynakla dogrulanmadigi surece adapter gercek API cagrisi yapmaz; TODO mesaji dondurur ve queue retry/failed akisi calisir.
 
+## SSL Provisioning Kurali
+
+SSL sadece ResellerClub provider ile calisir. DomainNameAPI SSL icin asla kullanilmayacaktir.
+
+Izinli SSL queue action degerleri:
+
+| Action | Provider | Not |
+|---|---|---|
+| `ssl/create` | resellerclub | Siparis sonrasi queue |
+| `ssl/renew` | resellerclub | Odeme dogrulandiktan sonra queue |
+| `ssl/reissue` | resellerclub | Endpoint dogrulaninca adapter tamamlanacak |
+| `ssl/cancel` | resellerclub | Endpoint dogrulaninca adapter tamamlanacak |
+| `ssl/details` | resellerclub | Endpoint dogrulaninca adapter tamamlanacak |
+| `ssl/download` | resellerclub | Endpoint dogrulaninca adapter tamamlanacak |
+
+Odeme alinmadan `ssl/renew` provider API cagrisi yapilmaz. Odeme yoksa servis `payment_required` durumuna alinir, billing event `renewal_payment_required` olarak yazilir ve notification queue uzerinden musteri bildirimi hazirlanir.
+
+ResellerClub SSL endpointleri resmi kaynakla dogrulanmadigi surece adapter gercek API cagrisi yapmaz; TODO mesaji dondurur ve queue retry/failed akisi calisir.
+
 ## Fiyat Kurali
 
 Tum domain, hosting ve SSL satis fiyati hesaplari merkezi fiyat motorundan veya manuel mapping altyapisindan gecmelidir.
 
 Hosting urunleri `ntresellerclub_hosting_product_mapping` icindeki manuel mapping ve fiyat alanlarindan calisir. ResellerClub hosting fiyat API endpointi dogrulanmadan fiyat sync yazilmayacaktir.
+
+SSL urunleri `ntresellerclub_ssl_product_mapping` ile provider product id'ye baglanir ve satis fiyatlari Engine 11 `NtRcPricingManager` altyapisindan gelir. Yeni pricing sistemi yazilmayacaktir.
 
 ## Notification Kurali
 
@@ -90,6 +112,9 @@ Loglanmasi yasak alanlar:
 - Auth code
 - Token
 - Credential
+- CSR
+- Private key
+- Certificate raw
 - Raw request
 
 Provider response ve queue response sanitize edilmelidir.

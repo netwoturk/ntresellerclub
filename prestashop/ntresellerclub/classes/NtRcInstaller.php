@@ -18,6 +18,7 @@ class NtRcInstaller
             && self::ensureContactProfileSchema()
             && self::ensureServiceSchema()
             && self::ensureHostingProductMappingSchema()
+            && self::ensureSslProductMappingSchema()
             && self::ensureCartDomainSchema()
             && self::ensurePricingSchema()
             && self::ensureBillingEventSchema()
@@ -86,7 +87,8 @@ class NtRcInstaller
             'provider_order_id' => 'VARCHAR(128) DEFAULT NULL AFTER `provider_service_id`',
             'provider_customer_id' => 'VARCHAR(128) DEFAULT NULL AFTER `provider_order_id`',
             'provider_contact_id' => 'VARCHAR(128) DEFAULT NULL AFTER `provider_customer_id`',
-            'start_date' => 'DATE DEFAULT NULL AFTER `provider_contact_id`',
+            'ssl_certificate_number' => 'VARCHAR(128) DEFAULT NULL AFTER `provider_contact_id`',
+            'start_date' => 'DATE DEFAULT NULL AFTER `ssl_certificate_number`',
             'expiry_date' => 'DATE DEFAULT NULL AFTER `start_date`',
             'last_sync' => 'DATETIME DEFAULT NULL AFTER `currency`',
             'updated_at' => 'DATETIME DEFAULT NULL AFTER `created_at`',
@@ -142,6 +144,48 @@ class NtRcInstaller
 
         foreach ($columns as $column => $definition) {
             if (!self::addColumnIfMissing('ntresellerclub_hosting_product_mapping', $column, $definition)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public static function ensureSslProductMappingSchema()
+    {
+        $sql = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'ntresellerclub_ssl_product_mapping` ('
+            . '`id_ntresellerclub_ssl_product_mapping` INT UNSIGNED NOT NULL AUTO_INCREMENT,'
+            . '`id_product` INT UNSIGNED NOT NULL,'
+            . '`provider_code` VARCHAR(64) NOT NULL DEFAULT "resellerclub",'
+            . '`provider_product_id` VARCHAR(128) NOT NULL,'
+            . '`billing_cycle` VARCHAR(32) NOT NULL DEFAULT "yearly",'
+            . '`currency` VARCHAR(10) DEFAULT "USD",'
+            . '`active` TINYINT(1) DEFAULT 1,'
+            . '`created_at` DATETIME NOT NULL,'
+            . '`updated_at` DATETIME DEFAULT NULL,'
+            . 'PRIMARY KEY (`id_ntresellerclub_ssl_product_mapping`),'
+            . 'UNIQUE KEY `uniq_ssl_product_provider` (`id_product`, `provider_code`),'
+            . 'KEY `idx_ssl_mapping_provider_product` (`provider_code`, `provider_product_id`),'
+            . 'KEY `idx_ssl_mapping_active` (`active`)'
+            . ') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4';
+
+        if (!Db::getInstance()->execute($sql)) {
+            return false;
+        }
+
+        $columns = array(
+            'id_product' => 'INT UNSIGNED NOT NULL AFTER `id_ntresellerclub_ssl_product_mapping`',
+            'provider_code' => 'VARCHAR(64) NOT NULL DEFAULT "resellerclub" AFTER `id_product`',
+            'provider_product_id' => 'VARCHAR(128) NOT NULL AFTER `provider_code`',
+            'billing_cycle' => 'VARCHAR(32) NOT NULL DEFAULT "yearly" AFTER `provider_product_id`',
+            'currency' => 'VARCHAR(10) DEFAULT "USD" AFTER `billing_cycle`',
+            'active' => 'TINYINT(1) DEFAULT 1 AFTER `currency`',
+            'created_at' => 'DATETIME NOT NULL AFTER `active`',
+            'updated_at' => 'DATETIME DEFAULT NULL AFTER `created_at`',
+        );
+
+        foreach ($columns as $column => $definition) {
+            if (!self::addColumnIfMissing('ntresellerclub_ssl_product_mapping', $column, $definition)) {
                 return false;
             }
         }
@@ -445,6 +489,7 @@ class NtRcInstaller
             'ntresellerclub_contact',
             'ntresellerclub_service',
             'ntresellerclub_hosting_product_mapping',
+            'ntresellerclub_ssl_product_mapping',
             'ntresellerclub_cart_domain',
             'ntresellerclub_price',
             'ntresellerclub_price_history',

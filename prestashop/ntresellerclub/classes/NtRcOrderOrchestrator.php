@@ -6,6 +6,8 @@ if (!defined('_PS_VERSION_')) {
 require_once __DIR__ . '/NtRcDomainManager.php';
 require_once __DIR__ . '/NtRcHostingManager.php';
 require_once __DIR__ . '/NtRcHostingProductMappingManager.php';
+require_once __DIR__ . '/NtRcSslManager.php';
+require_once __DIR__ . '/NtRcSslProductMappingManager.php';
 require_once __DIR__ . '/NtRcBillingEventManager.php';
 require_once __DIR__ . '/NtRcNotificationEngine.php';
 require_once __DIR__ . '/NtRcOperationQueueManager.php';
@@ -44,6 +46,7 @@ class NtRcOrderOrchestrator
         $processedDomains = array();
         $domainManager = new NtRcDomainManager($this->module);
         $hostingManager = new NtRcHostingManager();
+        $sslManager = new NtRcSslManager();
 
         foreach ((array)NtRcCartDomain::getDomainsByCart((int)$order->id_cart) as $cartDomain) {
             if (!empty($cartDomain['domain_name'])) {
@@ -64,7 +67,7 @@ class NtRcOrderOrchestrator
             if ($classified['service_type'] === 'hosting') {
                 $results[] = $this->processHostingProduct($order, $product, $classified, $hostingManager);
             } elseif ($classified['service_type'] === 'ssl') {
-                $results[] = $this->processSslProduct($order, $product, $classified);
+                $results[] = $this->processSslProduct($order, $product, $classified, $sslManager);
             } else {
                 $results[] = $this->processDomainProduct($order, $product, $classified, $domainManager);
             }
@@ -118,28 +121,13 @@ class NtRcOrderOrchestrator
         return $this->recordProvisionResult($order, $result, (int)$classified['id_product'], 'hosting', $classified['domain_name'], 'resellerclub');
     }
 
-    protected function processSslProduct(Order $order, array $product, array $classified)
+    protected function processSslProduct(Order $order, array $product, array $classified, NtRcSslManager $sslManager)
     {
         if ($this->serviceExists((int)$order->id, (int)$classified['id_product'], 'ssl', $classified['domain_name'], 'resellerclub')) {
             return $this->duplicateSkipped($order, (int)$classified['id_product'], 'ssl', $classified['domain_name'], 'resellerclub');
         }
 
-        $idService = $this->createService($order, (int)$classified['id_product'], 'ssl', $classified['domain_name'], 'resellerclub', 'provisioning');
-        if ($idService <= 0) {
-            NtRcBillingEventManager::record('provisioning_failed', 'failed', $this->itemContext($order, (int)$classified['id_product'], 'ssl', $classified['domain_name'], 'resellerclub'), 'SSL servis kaydi olusturulamadi.');
-            return array('success' => false, 'message' => 'SSL servis kaydi olusturulamadi.');
-        }
-
-        $queue = NtRcOperationQueueManager::enqueue('resellerclub', 'ssl', 'create', array(
-            'id_order' => (int)$order->id,
-            'id_customer' => (int)$order->id_customer,
-            'id_service' => (int)$idService,
-            'id_product' => (int)$classified['id_product'],
-            'domain' => $classified['domain_name'],
-            'domain_name' => $classified['domain_name'],
-        ), (int)$order->id, (int)$order->id_customer, (int)$idService, 3, 3);
-
-        $result = array('success' => !empty($queue['success']), 'service_id' => $idService, 'queue_id' => isset($queue['queue_id']) ? (int)$queue['queue_id'] : 0, 'message' => isset($queue['message']) ? $queue['message'] : '');
+        $result = $sslManager->maybeProvisionSsl($order, $product);
         return $this->recordProvisionResult($order, $result, (int)$classified['id_product'], 'ssl', $classified['domain_name'], 'resellerclub');
     }
 
@@ -154,7 +142,8 @@ class NtRcOrderOrchestrator
             return array('service_type' => 'hosting', 'provider_code' => 'resellerclub', 'domain_name' => $domainName, 'id_product' => $idProduct);
         }
 
-        if (strpos($reference, 'SSL:') === 0) {
+        $sslMapping = NtRcSslProductMappingManager::getByProductId($idProduct, true);
+        if ($sslMapping || strpos($reference, 'SSL:') === 0) {
             return array('service_type' => 'ssl', 'provider_code' => 'resellerclub', 'domain_name' => $domainName, 'id_product' => $idProduct);
         }
 

@@ -40,6 +40,7 @@ Tablo: `PREFIX_ntresellerclub_service`
 | `domain_name` | Domain |
 | `provider_service_id` | Provider servis/domain ID |
 | `provider_order_id` | Provider siparis/order ID |
+| `ssl_certificate_number` | SSL sertifika/seri numarasi, varsa |
 | `start_date` | Servis baslangic tarihi |
 | `expiry_date` | Bitis tarihi |
 | `status` | pending, provisioning, register_waiting, ready, active, renewal_due, payment_required, suspended, expired, error, cancelled |
@@ -59,6 +60,15 @@ Hosting action degerleri:
 - `hosting/suspend`
 - `hosting/unsuspend`
 
+SSL action degerleri:
+
+- `ssl/create`
+- `ssl/renew`
+- `ssl/reissue`
+- `ssl/cancel`
+- `ssl/details`
+- `ssl/download`
+
 ## Hosting Product Mapping
 
 Tablo: `PREFIX_ntresellerclub_hosting_product_mapping`
@@ -77,6 +87,21 @@ PrestaShop hosting urunlerini ResellerClub paket/maliyet/satis mapping kayitlari
 | `currency` | Para birimi |
 | `active` | Aktif mapping |
 
+## SSL Product Mapping
+
+Tablo: `PREFIX_ntresellerclub_ssl_product_mapping`
+
+PrestaShop SSL urunlerini ResellerClub SSL product mapping kayitlarina baglar. SSL fiyatlari Engine 11 pricing sistemi uzerinden calisir; varsayimsal ResellerClub SSL fiyat API endpoint'i kullanilmaz.
+
+| Alan | Aciklama |
+|---|---|
+| `id_product` | PrestaShop product id |
+| `provider_code` | Sabit `resellerclub` |
+| `provider_product_id` | ResellerClub SSL urun ID |
+| `billing_cycle` | yearly, biennial, triennial |
+| `currency` | Para birimi |
+| `active` | Aktif mapping |
+
 ## Monitoring & Health
 
 `NtRcHostingMonitoring::summary()` su metrikleri dashboard/monitoring katmani icin okunabilir hale getirir:
@@ -85,11 +110,20 @@ PrestaShop hosting urunlerini ResellerClub paket/maliyet/satis mapping kayitlari
 - `failed_hosting_queue`
 - `pending_hosting_provisioning`
 
+`NtRcSslMonitoring::summary()` su metrikleri uretir:
+
+- `ssl_active_count`
+- `ssl_failed_queue`
+- `ssl_pending_provisioning`
+- `ssl_expiring_count`
+
 ## Notification & Mail
 
 Mail gonderimi dogrudan yapilmaz; `ntresellerclub_notification_queue` icine yazilir ve cron sonunda batch gonderilir.
 
 Engine 12 hosting create/renew basarilari `hosting_created` ve `hosting_renewed` template key'leriyle notification queue'ya baglidir.
+
+Engine 14 SSL akislari `ssl_created`, `ssl_renewed`, `ssl_expired`, `ssl_reissue_required` ve `payment_required` template key'leriyle notification queue'ya baglidir.
 
 ## Final Kurallar
 

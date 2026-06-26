@@ -99,7 +99,7 @@ class NtRcBillingEventManager
 
     public static function safeText($text)
     {
-        return preg_replace('/(api-key|api_key|auth-code|auth_code|passwd|password|token|credential|card|cc)=([^&\\s]+)/i', '$1=***', (string)$text);
+        return preg_replace('/(api-key|api_key|auth-code|auth_code|passwd|password|token|credential|card|cc|csr|private_key|private-key|certificate|certificate_raw|cert_raw)=([^&\\s]+)/i', '$1=***', (string)$text);
     }
 
     public static function safeData($data)
@@ -108,7 +108,7 @@ class NtRcBillingEventManager
             return is_string($data) ? self::safeText($data) : $data;
         }
 
-        foreach (array('raw', 'request', 'response', 'transaction_raw', 'api-key', 'api_key', 'password', 'passwd', 'auth-code', 'auth_code', 'token', 'credential', 'card', 'cc') as $key) {
+        foreach (array('raw', 'request', 'response', 'transaction_raw', 'api-key', 'api_key', 'password', 'passwd', 'auth-code', 'auth_code', 'token', 'credential', 'card', 'cc', 'csr', 'private_key', 'private-key', 'certificate', 'certificate_raw', 'cert_raw') as $key) {
             if (isset($data[$key])) {
                 unset($data[$key]);
             }

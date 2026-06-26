@@ -5,6 +5,7 @@ if (!defined('_PS_VERSION_')) {
 
 require_once __DIR__ . '/NtRcInstaller.php';
 require_once __DIR__ . '/NtRcBillingMonitoring.php';
+require_once __DIR__ . '/NtRcSslMonitoring.php';
 require_once __DIR__ . '/providers/NtRcProviderRegistry.php';
 
 class NtRcStatisticsEngine
@@ -52,6 +53,11 @@ class NtRcStatisticsEngine
     {
         NtRcInstaller::ensureBillingEventSchema();
         return NtRcBillingMonitoring::summary();
+    }
+
+    public function sslSummary()
+    {
+        return NtRcSslMonitoring::summary();
     }
 
     public function queueSummary($providerCode = null)
@@ -113,6 +119,7 @@ class NtRcStatisticsEngine
             'last_success_at' => $this->lastQueueDate($providerCode, 'done'),
             'last_failure_at' => $this->lastQueueDate($providerCode, 'failed'),
             'hosting' => $providerCode === 'resellerclub' ? $this->hostingSummary() : array(),
+            'ssl' => $providerCode === 'resellerclub' ? $this->sslSummary() : array(),
         );
     }
 

@@ -3,11 +3,11 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
-require_once __DIR__ . '/NtRcHostingOperationQueueProcessor.php';
+require_once __DIR__ . '/NtRcSslOperationQueueProcessor.php';
 require_once __DIR__ . '/NtRcBillingEventManager.php';
 require_once __DIR__ . '/NtRcNotificationEngine.php';
 
-class NtRcBillingOperationQueueProcessor extends NtRcHostingOperationQueueProcessor
+class NtRcBillingOperationQueueProcessor extends NtRcSslOperationQueueProcessor
 {
     protected function afterFailure(array $item, array $payload, $error)
     {

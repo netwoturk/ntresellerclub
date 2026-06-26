@@ -9,7 +9,7 @@ class NtRcApiContractGuard
         'resellerclub' => array(
             'domain' => array('check', 'register', 'transfer', 'renew', 'details', 'nameserver_update', 'contact_update'),
             'hosting' => array('hosting/create', 'hosting/renew', 'hosting/suspend', 'hosting/unsuspend', 'hosting/details'),
-            'ssl' => array('create', 'renew', 'details'),
+            'ssl' => array('ssl/create', 'ssl/renew', 'ssl/reissue', 'ssl/cancel', 'ssl/details', 'ssl/download'),
             'customer' => array('create', 'details', 'update'),
         ),
         'domainnameapi' => array(

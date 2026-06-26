@@ -15,6 +15,7 @@ class NtRcDashboard
             'providers' => self::providerStats(),
             'services' => self::serviceStats(),
             'hosting' => self::hostingStats(),
+            'ssl' => self::sslStats(),
             'billing' => self::billingStats(),
             'routes' => NtRcTldRouteManager::all(),
             'notices' => self::noticeStats(),
@@ -47,6 +48,12 @@ class NtRcDashboard
     {
         $statistics = new NtRcStatisticsEngine();
         return $statistics->hostingSummary();
+    }
+
+    public static function sslStats()
+    {
+        $statistics = new NtRcStatisticsEngine();
+        return $statistics->sslSummary();
     }
 
     public static function billingStats()

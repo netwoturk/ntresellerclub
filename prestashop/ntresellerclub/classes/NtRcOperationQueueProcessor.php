@@ -450,7 +450,7 @@ class NtRcOperationQueueProcessor
             return is_string($response) ? $this->safeText($response) : $response;
         }
 
-        foreach (array('raw', 'last_url', 'api-key', 'api_key', 'ApiKey', 'passwd', 'password', 'Password', 'auth-code', 'auth_code', 'AuthCode', 'token', 'Token', 'credential', 'Credential') as $key) {
+        foreach (array('raw', 'last_url', 'api-key', 'api_key', 'ApiKey', 'passwd', 'password', 'Password', 'auth-code', 'auth_code', 'AuthCode', 'token', 'Token', 'credential', 'Credential', 'csr', 'CSR', 'private_key', 'private-key', 'certificate', 'certificate_raw', 'cert_raw') as $key) {
             if (isset($response[$key])) {
                 unset($response[$key]);
             }
@@ -475,6 +475,6 @@ class NtRcOperationQueueProcessor
 
     protected function safeText($text)
     {
-        return preg_replace('/(api-key|api_key|auth-code|auth_code|passwd|password|token|credential)=([^&\s]+)/i', '$1=***', (string)$text);
+        return preg_replace('/(api-key|api_key|auth-code|auth_code|passwd|password|token|credential|csr|private_key|private-key|certificate|certificate_raw|cert_raw)=([^&\s]+)/i', '$1=***', (string)$text);
     }
 }

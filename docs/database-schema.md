@@ -29,6 +29,7 @@ Musterinin satin aldigi domain, hosting, SSL ve e-posta servislerini takip eder.
 | `domain_name` | Alan adi |
 | `provider_order_id` | Provider order ID |
 | `provider_service_id` | Provider service ID |
+| `ssl_certificate_number` | SSL sertifika/seri numarasi, varsa |
 | `start_date` | Baslangic tarihi |
 | `expiry_date` | Bitis tarihi |
 | `status` | pending / provisioning / active / renewal_due / payment_required / expired / suspended / cancelled / error |
@@ -52,13 +53,26 @@ PrestaShop hosting urunlerini ResellerClub hosting paketleriyle eslestirir. Host
 | `currency` | Para birimi |
 | `active` | Aktif mapping |
 
+## `ps_ntresellerclub_ssl_product_mapping`
+
+PrestaShop SSL urunlerini ResellerClub SSL urunleriyle eslestirir. SSL sadece ResellerClub uzerinden calisir.
+
+| Alan | Aciklama |
+|---|---|
+| `id_product` | PrestaShop product id |
+| `provider_code` | Sabit `resellerclub` |
+| `provider_product_id` | ResellerClub SSL urun ID |
+| `billing_cycle` | yearly / biennial / triennial |
+| `currency` | Para birimi |
+| `active` | Aktif mapping |
+
 ## `ps_ntresellerclub_cart_domain`
 
 Domain arama modulunden gelen ve sepete baglanan domain secimini tutar.
 
 ## `ps_ntresellerclub_price`
 
-Domain/TR domain/hosting/SSL manuel veya provider kaynakli fiyat mapping kayitlarini tutar. Engine 12 hosting fiyatlari manual/mapping tabanlidir; varsayimsal ResellerClub fiyat API endpointi eklenmedi.
+Domain/TR domain/hosting/SSL manuel veya provider kaynakli fiyat mapping kayitlarini tutar. Engine 14 SSL fiyatlari Engine 11 pricing altyapisini kullanir; yeni fiyat motoru eklenmedi.
 
 ## `ps_ntresellerclub_notice`
 
