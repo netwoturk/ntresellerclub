@@ -17,6 +17,8 @@ Branch: `codex/engine-13-billing-order-orchestrator`
 - `NtRcProvisioning` now delegates order processing to the orchestrator.
 - Cron now uses the billing-aware queue processor.
 - `NtRcServiceStatus` includes `provider_credit_required`.
+- `NtRcOperationQueueManager::retryFailed()` now accepts `provider_credit_required` queues for post-top-up retry.
+- Domain and hosting renew flows now record `renewal_payment_required` billing events when payment is missing.
 - Installer and SQL install/uninstall paths now include the billing event table.
 
 ### Fixed
@@ -24,6 +26,7 @@ Branch: `codex/engine-13-billing-order-orchestrator`
 - Provider queue creation is blocked for unpaid, cancelled, refunded, failed, payment-error, and chargeback order states.
 - Duplicate provisioning attempts are skipped and recorded instead of creating another service/queue.
 - Provider credit shortage no longer maps to customer payment failure.
+- Domain renew now follows the same no-payment/no-provider-queue rule as hosting renew.
 
 ### TODO
 
