@@ -59,7 +59,7 @@ Izinli hosting queue action degerleri:
 | `hosting/unsuspend` | resellerclub | Endpoint dogrulaninca adapter tamamlanacak |
 | `hosting/details` | resellerclub | Endpoint dogrulaninca adapter tamamlanacak |
 
-Odeme alinmadan `hosting/renew` provider API cagrisi yapilmaz. Odeme yoksa servis `payment_required` durumuna alinir ve notification queue uzerinden musteri bildirimi hazirlanir.
+Odeme alinmadan `domain/renew`, `tr_domain/renew` veya `hosting/renew` provider API cagrisi yapilmaz. Odeme yoksa servis `payment_required` durumuna alinir, billing event `renewal_payment_required` olarak yazilir ve notification queue uzerinden musteri bildirimi hazirlanir.
 
 ResellerClub hosting endpointleri resmi kaynakla dogrulanmadigi surece adapter gercek API cagrisi yapmaz; TODO mesaji dondurur ve queue retry/failed akisi calisir.
 
