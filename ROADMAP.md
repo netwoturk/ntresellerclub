@@ -20,6 +20,7 @@ This root roadmap is the repository-level continuation file for Codex engine wor
 | 13 | Billing / Order Orchestrator | Completed in `codex/engine-13-billing-order-orchestrator` |
 | 14 | SSL Provisioning | Completed in `codex/engine-14-ssl-provisioning` |
 | 15 | SSL Endpoint Verification + Admin Mapping Backend | Completed in `codex/engine-15-ssl-endpoint-verification-admin-mapping` |
+| 16 | Provider Sandbox & Production Readiness | Completed in `codex/engine-16-provider-sandbox-production-readiness` |
 
 ## Engine 12 - Hosting Provisioning
 
@@ -45,10 +46,9 @@ This root roadmap is the repository-level continuation file for Codex engine wor
 
 | Engine | Name | Notes |
 |---|---|---|
-| 16 | SSL Renew + Secure CSR Flow | Verify renew contract and design transient/encrypted CSR handling |
-| 17 | Webhook | Provider webhook ingestion |
-| 18 | Reporting | Admin/customer reports |
-| 19 | Customer Dashboard | Customer service panel expansion |
-| 20 | Admin Dashboard | Admin monitoring and operations UI |
-| 21 | Security | Hardening and sensitive-data review |
-| 22 | Production Hardening | Production readiness pass |
+| 17 | SSL Renew + Secure CSR Flow | Verify renew contract and design transient/encrypted CSR handling |
+| 18 | Webhook | Provider webhook ingestion |
+| 19 | Reporting | Admin/customer reports |
+| 20 | Customer Dashboard | Customer service panel expansion |
+| 21 | Admin Dashboard | Admin monitoring and operations UI |
+| 22 | Security | Deeper hardening and sensitive-data review |

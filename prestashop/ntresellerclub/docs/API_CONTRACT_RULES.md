@@ -157,6 +157,18 @@ Loglanmasi yasak alanlar:
 
 Provider response ve queue response sanitize edilmelidir.
 
+## Production Readiness Kurali
+
+Engine 16 sonrasi backend readiness kontrolu `NtRcProductionReadinessVerifier::summary()` ile lokal olarak okunabilir. Bu kontrol provider API cagrisi yapmaz; sadece sozlesme, queue zinciri, pricing, billing, notification, monitoring, runtime ve schema sorumlulugu kontrollerini yapar.
+
+Production'a cikmadan once:
+
+- `NtRcProductionReadinessVerifier::summary()` basarisiz check dondurmemelidir.
+- ResellerClub SSL renew endpoint kontrati dogrulanmadan `renewSsl()` gercek API cagrisi yapmamalidir.
+- DomainNameAPI SSL/hosting aksiyonlari sozlesme disi kalmalidir.
+- Runtime table creation SQL manager siniflarinda bulunmamalidir.
+- Mail ve provider API islemleri queue/cron disina cikmamalidir.
+
 ## Gelistirme Kontrol Listesi
 
 1. Bu islem ResellerClub API'de gercekten var mi?
@@ -166,5 +178,6 @@ Provider response ve queue response sanitize edilmelidir.
 5. Hata loglanirken credential temizleniyor mu?
 6. Mail varsa notification queue uzerinden mi gidiyor?
 7. Fiyat hesaplamasi merkezi pricing veya manuel mapping kurallarina uyuyor mu?
+8. Schema degisikligi installer/migration guard uzerinden mi yapiliyor?
 
 Bu sorulardan biri olumsuzsa kod uretime alinmayacaktir.

@@ -133,6 +133,17 @@ Engine 12 hosting create/renew basarilari `hosting_created` ve `hosting_renewed`
 
 Engine 14/15 SSL akislari `ssl_created`, `ssl_renewed`, `ssl_expired`, `ssl_reissue_required`, `payment_required` ve `provider_credit_required` template key'leriyle notification queue'ya baglidir.
 
+## Production Readiness / Schema Guard
+
+Engine 16 yeni tablo eklemez.
+
+Tablo olusturma SQL'i installer/schema migration katmaninda kalir. Runtime manager siniflari kendi `CREATE TABLE` SQL'ini tasimaz; gerekli schema kontrolunu `NtRcInstaller` guard metotlarina devreder.
+
+Engine 16 ile su manager metotlari installer guard'a baglandi:
+
+- `NtRcHostingProductMappingManager::ensureSchema()`
+- `NtRcBillingEventManager::ensureSchema()`
+
 ## Final Kurallar
 
 - Global domain = ResellerClub.
@@ -143,3 +154,4 @@ Engine 14/15 SSL akislari `ssl_created`, `ssl_renewed`, `ssl_expired`, `ssl_reis
 - Queue olmadan register/renew/transfer/create islemi yapilmaz.
 - Notification queue olmadan mail gonderimi yapilmaz.
 - Pricing engine veya manuel mapping olmadan satis fiyati hesaplanmaz.
+- Runtime schema olusturma manager icinde yapilmaz; installer/migration guard kullanilir.

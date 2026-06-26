@@ -1,5 +1,34 @@
 # Changelog
 
+## 2026-06-26 - Engine 16 Provider Sandbox & Production Readiness
+
+Branch: `codex/engine-16-provider-sandbox-production-readiness`
+
+### Added
+
+- Added `NtRcProductionReadinessVerifier` for no-network backend readiness checks.
+- Added production readiness documentation in `docs/production/PRODUCTION_READINESS.md`.
+- Added sandbox provider test documentation in `docs/testing/SANDBOX_PROVIDER_TESTS.md`.
+- Added regression test plan in `docs/testing/REGRESSION_TEST_PLAN.md`.
+- Added `docs/architecture/19_PROVIDER_SANDBOX_PRODUCTION_READINESS.md`.
+
+### Changed
+
+- `NtRcHostingProductMappingManager::ensureSchema()` now delegates schema work to `NtRcInstaller::ensureHostingProductMappingSchema()`.
+- `NtRcBillingEventManager::ensureSchema()` now delegates schema work to `NtRcInstaller::ensureBillingEventSchema()`.
+- Production readiness docs now make installer-owned schema creation, queue-driven heavy work, notification queue mail, and provider contract guard behavior explicit.
+
+### Fixed
+
+- Removed direct manager-owned runtime table creation SQL from hosting mapping and billing event managers.
+- Updated adapter/language architecture docs to require sanitized provider technical errors instead of raw error storage.
+
+### TODO
+
+- Run real PrestaShop 1.7/8/9 install and upgrade smoke tests.
+- Run ResellerClub sandbox checks with real sandbox credentials.
+- Verify the current official ResellerClub SSL renew parameter contract before enabling `renewSsl()`.
+
 ## 2026-06-26 - Engine 15 SSL Endpoint Verification + Admin Mapping Backend
 
 Branch: `codex/engine-15-ssl-endpoint-verification-admin-mapping`

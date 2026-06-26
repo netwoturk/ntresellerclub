@@ -17,6 +17,7 @@ require_once __DIR__ . '/classes/NtRcRuntimeAdminRenderer.php';
 require_once __DIR__ . '/classes/NtRcBtkCsvExportEngine.php';
 require_once __DIR__ . '/classes/NtRcSslMappingAdminRenderer.php';
 require_once __DIR__ . '/classes/NtRcSslProductMappingManager.php';
+require_once __DIR__ . '/classes/NtRcProductionReadinessVerifier.php';
 
 class Ntresellerclub extends Module
 {

@@ -3,6 +3,8 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+require_once __DIR__ . '/NtRcInstaller.php';
+
 class NtRcBillingEventManager
 {
     protected static $schemaChecked = false;
@@ -52,29 +54,7 @@ class NtRcBillingEventManager
             return true;
         }
 
-        $sql = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'ntresellerclub_billing_event` ('
-            . '`id_ntresellerclub_billing_event` INT UNSIGNED NOT NULL AUTO_INCREMENT,'
-            . '`id_order` INT UNSIGNED DEFAULT NULL,'
-            . '`id_customer` INT UNSIGNED DEFAULT NULL,'
-            . '`id_service` INT UNSIGNED DEFAULT NULL,'
-            . '`provider_code` VARCHAR(64) DEFAULT NULL,'
-            . '`service_type` VARCHAR(50) DEFAULT NULL,'
-            . '`event_type` VARCHAR(64) NOT NULL,'
-            . '`event_status` VARCHAR(32) NOT NULL,'
-            . '`message` TEXT DEFAULT NULL,'
-            . '`metadata_json` MEDIUMTEXT DEFAULT NULL,'
-            . '`created_at` DATETIME NOT NULL,'
-            . 'PRIMARY KEY (`id_ntresellerclub_billing_event`),'
-            . 'KEY `idx_billing_event_order` (`id_order`),'
-            . 'KEY `idx_billing_event_customer` (`id_customer`),'
-            . 'KEY `idx_billing_event_service` (`id_service`),'
-            . 'KEY `idx_billing_event_provider` (`provider_code`),'
-            . 'KEY `idx_billing_event_type` (`event_type`),'
-            . 'KEY `idx_billing_event_status` (`event_status`),'
-            . 'KEY `idx_billing_event_created` (`created_at`)'
-            . ') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4';
-
-        self::$schemaChecked = (bool)Db::getInstance()->execute($sql);
+        self::$schemaChecked = (bool)NtRcInstaller::ensureBillingEventSchema();
         return self::$schemaChecked;
     }
 

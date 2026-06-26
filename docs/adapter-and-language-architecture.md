@@ -95,7 +95,7 @@ Desteklenecek diller:
 - Musteri panelindeki tum metinler PrestaShop ceviri sistemi uzerinden yonetilir.
 - Mail sablonlari her dil icin ayri klasorde tutulur.
 - API hata mesajlari normalize edilip modulun dil anahtarlariyla gosterilir.
-- Provider donen teknik hata mesajlari admin loglarinda ham olarak saklanir, musteriye sade mesaj gosterilir.
+- Provider donen teknik hata mesajlari sanitize edilerek admin loglarinda saklanir, musteriye sade mesaj gosterilir.
 
 ## Mail sablon klasorleri
 

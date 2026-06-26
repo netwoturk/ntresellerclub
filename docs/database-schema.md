@@ -77,6 +77,12 @@ Domain arama modulunden gelen ve sepete baglanan domain secimini tutar.
 
 Domain/TR domain/hosting/SSL manuel veya provider kaynakli fiyat mapping kayitlarini tutar. Engine 14 SSL fiyatlari Engine 11 pricing altyapisini kullanir; yeni fiyat motoru eklenmedi.
 
+## Schema Migration Rule
+
+Table creation SQL is owned by installer/schema migration code. Runtime managers must call installer schema guards instead of carrying their own table creation SQL.
+
+Engine 16 moved hosting mapping and billing event manager schema creation responsibility back to `NtRcInstaller`.
+
 ## `ps_ntresellerclub_notice`
 
 Yenileme bildirimlerinin tekrar gonderilmesini onler.
