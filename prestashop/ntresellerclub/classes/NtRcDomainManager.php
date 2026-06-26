@@ -9,6 +9,8 @@ require_once __DIR__ . '/NtRcContactProfileManager.php';
 require_once __DIR__ . '/NtRcProviderCustomerManager.php';
 require_once __DIR__ . '/NtRcServiceRepository.php';
 require_once __DIR__ . '/NtRcApiContractGuard.php';
+require_once __DIR__ . '/NtRcNotificationEngine.php';
+require_once __DIR__ . '/NtRcBillingEventManager.php';
 require_once __DIR__ . '/NtRcLog.php';
 require_once __DIR__ . '/providers/NtRcTldRouteManager.php';
 
@@ -110,11 +112,18 @@ class NtRcDomainManager
         return $this->enqueueDomainOperation($service, 'transfer', $payload, 2);
     }
 
-    public function enqueueRenew($idService, $years = 1, array $options = array())
+    public function enqueueRenew($idService, $years = 1, array $options = array(), $paymentConfirmed = false)
     {
         $service = NtRcServiceRepository::getService((int)$idService);
         if (!$service || empty($service['domain_name'])) {
             return array('success' => false, 'message' => 'Renew icin servis kaydi bulunamadi.');
+        }
+
+        if (!$paymentConfirmed && empty($options['payment_confirmed'])) {
+            NtRcServiceRepository::updateStatus((int)$idService, 'payment_required');
+            $this->enqueuePaymentRequiredNotification($service);
+            $this->recordPaymentRequired($service);
+            return array('success' => true, 'status' => 'payment_required', 'message' => 'Odeme alinmadan domain renew queue olusturulmadi.');
         }
 
         $payload = $this->buildDomainOperationPayload($service, max(1, (int)$years), $options);
@@ -381,6 +390,44 @@ class NtRcDomainManager
         );
 
         return (bool)$value;
+    }
+
+    protected function enqueuePaymentRequiredNotification(array $service)
+    {
+        try {
+            $engine = new NtRcNotificationEngine();
+            $engine->enqueueServiceNotification(
+                'payment_required',
+                (int)$service['id_ntresellerclub_service'],
+                array(
+                    'domain_name' => isset($service['domain_name']) ? $service['domain_name'] : '',
+                    'checked_at' => date('Y-m-d H:i:s'),
+                ),
+                'customer',
+                2,
+                'domain_payment_required:' . (int)$service['id_ntresellerclub_service'] . ':' . date('Y-m-d')
+            );
+        } catch (Exception $e) {
+            NtRcLog::add('warning', 'domain_provisioning', 'Payment required notification failed service=' . (int)$service['id_ntresellerclub_service'] . ' ' . $this->safeText($e->getMessage()));
+        }
+    }
+
+    protected function recordPaymentRequired(array $service)
+    {
+        $providerCode = isset($service['provider_code']) ? $service['provider_code'] : '';
+        NtRcBillingEventManager::record(
+            'renewal_payment_required',
+            'payment_required',
+            array(
+                'id_order' => !empty($service['id_order']) ? (int)$service['id_order'] : null,
+                'id_customer' => !empty($service['id_customer']) ? (int)$service['id_customer'] : null,
+                'id_service' => !empty($service['id_ntresellerclub_service']) ? (int)$service['id_ntresellerclub_service'] : null,
+                'provider_code' => $providerCode,
+                'service_type' => $providerCode === 'domainnameapi' ? 'tr_domain' : 'domain',
+            ),
+            'Odeme alinmadan renew provider queue olusturulmadi.',
+            array('reason' => 'renewal_payment_required')
+        );
     }
 
     protected function splitPhone($phone)
