@@ -5,6 +5,8 @@ if (!defined('_PS_VERSION_')) {
 
 class NtRcInstaller
 {
+    const ADMIN_ROOT_CLASS = 'AdminNtRcRoot';
+
     public static function installSql()
     {
         foreach (array('install.sql', 'history.sql') as $sqlFile) {
@@ -24,6 +26,90 @@ class NtRcInstaller
             && self::ensureBillingEventSchema()
             && self::ensureMonitoringSchema()
             && self::ensureNotificationSchema();
+    }
+
+    public static function installAdminTabs()
+    {
+        if (!class_exists('Tab')) {
+            return true;
+        }
+
+        $rootId = self::installTab(self::ADMIN_ROOT_CLASS, 'NetwoTurk Hosting', 0, 'ntresellerclub', 'dns');
+        if (!$rootId) {
+            return false;
+        }
+
+        $tabs = self::adminTabs();
+        foreach ($tabs as $tab) {
+            if (!self::installTab($tab['class_name'], $tab['label'], $rootId, 'ntresellerclub', $tab['icon'])) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public static function uninstallAdminTabs()
+    {
+        if (!class_exists('Tab')) {
+            return true;
+        }
+
+        $tabs = array_reverse(self::adminTabs());
+        foreach ($tabs as $tab) {
+            self::deleteTab($tab['class_name']);
+        }
+        self::deleteTab(self::ADMIN_ROOT_CLASS);
+
+        return true;
+    }
+
+    protected static function adminTabs()
+    {
+        $file = _PS_MODULE_DIR_ . 'ntresellerclub/classes/admin/NtRcAdminNavigationBuilder.php';
+        if (file_exists($file)) {
+            require_once $file;
+        }
+
+        if (class_exists('NtRcAdminNavigationBuilder')) {
+            return NtRcAdminNavigationBuilder::tabs();
+        }
+
+        return array();
+    }
+
+    protected static function installTab($className, $label, $idParent, $moduleName, $icon = '')
+    {
+        $existing = (int)Tab::getIdFromClassName($className);
+        if ($existing > 0) {
+            $tab = new Tab($existing);
+        } else {
+            $tab = new Tab();
+            $tab->class_name = $className;
+        }
+
+        $tab->id_parent = (int)$idParent;
+        $tab->module = $moduleName;
+        $tab->active = 1;
+        foreach (Language::getLanguages(false) as $lang) {
+            $tab->name[(int)$lang['id_lang']] = $label;
+        }
+        if ($icon !== '' && property_exists($tab, 'icon')) {
+            $tab->icon = $icon;
+        }
+
+        return $tab->save() ? (int)$tab->id : false;
+    }
+
+    protected static function deleteTab($className)
+    {
+        $idTab = (int)Tab::getIdFromClassName($className);
+        if ($idTab <= 0) {
+            return true;
+        }
+
+        $tab = new Tab($idTab);
+        return $tab->delete();
     }
 
     protected static function executeSqlFile($sqlFile)

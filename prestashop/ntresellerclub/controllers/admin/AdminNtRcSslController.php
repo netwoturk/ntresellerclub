@@ -3,15 +3,12 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+require_once _PS_MODULE_DIR_ . 'ntresellerclub/classes/admin/NtRcAdminBaseController.php';
 require_once _PS_MODULE_DIR_ . 'ntresellerclub/classes/NtRcSslProductMappingManager.php';
 
-class AdminNtRcSslController extends ModuleAdminController
+class AdminNtRcSslController extends NtRcAdminBaseController
 {
-    public function __construct()
-    {
-        $this->bootstrap = true;
-        parent::__construct();
-    }
+    protected $ntRcSection = 'ssl';
 
     public function postProcess()
     {
@@ -24,14 +21,7 @@ class AdminNtRcSslController extends ModuleAdminController
         parent::postProcess();
     }
 
-    public function initContent()
-    {
-        parent::initContent();
-        $this->content .= $this->renderMappingListAction();
-        $this->context->smarty->assign(array('content' => $this->content));
-    }
-
-    protected function renderMappingListAction()
+    protected function renderSectionContent()
     {
         $rows = NtRcSslProductMappingManager::all(false);
         $html = '<div class="panel"><h3>SSL Product Mapping Backend</h3>';

@@ -83,6 +83,15 @@ Table creation SQL is owned by installer/schema migration code. Runtime managers
 
 Engine 16 moved hosting mapping and billing event manager schema creation responsibility back to `NtRcInstaller`.
 
+## Admin Framework
+
+Engine 17 adds no module-owned database table.
+
+Admin menu entries are installed through PrestaShop's native `Tab` model:
+
+- root: `AdminNtRcRoot`
+- children: `AdminNtRcDashboard`, `AdminNtRcDomains`, `AdminNtRcTrDomains`, `AdminNtRcHosting`, `AdminNtRcSsl`, `AdminNtRcQueue`, `AdminNtRcBilling`, `AdminNtRcMonitoring`, `AdminNtRcNotifications`, `AdminNtRcPricing`, `AdminNtRcBtkCsv`, `AdminNtRcLogs`, `AdminNtRcSettings`, `AdminNtRcLicense`
+
 ## `ps_ntresellerclub_notice`
 
 Yenileme bildirimlerinin tekrar gonderilmesini onler.

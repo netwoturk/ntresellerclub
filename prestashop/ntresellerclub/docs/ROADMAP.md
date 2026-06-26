@@ -27,6 +27,7 @@ Bu dosya ResellerClub + DomainNameAPI destekli PrestaShop domain/hosting/SSL mod
 | SSL Provisioning | Backend engine tamamlandi |
 | SSL Endpoint Verification + Admin Mapping Backend | Tamamlandi |
 | Provider Sandbox & Production Readiness | Tamamlandi |
+| PrestaShop Admin Framework | Tamamlandi |
 
 ## PHASE 08 - Hosting Provisioning
 
@@ -78,7 +79,8 @@ Durum: Backend engine tamamlandi (`codex/engine-14-ssl-provisioning`)
 
 | Phase | Baslik | Not |
 |---|---|---|
-| 10 | SSL Secure CSR + Renew | SSL renew kontrati ve guvenli CSR tasima |
-| 11 | Customer Panel | Hosting/domain/SSL servis gorunurlugu |
-| 12 | Admin Panel | Queue, monitoring ve servis operasyon UI |
-| 13 | Security Deep Hardening | Credential, logging, runtime ve edge case sertlestirme |
+| 10 | Admin Dashboard Data Binding | Admin framework uzerinde dashboard metriklerini baglama |
+| 11 | Queue / Monitoring Admin Screens | Operasyon ekranlari |
+| 12 | SSL Secure CSR + Renew | SSL renew kontrati ve guvenli CSR tasima |
+| 13 | Customer Panel | Hosting/domain/SSL servis gorunurlugu |
+| 14 | Security Deep Hardening | Credential, logging, runtime ve edge case sertlestirme |

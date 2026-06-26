@@ -41,3 +41,27 @@ Modül komple kilitlenmez. Sadece lisansı veya API bilgisi olmayan provider'a a
 ## Yönetim paneli hedefi
 
 Admin panel, WHMCS mantığında servis ve provider durumunu tek ekrandan gösterecek; ancak ödeme ve fatura tarafını PrestaShop kendi sistemi yönetecektir.
+## Engine 17 Admin Framework
+
+Engine 17 ortak admin framework katmanini ekler.
+
+Ana menu: `NetwoTurk Hosting`
+
+Alt menu:
+
+- Dashboard
+- Domains
+- TR Domains
+- Hosting
+- SSL
+- Queue
+- Billing
+- Monitoring
+- Notifications
+- Pricing
+- BTK CSV
+- Logs
+- Settings
+- License
+
+Bu framework provider API cagrisi yapmaz. Dashboard ve sonraki ekranlar mevcut backend engine ozetlerini data provider katmani uzerinden okur.

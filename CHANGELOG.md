@@ -1,5 +1,32 @@
 # Changelog
 
+## 2026-06-26 - Engine 17 PrestaShop Admin Framework
+
+Branch: `codex/engine-17-admin-framework`
+
+### Added
+
+- Added shared admin base controller through `NtRcAdminBaseController`.
+- Added central admin navigation builder for NetwoTurk Hosting menu and section metadata.
+- Added shared admin layout helper with header, sidebar, content, and footer shell.
+- Added widget helper for KPI cards, tables, alerts, status badges, and statistic tiles.
+- Added admin theme helper and dark/light-compatible CSS.
+- Added dashboard data provider interface and dashboard provider using existing backend summaries only.
+- Added thin PrestaShop admin controllers for Dashboard, Domains, TR Domains, Hosting, SSL, Queue, Billing, Monitoring, Notifications, Pricing, BTK CSV, Logs, Settings, and License.
+- Added installer-managed admin tab registration/unregistration.
+- Added `docs/architecture/20_ADMIN_FRAMEWORK.md` and `docs/devbook/ADMIN_FRAMEWORK.md`.
+
+### Changed
+
+- Existing `AdminNtRcSslController` now extends the shared admin base controller instead of duplicating layout behavior.
+- Legacy admin API test button now runs local readiness checks instead of calling a provider endpoint.
+
+### Security
+
+- Shared helpers escape admin output through `Tools::safeOutput`.
+- Admin forms keep PrestaShop admin token/CSRF conventions.
+- Framework pages do not execute provider API calls.
+
 ## 2026-06-26 - Engine 16 Provider Sandbox & Production Readiness
 
 Branch: `codex/engine-16-provider-sandbox-production-readiness`

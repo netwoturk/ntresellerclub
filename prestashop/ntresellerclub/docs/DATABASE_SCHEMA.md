@@ -144,6 +144,31 @@ Engine 16 ile su manager metotlari installer guard'a baglandi:
 - `NtRcHostingProductMappingManager::ensureSchema()`
 - `NtRcBillingEventManager::ensureSchema()`
 
+## Admin Framework
+
+Engine 17 yeni modul tablosu eklemez. Admin menu kayitlari PrestaShop `Tab` modeliyle kurulur ve kaldirilir.
+
+Root controller:
+
+- `AdminNtRcRoot`
+
+Child controller tablari:
+
+- `AdminNtRcDashboard`
+- `AdminNtRcDomains`
+- `AdminNtRcTrDomains`
+- `AdminNtRcHosting`
+- `AdminNtRcSsl`
+- `AdminNtRcQueue`
+- `AdminNtRcBilling`
+- `AdminNtRcMonitoring`
+- `AdminNtRcNotifications`
+- `AdminNtRcPricing`
+- `AdminNtRcBtkCsv`
+- `AdminNtRcLogs`
+- `AdminNtRcSettings`
+- `AdminNtRcLicense`
+
 ## Final Kurallar
 
 - Global domain = ResellerClub.
@@ -155,3 +180,4 @@ Engine 16 ile su manager metotlari installer guard'a baglandi:
 - Notification queue olmadan mail gonderimi yapilmaz.
 - Pricing engine veya manuel mapping olmadan satis fiyati hesaplanmaz.
 - Runtime schema olusturma manager icinde yapilmaz; installer/migration guard kullanilir.
+- Admin framework yeni tablo olusturmaz; PrestaShop native Tab sistemi kullanilir.

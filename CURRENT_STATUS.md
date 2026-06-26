@@ -4,72 +4,62 @@ Date: 2026-06-26
 
 ## Last Work
 
-Engine 16 - Provider Sandbox & Production Readiness Engine
+Engine 17 - PrestaShop Admin Framework
 
 ## Last Branch
 
-`codex/engine-16-provider-sandbox-production-readiness`
+`codex/engine-17-admin-framework`
 
 ## Completed
 
-- Added backend-only production readiness verification through `NtRcProductionReadinessVerifier`.
-- Verified provider contract rules without real provider API calls:
-  - ResellerClub remains allowed for global domain, hosting, and SSL.
-  - DomainNameAPI remains limited to TR domain operations.
-  - DomainNameAPI SSL and hosting actions remain blocked by contract guard.
-- Verified queue architecture for SSL, hosting, billing, notification, and cron-safe processing.
-- Verified Engine 11 pricing integration is reused for SSL and hosting mappings.
-- Verified Engine 13 billing event manager remains the billing integration point.
-- Removed manager-owned runtime table creation SQL from hosting product mapping and billing event manager; both now delegate schema work to `NtRcInstaller`.
-- Added production, sandbox, regression, and Engine 16 architecture documentation.
-- Updated API contract, database, roadmap, changelog, and current-status documentation.
-
-## Production Readiness
-
-- Heavy provider work remains queue -> cron -> processor.
-- Hooks only enqueue/delegate and do not run provider API calls directly.
-- Mail sending remains notification queue -> cron -> `Mail::Send`.
-- Runtime caps remain controlled by `NtRcRuntimeGuard` and shared-hosting batch limits.
-- Sensitive fields remain blocked from logs and payload echo:
-  - api-key
-  - password
-  - credential
-  - csr
-  - private key
-  - certificate raw
-  - token
-  - auth-code
+- Added shared PrestaShop admin framework for completed Foundation and Business Layer engines.
+- Added main admin menu root: `NetwoTurk Hosting`.
+- Added child admin sections: Dashboard, Domains, TR Domains, Hosting, SSL, Queue, Billing, Monitoring, Notifications, Pricing, BTK CSV, Logs, Settings, License.
+- Added `NtRcAdminBaseController` with shared toolbar title, permission helper, token helper, flash helper, and render flow.
+- Added shared layout, navigation builder, theme helper, widget helper, and dashboard data provider interface.
+- Existing SSL admin controller was reused and moved onto the shared base controller.
+- Installer now creates/removes admin tabs through a single navigation definition.
+- Legacy admin API test action now performs local readiness checks and does not call provider APIs.
 
 ## Database Changes
 
-No new table was added in Engine 16.
+No module table was added in Engine 17.
 
-Schema responsibility changed:
+Admin menu records use PrestaShop's native `Tab` model during install/uninstall.
 
-- `NtRcHostingProductMappingManager::ensureSchema()` now calls `NtRcInstaller::ensureHostingProductMappingSchema()`.
-- `NtRcBillingEventManager::ensureSchema()` now calls `NtRcInstaller::ensureBillingEventSchema()`.
+## Security
 
-Table creation SQL is intentionally limited to installer/schema migration code.
+- Shared widget/theme helpers escape text with `Tools::safeOutput`.
+- Admin pages keep PrestaShop token and permission conventions.
+- CSRF helper is available in the base controller.
+- Framework screens do not call ResellerClub or DomainNameAPI.
+
+## Performance
+
+- Dashboard reads existing backend summaries only.
+- No provider API call is executed while opening admin framework pages.
+- No heavy processing runs from admin page load.
 
 ## TODO
 
-- Verify current ResellerClub SSL renew endpoint parameter contract before enabling `renewSsl()`.
-- Run real PrestaShop 1.7, 8, and 9 smoke tests with module install/upgrade.
-- Run ResellerClub sandbox/live-credential tests for verified SSL endpoints.
-- Design secure transient/encrypted CSR handling before exposing automated customer reissue/enroll flows.
+- Build full Dashboard UI on top of this framework.
+- Bind each section to its dedicated data provider in future screen engines.
+- Add richer PrestaShop permission profiles if role-specific operations are introduced.
+- Run real PrestaShop 1.7, 8, and 9 install/upgrade smoke tests.
 
 ## Known Risks
 
 - PHP CLI and real PrestaShop runtime tests were not available in this workspace.
-- ResellerClub SSL renew remains a controlled TODO until official current parameter contract is verified.
-- Raw certificate delivery still needs a secure download design; adapter sanitizes certificate-like response fields.
+- Admin tabs need module install/upgrade execution in a real PrestaShop back office to verify visual placement.
+- Current non-dashboard section pages are intentional skeletons.
 
 ## Last Test
 
-- Static repository scan for duplicate managers/providers/queue/monitoring/notification/pricing/billing/provisioning.
-- Static check that runtime table creation SQL is limited to `NtRcInstaller`.
-- Static check that `curl_exec` remains isolated in `NtRcApiClient`.
-- Static check that `Mail::Send` remains notification-queue based.
+- Repository was scanned for existing controllers/helpers/renderers/data providers before implementation.
+- Static check verified admin framework code does not call provider API clients.
+- Static check verified dashboard provider uses existing backend summary classes.
+- Static check verified `curl_exec` remains isolated in `NtRcApiClient`.
+- Static check verified `Mail::Send` remains notification-queue based.
 - `git diff --check` was run.
 - PHP lint could not be run because PHP CLI is not available in this workspace.
 
@@ -78,11 +68,9 @@ Table creation SQL is intentionally limited to installer/schema migration code.
 - `CHANGELOG.md`
 - `CURRENT_STATUS.md`
 - `ROADMAP.md`
-- `docs/production/PRODUCTION_READINESS.md`
-- `docs/testing/SANDBOX_PROVIDER_TESTS.md`
-- `docs/testing/REGRESSION_TEST_PLAN.md`
-- `docs/architecture/19_PROVIDER_SANDBOX_PRODUCTION_READINESS.md`
+- `docs/admin-panel-architecture.md`
+- `docs/architecture/20_ADMIN_FRAMEWORK.md`
+- `docs/devbook/ADMIN_FRAMEWORK.md`
 - `docs/database-schema.md`
-- `prestashop/ntresellerclub/docs/API_CONTRACT_RULES.md`
 - `prestashop/ntresellerclub/docs/DATABASE_SCHEMA.md`
 - `prestashop/ntresellerclub/docs/ROADMAP.md`

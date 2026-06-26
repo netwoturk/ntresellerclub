@@ -1,0 +1,115 @@
+.ntrc-admin-shell {
+    background: var(--ntrc-admin-bg, #f7f8fb);
+    border: 1px solid #dfe3e8;
+    color: #1f2933;
+}
+
+.ntrc-admin-header,
+.ntrc-admin-footer {
+    background: var(--ntrc-admin-panel, #ffffff);
+    padding: 14px 18px;
+}
+
+.ntrc-admin-header h2 {
+    margin: 0 0 6px;
+}
+
+.ntrc-admin-body {
+    display: flex;
+    min-height: 420px;
+}
+
+.ntrc-admin-sidebar {
+    background: #ffffff;
+    border-right: 1px solid #dfe3e8;
+    flex: 0 0 230px;
+}
+
+.ntrc-admin-sidebar ul {
+    list-style: none;
+    margin: 0;
+    padding: 8px;
+}
+
+.ntrc-admin-sidebar a {
+    align-items: center;
+    border-radius: 4px;
+    color: #344054;
+    display: flex;
+    gap: 8px;
+    padding: 9px 10px;
+    text-decoration: none;
+}
+
+.ntrc-admin-sidebar li.active a,
+.ntrc-admin-sidebar a:hover {
+    background: #eef4ff;
+    color: #1849a9;
+}
+
+.ntrc-admin-content {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 16px;
+}
+
+.ntrc-widget-grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.ntrc-widget {
+    background: #ffffff;
+    border: 1px solid #dfe3e8;
+    border-radius: 6px;
+    padding: 12px;
+}
+
+.ntrc-widget-title,
+.ntrc-widget-desc,
+.ntrc-stat-tile small {
+    color: #667085;
+}
+
+.ntrc-widget-value {
+    font-size: 24px;
+    font-weight: 600;
+    margin: 6px 0;
+}
+
+.ntrc-stat-tile span {
+    display: block;
+    font-size: 20px;
+    margin-top: 4px;
+}
+
+@media (prefers-color-scheme: dark) {
+    .ntrc-admin-shell {
+        --ntrc-admin-bg: #111827;
+        --ntrc-admin-panel: #1f2937;
+        border-color: #374151;
+        color: #f9fafb;
+    }
+
+    .ntrc-admin-header,
+    .ntrc-admin-footer,
+    .ntrc-admin-sidebar,
+    .ntrc-widget {
+        background: #1f2937;
+        border-color: #374151;
+    }
+
+    .ntrc-admin-sidebar a,
+    .ntrc-widget-title,
+    .ntrc-widget-desc,
+    .ntrc-stat-tile small {
+        color: #d1d5db;
+    }
+
+    .ntrc-admin-sidebar li.active a,
+    .ntrc-admin-sidebar a:hover {
+        background: #243b64;
+        color: #ffffff;
+    }
+}

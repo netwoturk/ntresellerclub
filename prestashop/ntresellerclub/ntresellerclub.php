@@ -18,6 +18,7 @@ require_once __DIR__ . '/classes/NtRcBtkCsvExportEngine.php';
 require_once __DIR__ . '/classes/NtRcSslMappingAdminRenderer.php';
 require_once __DIR__ . '/classes/NtRcSslProductMappingManager.php';
 require_once __DIR__ . '/classes/NtRcProductionReadinessVerifier.php';
+require_once __DIR__ . '/classes/admin/NtRcAdminThemeHelper.php';
 
 class Ntresellerclub extends Module
 {
@@ -76,8 +77,10 @@ class Ntresellerclub extends Module
             && Configuration::updateValue(self::CFG_CRON_BATCH_LIMIT, 10)
             && NtRcManualExchangeRate::ensureDefaultRates()
             && NtRcPricingManager::seedResellerClubMappings('USD')
+            && NtRcInstaller::installAdminTabs()
             && $this->registerHook('actionValidateOrder')
-            && $this->registerHook('displayCustomerAccount');
+            && $this->registerHook('displayCustomerAccount')
+            && $this->registerHook('displayBackOfficeHeader');
     }
 
     public function uninstall()
@@ -92,7 +95,7 @@ class Ntresellerclub extends Module
         ) as $key) {
             Configuration::deleteByName($key);
         }
-        return parent::uninstall();
+        return NtRcInstaller::uninstallAdminTabs() && parent::uninstall();
     }
 
     public function getContent()
@@ -288,20 +291,12 @@ class Ntresellerclub extends Module
 
     protected function renderApiTest()
     {
-        if (!NtRcFeature::isResellerClubActive()) {
-            return $this->displayWarning($this->l('ResellerClub provider lisansı/özelliği aktif değil.'));
+        $summary = NtRcProductionReadinessVerifier::summary();
+        $message = 'Admin readiness checks: ' . (int)$summary['check_count'] . ', failed: ' . (int)$summary['failed_count'];
+        if (!empty($summary['success'])) {
+            return $this->displayConfirmation($this->l($message));
         }
-        $client = new NtRcApiClient(
-            (bool)Configuration::get(self::CFG_LIVE_MODE),
-            Configuration::get(self::CFG_RESELLER_ID),
-            Configuration::get(self::CFG_API_KEY),
-            Configuration::get(self::CFG_LANG_PREF) ?: 'en'
-        );
-        $response = $client->domainAvailability('netwoturk', array('com'));
-        if ($response['success']) {
-            return $this->displayConfirmation($this->l('ResellerClub API testi başarılı.')) . '<pre>' . Tools::safeOutput(print_r($response['data'], true)) . '</pre>';
-        }
-        return $this->displayError($this->l('API testi başarısız: ') . Tools::safeOutput($response['error']) . ' HTTP: ' . (int)$response['http_code']) . '<pre>' . Tools::safeOutput($response['raw']) . '</pre>';
+        return $this->displayWarning($this->l($message));
     }
 
     protected function downloadBtkCsv($type)
@@ -371,7 +366,7 @@ class Ntresellerclub extends Module
                 array('type' => 'text', 'label' => $this->l('Cron URL'), 'name' => 'NTRC_CRON_URL', 'readonly' => true),
             ),
             'submit' => array('title' => $this->l('Kaydet'), 'name' => 'submitNtRcSettings'),
-            'buttons' => array(array('title' => $this->l('ResellerClub API Test Et'), 'name' => 'testNtRcApi', 'type' => 'submit', 'class' => 'btn btn-default pull-right')),
+            'buttons' => array(array('title' => $this->l('Admin Readiness Kontrol Et'), 'name' => 'testNtRcApi', 'type' => 'submit', 'class' => 'btn btn-default pull-right')),
         ));
         $helper = new HelperForm();
         $helper->module = $this;
@@ -427,5 +422,15 @@ class Ntresellerclub extends Module
     {
         $url = $this->context->link->getModuleLink($this->name, 'services');
         return '<a class="col-lg-4 col-md-6 col-sm-6 col-xs-12" href="' . $url . '"><span class="link-item"><i class="material-icons">dns</i>' . $this->l('Hizmetlerim') . '</span></a>';
+    }
+
+    public function hookDisplayBackOfficeHeader($params)
+    {
+        $controller = Tools::getValue('controller');
+        if (stripos((string)$controller, 'AdminNtRc') !== 0) {
+            return;
+        }
+
+        $this->context->controller->addCSS(NtRcAdminThemeHelper::cssUrl());
     }
 }
