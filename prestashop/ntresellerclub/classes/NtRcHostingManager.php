@@ -7,6 +7,7 @@ require_once __DIR__ . '/NtRcHostingProductMappingManager.php';
 require_once __DIR__ . '/NtRcOperationQueueManager.php';
 require_once __DIR__ . '/NtRcServiceRepository.php';
 require_once __DIR__ . '/NtRcNotificationEngine.php';
+require_once __DIR__ . '/NtRcBillingEventManager.php';
 require_once __DIR__ . '/NtRcLog.php';
 
 class NtRcHostingManager
@@ -66,6 +67,7 @@ class NtRcHostingManager
         if (!$paymentConfirmed) {
             NtRcServiceRepository::updateStatus((int)$idService, 'payment_required');
             $this->enqueuePaymentRequiredNotification($service);
+            $this->recordPaymentRequired($service, 'hosting');
             return array('success' => true, 'status' => 'payment_required', 'message' => 'Odeme alinmadan hosting renew queue olusturulmadi.');
         }
 
@@ -197,6 +199,23 @@ class NtRcHostingManager
         } catch (Exception $e) {
             NtRcLog::add('warning', 'hosting_provisioning', 'Payment required notification failed service=' . (int)$service['id_ntresellerclub_service'] . ' ' . $this->safeText($e->getMessage()));
         }
+    }
+
+    protected function recordPaymentRequired(array $service, $serviceType)
+    {
+        NtRcBillingEventManager::record(
+            'renewal_payment_required',
+            'payment_required',
+            array(
+                'id_order' => !empty($service['id_order']) ? (int)$service['id_order'] : null,
+                'id_customer' => !empty($service['id_customer']) ? (int)$service['id_customer'] : null,
+                'id_service' => !empty($service['id_ntresellerclub_service']) ? (int)$service['id_ntresellerclub_service'] : null,
+                'provider_code' => self::PROVIDER_CODE,
+                'service_type' => $serviceType,
+            ),
+            'Odeme alinmadan renew provider queue olusturulmadi.',
+            array('reason' => 'renewal_payment_required')
+        );
     }
 
     protected function extractDomainName(array $product)
