@@ -34,7 +34,7 @@ class NtRcBillingEventManager
         $today = date('Y-m-d');
 
         return array(
-            'payment_required_count' => self::countByEvent('payment_required'),
+            'payment_required_count' => self::countByEvent('payment_required') + self::countByEvent('renewal_payment_required'),
             'provider_credit_required_count' => self::countByEvent('provider_credit_required'),
             'billing_failed_count' => self::countByStatus('failed'),
             'unpaid_renewal_count' => self::countByEvent('renewal_payment_required'),
