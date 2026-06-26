@@ -1,5 +1,27 @@
 # Changelog
 
+## 2026-06-26 - V1 Admin Dashboard Data Binding
+
+Branch: `codex/v1-admin-dashboard-data-binding`
+
+### Added
+
+- Bound admin Dashboard to real local backend data through `NtRcAdminDashboardDataProvider`.
+- Added KPI cards for active services, queue state, billing action-required state, and notification queue state.
+- Added provider health, queue summary, runtime summary, service overview, failed operations, notification summary, and quick action sections.
+- Added `docs/devbook/ADMIN_DASHBOARD_DETAILED_SPEC.md`.
+
+### Changed
+
+- `NtRcAdminBaseController::renderDashboardSkeleton()` now renders the real V1 dashboard instead of a foundation-only placeholder.
+- Admin dashboard CSS now includes dashboard grid and quick action layout helpers.
+
+### Security
+
+- Dashboard reads no provider API endpoint during page load.
+- Failed operation output excludes payload JSON and sanitizes error text.
+- Credential-like values are masked before render.
+
 ## 2026-06-26 - Engine 17 PrestaShop Admin Framework
 
 Branch: `codex/engine-17-admin-framework`

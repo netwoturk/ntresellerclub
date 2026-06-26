@@ -36,8 +36,8 @@ Admin data providers may compose existing backend managers and monitoring classe
 Allowed example:
 
 ```php
-$statistics = new NtRcStatisticsEngine();
-$queue = $statistics->queueSummary();
+$provider = new NtRcAdminDashboardDataProvider();
+$summary = $provider->getSummary();
 ```
 
 Disallowed example:
@@ -48,3 +48,19 @@ $client->domainAvailability(...);
 ```
 
 Provider sandbox tests belong in testing workflows, not admin page rendering.
+
+## V1 Dashboard Binding
+
+The Dashboard screen is bound through `NtRcAdminDashboardDataProvider`.
+
+It reads only local backend tables and existing monitoring classes:
+
+- service counts,
+- operation queue summary,
+- provider health snapshots,
+- runtime health snapshots,
+- billing summary,
+- notification queue summary,
+- latest failed operations.
+
+It must not call `NtRcApiClient`, provider adapters, sandbox checks, or cron processors during page load.

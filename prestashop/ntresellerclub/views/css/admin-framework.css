@@ -59,6 +59,23 @@
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 }
 
+.ntrc-dashboard-grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    margin-top: 14px;
+}
+
+.ntrc-dashboard-wide {
+    margin-top: 14px;
+}
+
+.ntrc-quick-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
 .ntrc-widget {
     background: #ffffff;
     border: 1px solid #dfe3e8;

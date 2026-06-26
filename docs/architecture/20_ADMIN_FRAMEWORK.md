@@ -89,15 +89,15 @@ Widget text is escaped through `NtRcAdminThemeHelper::esc()`.
 
 `NtRcAdminDataProviderInterface` is the contract for admin screens.
 
-`NtRcAdminDashboardDataProvider` reads existing backend summaries:
+`NtRcAdminDashboardDataProvider` is the Dashboard data source. V1 dashboard binding reads local snapshots and aggregate counters from existing module tables:
 
-- `NtRcProductionReadinessVerifier`
-- `NtRcStatisticsEngine::queueSummary()`
-- `NtRcStatisticsEngine::hostingSummary()`
-- `NtRcStatisticsEngine::sslSummary()`
-- `NtRcStatisticsEngine::billingSummary()`
+- operation queue,
+- service,
+- provider health,
+- runtime health,
+- notification queue.
 
-It does not write SQL directly and does not call provider APIs.
+It does not call provider APIs, run cron processors, or invoke installer schema guards during page load.
 
 ## Security
 

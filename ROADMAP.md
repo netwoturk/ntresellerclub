@@ -22,6 +22,7 @@ This root roadmap is the repository-level continuation file for Codex engine wor
 | 15 | SSL Endpoint Verification + Admin Mapping Backend | Completed in `codex/engine-15-ssl-endpoint-verification-admin-mapping` |
 | 16 | Provider Sandbox & Production Readiness | Completed in `codex/engine-16-provider-sandbox-production-readiness` |
 | 17 | PrestaShop Admin Framework | Completed in `codex/engine-17-admin-framework` |
+| V1 | Admin Dashboard Data Binding | Completed in `codex/v1-admin-dashboard-data-binding` |
 
 ## Engine 12 - Hosting Provisioning
 
@@ -47,8 +48,8 @@ This root roadmap is the repository-level continuation file for Codex engine wor
 
 | Engine | Name | Notes |
 |---|---|---|
-| 18 | Admin Dashboard Data Binding | Bind dashboard cards/tables to completed backend metrics |
-| 19 | Queue & Monitoring Admin Screens | Operations UI using the admin framework |
+| 18 | Queue & Monitoring Admin Screens | Operations UI using the admin framework |
+| 19 | Billing & Notification Admin Screens | Billing events and mail queue visibility |
 | 20 | SSL Renew + Secure CSR Flow | Verify renew contract and design transient/encrypted CSR handling |
 | 21 | Webhook | Provider webhook ingestion |
 | 22 | Customer Dashboard | Customer service panel expansion |
