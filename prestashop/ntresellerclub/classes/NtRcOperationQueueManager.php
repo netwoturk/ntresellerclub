@@ -129,8 +129,8 @@ class NtRcOperationQueueManager
         self::ensureSchema();
 
         $item = self::get($idQueue);
-        if (!$item || $item['status'] !== 'failed') {
-            return array('success' => false, 'message' => 'Failed queue kaydi bulunamadi.');
+        if (!$item || !in_array($item['status'], array('failed', 'provider_credit_required'), true)) {
+            return array('success' => false, 'message' => 'Retry edilebilir failed/provider_credit_required queue kaydi bulunamadi.');
         }
 
         $payload = self::decodePayload($item['payload_json']);
@@ -148,7 +148,7 @@ class NtRcOperationQueueManager
             'locked_at' => null,
             'processed_at' => null,
             'updated_at' => date('Y-m-d H:i:s'),
-        ), 'id_ntresellerclub_operation_queue=' . (int)$idQueue . ' AND status="failed"');
+        ), 'id_ntresellerclub_operation_queue=' . (int)$idQueue . ' AND status IN ("failed", "provider_credit_required")');
 
         return array('success' => (bool)$ok, 'queue_id' => (int)$idQueue);
     }
