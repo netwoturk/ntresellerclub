@@ -21,6 +21,8 @@ Engine 13 - Billing & Order Orchestrator
 - Billing event history was added with sanitized metadata.
 - Provider credit shortage is treated as `provider_credit_required`, not as a customer payment failure.
 - Cron now uses `NtRcBillingOperationQueueProcessor` to detect provider credit/balance errors.
+- Provider-credit queues can be retried after provider balance is topped up.
+- Domain and hosting renew helpers block provider queue creation until payment confirmation and record `renewal_payment_required`.
 - Backend monitoring exposes billing/order metrics without adding admin UI.
 - Installer, install SQL, and uninstall SQL include `ntresellerclub_billing_event`.
 
@@ -46,8 +48,8 @@ Key fields:
 ## TODO
 
 - Verify and implement real ResellerClub SSL endpoint/resource/action details before executing SSL provider calls.
-- Connect provider-credit retry operations to the future Admin Operations UI.
-- Connect renewal payment confirmation to the future billing/invoice engine.
+- Connect provider-credit retry actions to the future Admin Operations UI.
+- Connect renewal payment confirmation references to the future billing/invoice engine.
 
 ## Known Risks
 
