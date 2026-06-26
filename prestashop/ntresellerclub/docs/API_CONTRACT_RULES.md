@@ -40,7 +40,7 @@ Asagidaki islemler dogrudan calistirilmayacaktir:
 | Hosting renew | Yasak |
 | Hosting suspend/unsuspend | Yasak |
 | SSL create | Yasak |
-| SSL renew/reissue/cancel/details/download | Yasak |
+| SSL renew/reissue/cancel/details/download/validation status | Yasak |
 | Provider customer create | Yasak |
 | Mail gonderimi | Yasak |
 
@@ -78,10 +78,48 @@ Izinli SSL queue action degerleri:
 | `ssl/cancel` | resellerclub | Endpoint dogrulaninca adapter tamamlanacak |
 | `ssl/details` | resellerclub | Endpoint dogrulaninca adapter tamamlanacak |
 | `ssl/download` | resellerclub | Endpoint dogrulaninca adapter tamamlanacak |
+| `ssl/validation_status` | resellerclub | Details endpointinden DCV/verification bilgisi okunur |
 
 Odeme alinmadan `ssl/renew` provider API cagrisi yapilmaz. Odeme yoksa servis `payment_required` durumuna alinir, billing event `renewal_payment_required` olarak yazilir ve notification queue uzerinden musteri bildirimi hazirlanir.
 
-ResellerClub SSL endpointleri resmi kaynakla dogrulanmadigi surece adapter gercek API cagrisi yapmaz; TODO mesaji dondurur ve queue retry/failed akisi calisir.
+Engine 15 dogrulanmis SSL endpointleri:
+
+| Adapter | ResellerClub path | Method | Not |
+|---|---|---|---|
+| `createSsl()` | `/api/sslcert/add.json` | POST | `domain-name`, `months`, `customer-id`, `plan-id`, `invoice-option` gerekir |
+| `reissueSsl()` | `/api/sslcert/reissue.json` | POST | CSR gerekir; CSR yoksa kontrollu failure |
+| `cancelSsl()` | `/api/sslcert/delete.json` | POST | `order-id` gerekir |
+| `getSslDetails()` | `/api/sslcert/details.json` | GET | `order-id` gerekir |
+| `downloadSsl()` | `/api/sslcert/get-cert-details.json` | GET | Ham certificate response sanitize edilir |
+| `getValidationStatus()` | `/api/sslcert/details.json` | GET | DCV bilgisi details response alanlarindan okunur |
+
+Kontrollu TODO kalan SSL endpointleri:
+
+| Adapter | Durum |
+|---|---|
+| `renewSsl()` | Legacy/WebPro path goruldu, guncel ResellerClub parametre kontrati kesinlesmedigi icin production cagrisi yapmaz |
+
+DomainNameAPI icin `ssl/create`, `ssl/renew`, `ssl/reissue`, `ssl/cancel`, `ssl/details`, `ssl/download` ve `ssl/validation_status` action degerleri sozlesme disidir ve reddedilir.
+
+CSR/private key/certificate raw degerleri loglanmayacak ve kalici queue payload tasarimi netlesmeden manager tarafindan lifecycle options icinden temizlenecektir.
+
+## Admin SSL Mapping Kurali
+
+Admin mapping backend sadece local DB/pricing mapping gunceller. Controller veya template icinden provider API cagrisi yapilmaz.
+
+Zorunlu alanlar:
+
+- `id_product`
+- `provider_code=resellerclub`
+- `provider_product_id`
+- `ssl_product_type`
+- `billing_cycle`
+- `cost_price`
+- `sale_price`
+- `currency`
+- `active`
+
+Mapping kaydi `NtRcSslProductMappingManager` uzerinden gecer ve satis/maliyet alanlari Engine 11 `NtRcPricingManager` satirina yansitilir. Yeni pricing sistemi yazilmaz.
 
 ## Fiyat Kurali
 

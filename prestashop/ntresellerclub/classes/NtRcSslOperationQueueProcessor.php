@@ -25,6 +25,7 @@ class NtRcSslOperationQueueProcessor extends NtRcHostingOperationQueueProcessor
             'ssl/cancel' => 'cancelSsl',
             'ssl/details' => 'getSslDetails',
             'ssl/download' => 'downloadSsl',
+            'ssl/validation_status' => 'getValidationStatus',
         );
 
         $action = isset($item['action']) ? $item['action'] : '';
@@ -44,7 +45,7 @@ class NtRcSslOperationQueueProcessor extends NtRcHostingOperationQueueProcessor
             return;
         }
 
-        if (!in_array($item['action'], array('ssl/create', 'ssl/renew', 'ssl/reissue', 'ssl/cancel', 'ssl/details', 'ssl/download'), true)) {
+        if (!in_array($item['action'], array('ssl/create', 'ssl/renew', 'ssl/reissue', 'ssl/cancel', 'ssl/details', 'ssl/download', 'ssl/validation_status'), true)) {
             return;
         }
 
@@ -73,7 +74,7 @@ class NtRcSslOperationQueueProcessor extends NtRcHostingOperationQueueProcessor
             return;
         }
 
-        if (!in_array($item['action'], array('ssl/create', 'ssl/renew', 'ssl/reissue', 'ssl/cancel', 'ssl/details', 'ssl/download'), true)) {
+        if (!in_array($item['action'], array('ssl/create', 'ssl/renew', 'ssl/reissue', 'ssl/cancel', 'ssl/details', 'ssl/download', 'ssl/validation_status'), true)) {
             return;
         }
 

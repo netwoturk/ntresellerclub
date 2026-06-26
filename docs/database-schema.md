@@ -62,7 +62,10 @@ PrestaShop SSL urunlerini ResellerClub SSL urunleriyle eslestirir. SSL sadece Re
 | `id_product` | PrestaShop product id |
 | `provider_code` | Sabit `resellerclub` |
 | `provider_product_id` | ResellerClub SSL urun ID |
+| `ssl_product_type` | standard, premium, wildcard, ev vb. SSL urun tipi |
 | `billing_cycle` | yearly / biennial / triennial |
+| `cost_price` | Manuel maliyet; Engine 11 pricing satirina yansitilir |
+| `sale_price` | Manuel satis fiyati; Engine 11 pricing satirina yansitilir |
 | `currency` | Para birimi |
 | `active` | Aktif mapping |
 

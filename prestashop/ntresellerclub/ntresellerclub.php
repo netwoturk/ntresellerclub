@@ -15,6 +15,8 @@ require_once __DIR__ . '/classes/NtRcTrPriceAdminRenderer.php';
 require_once __DIR__ . '/classes/NtRcTrPriceManager.php';
 require_once __DIR__ . '/classes/NtRcRuntimeAdminRenderer.php';
 require_once __DIR__ . '/classes/NtRcBtkCsvExportEngine.php';
+require_once __DIR__ . '/classes/NtRcSslMappingAdminRenderer.php';
+require_once __DIR__ . '/classes/NtRcSslProductMappingManager.php';
 
 class Ntresellerclub extends Module
 {
@@ -121,6 +123,18 @@ class Ntresellerclub extends Module
             $this->saveTrPrices();
             $output .= $this->displayConfirmation($this->l('TR fiyat ayarlari kaydedildi.'));
         }
+        if (Tools::isSubmit('submitNtRcSaveSslMapping')) {
+            $result = $this->saveSslMapping();
+            $output .= !empty($result['success'])
+                ? $this->displayConfirmation($this->l('SSL mapping kaydedildi.'))
+                : $this->displayError(isset($result['message']) ? $result['message'] : $this->l('SSL mapping kaydedilemedi.'));
+        }
+        if (Tools::isSubmit('submitNtRcToggleSslMapping')) {
+            $result = $this->toggleSslMapping();
+            $output .= !empty($result['success'])
+                ? $this->displayConfirmation($this->l('SSL mapping durumu guncellendi.'))
+                : $this->displayError(isset($result['message']) ? $result['message'] : $this->l('SSL mapping durumu guncellenemedi.'));
+        }
         if (Tools::isSubmit('testNtRcApi')) {
             $output .= $this->renderApiTest();
         }
@@ -129,6 +143,7 @@ class Ntresellerclub extends Module
             . NtRcRuntimeAdminRenderer::render($this)
             . NtRcExchangeRateAdminRenderer::render($this)
             . NtRcTrPriceAdminRenderer::render($this)
+            . NtRcSslMappingAdminRenderer::render($this)
             . $this->renderBtkCsvPanel()
             . $this->renderForm();
     }
@@ -203,6 +218,38 @@ class Ntresellerclub extends Module
                 isset($row['margin_fixed']) ? $row['margin_fixed'] : 0
             );
         }
+    }
+
+    protected function saveSslMapping()
+    {
+        if (!$this->isValidSslMappingToken()) {
+            return array('success' => false, 'message' => $this->l('Gecersiz SSL mapping token.'));
+        }
+
+        return NtRcSslProductMappingManager::upsert(array(
+            'id_product' => (int)Tools::getValue('id_product'),
+            'provider_product_id' => trim((string)Tools::getValue('provider_product_id')),
+            'ssl_product_type' => trim((string)Tools::getValue('ssl_product_type')),
+            'billing_cycle' => trim((string)Tools::getValue('billing_cycle')),
+            'cost_price' => (float)Tools::getValue('cost_price'),
+            'sale_price' => (float)Tools::getValue('sale_price'),
+            'currency' => trim((string)Tools::getValue('currency')),
+            'active' => (int)Tools::getValue('active', 1),
+        ));
+    }
+
+    protected function toggleSslMapping()
+    {
+        if (!$this->isValidSslMappingToken()) {
+            return array('success' => false, 'message' => $this->l('Gecersiz SSL mapping token.'));
+        }
+
+        return NtRcSslProductMappingManager::toggle((int)Tools::getValue('id_mapping'), (int)Tools::getValue('active'));
+    }
+
+    protected function isValidSslMappingToken()
+    {
+        return Tools::getValue('nt_ssl_mapping_token') === Tools::getAdminTokenLite('AdminModules');
     }
 
     protected function saveSettings()

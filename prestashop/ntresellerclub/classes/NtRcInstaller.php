@@ -158,7 +158,10 @@ class NtRcInstaller
             . '`id_product` INT UNSIGNED NOT NULL,'
             . '`provider_code` VARCHAR(64) NOT NULL DEFAULT "resellerclub",'
             . '`provider_product_id` VARCHAR(128) NOT NULL,'
+            . '`ssl_product_type` VARCHAR(64) NOT NULL DEFAULT "standard",'
             . '`billing_cycle` VARCHAR(32) NOT NULL DEFAULT "yearly",'
+            . '`cost_price` DECIMAL(20,6) DEFAULT 0,'
+            . '`sale_price` DECIMAL(20,6) DEFAULT 0,'
             . '`currency` VARCHAR(10) DEFAULT "USD",'
             . '`active` TINYINT(1) DEFAULT 1,'
             . '`created_at` DATETIME NOT NULL,'
@@ -177,8 +180,11 @@ class NtRcInstaller
             'id_product' => 'INT UNSIGNED NOT NULL AFTER `id_ntresellerclub_ssl_product_mapping`',
             'provider_code' => 'VARCHAR(64) NOT NULL DEFAULT "resellerclub" AFTER `id_product`',
             'provider_product_id' => 'VARCHAR(128) NOT NULL AFTER `provider_code`',
-            'billing_cycle' => 'VARCHAR(32) NOT NULL DEFAULT "yearly" AFTER `provider_product_id`',
-            'currency' => 'VARCHAR(10) DEFAULT "USD" AFTER `billing_cycle`',
+            'ssl_product_type' => 'VARCHAR(64) NOT NULL DEFAULT "standard" AFTER `provider_product_id`',
+            'billing_cycle' => 'VARCHAR(32) NOT NULL DEFAULT "yearly" AFTER `ssl_product_type`',
+            'cost_price' => 'DECIMAL(20,6) DEFAULT 0 AFTER `billing_cycle`',
+            'sale_price' => 'DECIMAL(20,6) DEFAULT 0 AFTER `cost_price`',
+            'currency' => 'VARCHAR(10) DEFAULT "USD" AFTER `sale_price`',
             'active' => 'TINYINT(1) DEFAULT 1 AFTER `currency`',
             'created_at' => 'DATETIME NOT NULL AFTER `active`',
             'updated_at' => 'DATETIME DEFAULT NULL AFTER `created_at`',

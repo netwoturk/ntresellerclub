@@ -31,6 +31,7 @@ class NtRcMailTemplateManager
             'ssl_expired',
             'ssl_reissue_required',
             'queue_failed_admin',
+            'provider_credit_required',
             'provider_down_admin',
             'payment_required',
             'service_suspended',
@@ -112,7 +113,7 @@ class NtRcMailTemplateManager
 
     public static function defaultRecipientType($templateKey)
     {
-        return in_array($templateKey, array('queue_failed_admin', 'provider_down_admin'), true) ? 'admin' : 'customer';
+        return in_array($templateKey, array('queue_failed_admin', 'provider_credit_required', 'provider_down_admin'), true) ? 'admin' : 'customer';
     }
 
     protected static function templateExists($templateKey, $langIso, $recipientType)
@@ -192,6 +193,7 @@ class NtRcMailTemplateManager
             'ssl_expired' => array('tr' => 'SSL hizmetiniz sona erdi', 'en' => 'Your SSL service has expired', 'de' => 'Ihr SSL-Dienst ist abgelaufen', 'fr' => 'Votre service SSL a expire', 'es' => 'Su servicio SSL ha caducado', 'it' => 'Il tuo servizio SSL e scaduto'),
             'ssl_reissue_required' => array('tr' => 'SSL yeniden duzenleme gerekiyor', 'en' => 'SSL reissue is required', 'de' => 'SSL-Neuausstellung erforderlich', 'fr' => 'Reemission SSL requise', 'es' => 'Se requiere reemision SSL', 'it' => 'Ri-emissione SSL richiesta'),
             'queue_failed_admin' => array('tr' => 'Queue failed bildirimi', 'en' => 'Queue failure notification', 'de' => 'Queue-Fehlerbenachrichtigung', 'fr' => 'Notification d echec de queue', 'es' => 'Notificacion de error de cola', 'it' => 'Notifica errore coda'),
+            'provider_credit_required' => array('tr' => 'Provider kredi gerekiyor', 'en' => 'Provider credit required', 'de' => 'Provider-Guthaben erforderlich', 'fr' => 'Credit provider requis', 'es' => 'Credito del proveedor requerido', 'it' => 'Credito provider richiesto'),
             'provider_down_admin' => array('tr' => 'Provider saglik uyarisi', 'en' => 'Provider health warning', 'de' => 'Provider-Gesundheitswarnung', 'fr' => 'Alerte de sante provider', 'es' => 'Alerta de salud del proveedor', 'it' => 'Avviso salute provider'),
             'payment_required' => array('tr' => 'Odeme gerekiyor', 'en' => 'Payment required', 'de' => 'Zahlung erforderlich', 'fr' => 'Paiement requis', 'es' => 'Pago requerido', 'it' => 'Pagamento richiesto'),
             'service_suspended' => array('tr' => 'Hizmetiniz askida', 'en' => 'Your service is suspended', 'de' => 'Ihr Dienst ist gesperrt', 'fr' => 'Votre service est suspendu', 'es' => 'Su servicio esta suspendido', 'it' => 'Il tuo servizio e sospeso'),
@@ -259,6 +261,6 @@ class NtRcMailTemplateManager
 
     protected static function safeText($text)
     {
-        return preg_replace('/(api-key|api_key|auth-code|auth_code|passwd|password|token|credential)=([^&\s]+)/i', '$1=***', (string)$text);
+        return preg_replace('/(api-key|api_key|auth-code|auth_code|passwd|password|token|credential|csr|private_key|private-key|certificate|certificate_raw|cert_raw)=([^&\s]+)/i', '$1=***', (string)$text);
     }
 }

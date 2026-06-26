@@ -1,5 +1,34 @@
 # Changelog
 
+## 2026-06-26 - Engine 15 SSL Endpoint Verification + Admin Mapping Backend
+
+Branch: `codex/engine-15-ssl-endpoint-verification-admin-mapping`
+
+### Added
+
+- Added verified ResellerClub SSL API wiring for add, details, reissue, delete/cancel, certificate details, and validation-status reads.
+- Added `ssl/validation_status` queue contract support.
+- Added SSL mapping admin backend skeleton through `NtRcSslMappingAdminRenderer`, `AdminNtRcSslController`, and `views/templates/admin/ssl_mapping.tpl`.
+- Added `provider_credit_required` notification template key.
+- Added `docs/architecture/18_SSL_ENDPOINT_VERIFICATION_ADMIN_MAPPING.md`.
+
+### Changed
+
+- Extended `ntresellerclub_ssl_product_mapping` with `ssl_product_type`, `cost_price`, and `sale_price`.
+- `NtRcSslProductMappingManager` now syncs mapping cost/sale data into Engine 11 `NtRcPricingManager`.
+- `NtRcSslMonitoring::summary()` now exposes `active_ssl_count`, `pending_ssl_queue`, `failed_ssl_queue`, `ssl_expiring_count`, and `ssl_provider_credit_required_count`.
+- SSL API contract docs now distinguish verified endpoints from controlled TODO actions.
+
+### Fixed
+
+- DomainNameAPI remains blocked from all SSL queue actions, including `ssl/validation_status`.
+- SSL adapter sanitizes CSR/private-key/certificate-like fields from returned data and failure payloads.
+
+### TODO
+
+- `renewSsl()` remains controlled TODO until the current ResellerClub SSL renew parameter contract is verified from official help material.
+- Secure transient/encrypted CSR handling is required before customer-facing automated reissue/enroll flows are exposed.
+
 ## 2026-06-26 - Engine 14 SSL Provisioning
 
 Branch: `codex/engine-14-ssl-provisioning`

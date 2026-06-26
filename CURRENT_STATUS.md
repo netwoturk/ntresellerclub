@@ -4,32 +4,38 @@ Date: 2026-06-26
 
 ## Last Work
 
-Engine 14 - SSL Provisioning Engine
+Engine 15 - SSL Endpoint Verification + Admin Mapping Backend
 
 ## Last Branch
 
-`codex/engine-14-ssl-provisioning`
+`codex/engine-15-ssl-endpoint-verification-admin-mapping`
 
 ## Completed
 
-- SSL backend provisioning was added through `NtRcSslManager`.
-- SSL product mapping is handled by `ntresellerclub_ssl_product_mapping`.
-- SSL queue actions are `ssl/create`, `ssl/renew`, `ssl/reissue`, `ssl/cancel`, `ssl/details`, and `ssl/download`.
-- SSL queue processing extends the existing hosting/domain/billing queue chain.
-- ResellerClub is the only SSL provider; DomainNameAPI SSL is blocked by contract guard.
-- ResellerClub SSL adapter returns controlled TODO/failure responses until official endpoints are verified.
-- SSL renew blocks provider queue creation until payment confirmation and records billing/payment-required state.
-- SSL lifecycle notifications include `ssl_created`, `ssl_renewed`, `ssl_expired`, `ssl_reissue_required`, and `payment_required`.
-- Backend monitoring exposes SSL active, failed, pending, and expiring metrics.
-- Installer, install SQL, and uninstall SQL include SSL product mapping schema.
+- ResellerClub SSL endpoint verification was documented in `docs/resellerclub-api-analysis.md`.
+- `NtRcResellerClubSslAdapter` now calls verified SSL add, details, reissue, delete/cancel, certificate details, and validation status paths.
+- `renewSsl()` remains a controlled TODO because the current ResellerClub renew parameter contract was not fully verified.
+- `ssl/validation_status` was added to queue contract and processor dispatch.
+- DomainNameAPI remains blocked from every SSL queue action.
+- SSL mapping backend was extended with `ssl_product_type`, `cost_price`, and `sale_price`.
+- SSL mapping save/toggle/list backend skeleton was added.
+- SSL mapping writes sync cost/sale data into the existing Engine 11 pricing manager.
+- Provider credit failures now enqueue the `provider_credit_required` admin notification template.
+- SSL monitoring exposes active, pending queue, failed queue, expiring, and provider-credit-required metrics.
 
 ## Database Changes
 
-New table:
+Updated table:
 
 - `ntresellerclub_ssl_product_mapping`
 
-Key fields:
+Added/guarded fields:
+
+- `ssl_product_type`
+- `cost_price`
+- `sale_price`
+
+Existing Engine 14 fields remain:
 
 - `id_product`
 - `provider_code`
@@ -40,33 +46,44 @@ Key fields:
 - `created_at`
 - `updated_at`
 
-Updated table:
+## Verified SSL Endpoints
 
-- `ntresellerclub_service.ssl_certificate_number`
+- `/api/sslcert/add.json`
+- `/api/sslcert/enroll.json`
+- `/api/sslcert/reissue.json`
+- `/api/sslcert/details.json`
+- `/api/sslcert/delete.json`
+- `/api/sslcert/change-verification-method.json`
+- `/api/sslcert/validate-csr.json`
+- `/api/sslcert/get-cert-details.json`
 
 ## TODO
 
-- Verify and implement real ResellerClub SSL endpoint/resource/action details before executing SSL provider calls.
-- Connect provider-credit retry actions to the future Admin Operations UI.
-- Connect renewal payment confirmation references to the future billing/invoice engine.
+- Verify current ResellerClub SSL renew endpoint parameter contract before enabling `renewSsl()`.
+- Design secure transient/encrypted CSR handling before exposing automated customer reissue/enroll flows.
+- Register a real PrestaShop admin tab for `AdminNtRcSslController` in a future UI engine if needed.
+- Expand admin UI from skeleton to full UX in a later engine.
 
 ## Known Risks
 
 - PHP runtime and real PrestaShop runtime tests were not available in this environment.
-- SSL endpoint execution is intentionally TODO until official ResellerClub SSL API details are verified.
-- Product classification depends on SSL product mappings or `SSL:` product references.
+- `createSsl()` requires a ResellerClub `customer-id`; orders without provider customer mapping first enqueue/reuse the customer mapping queue and SSL provisioning waits for a later retry.
+- `downloadSsl()` sanitizes certificate-like response fields, so raw certificate delivery needs a secure download design later.
 
 ## Last Test
 
+- `git diff --check` was run.
 - New and changed PHP files passed a brace/parenthesis balance check.
 - `php -l` could not be run because PHP CLI is not available in this workspace.
-- SSL queue contract, DomainNameAPI blocking, payment-required renew path, and credential/CSR/certificate sanitization were statically reviewed.
+- Static checks verified SSL queue contract, DomainNameAPI blocking, TODO renew behavior, and sensitive-field sanitization.
 
 ## Last Documentation Update
 
 - `CHANGELOG.md`
 - `CURRENT_STATUS.md`
 - `ROADMAP.md`
-- `docs/architecture/17_SSL_PROVISIONING_ENGINE.md`
+- `docs/resellerclub-api-analysis.md`
+- `docs/architecture/18_SSL_ENDPOINT_VERIFICATION_ADMIN_MAPPING.md`
 - `prestashop/ntresellerclub/docs/API_CONTRACT_RULES.md`
 - `prestashop/ntresellerclub/docs/DATABASE_SCHEMA.md`
+- `prestashop/ntresellerclub/docs/ROADMAP.md`

@@ -8,6 +8,7 @@ require_once __DIR__ . '/NtRcOperationQueueManager.php';
 require_once __DIR__ . '/NtRcServiceRepository.php';
 require_once __DIR__ . '/NtRcNotificationEngine.php';
 require_once __DIR__ . '/NtRcBillingEventManager.php';
+require_once __DIR__ . '/NtRcProviderCustomerManager.php';
 require_once __DIR__ . '/NtRcLog.php';
 
 class NtRcSslManager
@@ -23,6 +24,19 @@ class NtRcSslManager
         }
 
         $domainName = $this->extractDomainName($product);
+        $providerCustomer = NtRcProviderCustomerManager::ensure((int)$order->id_customer, self::PROVIDER_CODE, $domainName);
+        if (empty($providerCustomer['success'])) {
+            return $providerCustomer;
+        }
+        if (empty($providerCustomer['provider_customer_id'])) {
+            return array(
+                'success' => true,
+                'skipped' => true,
+                'reason' => 'ResellerClub customer mapping pending; SSL provisioning waits for customer queue.',
+                'queue_id' => isset($providerCustomer['queue_id']) ? (int)$providerCustomer['queue_id'] : 0,
+            );
+        }
+
         $idService = $this->createSslService($order, $idProduct, $domainName, $mapping);
 
         if ($idService <= 0) {
@@ -30,7 +44,7 @@ class NtRcSslManager
             return array('success' => false, 'message' => 'SSL servis kaydi olusturulamadi.');
         }
 
-        $payload = $this->buildCreatePayload($order, $product, $mapping, $idService, $domainName);
+        $payload = $this->buildCreatePayload($order, $product, $mapping, $idService, $domainName, $providerCustomer['provider_customer_id']);
         $queue = NtRcOperationQueueManager::enqueue(
             self::PROVIDER_CODE,
             'ssl',
@@ -114,6 +128,16 @@ class NtRcSslManager
         return $this->enqueueLifecycleAction($service['service'], 'ssl/download', $options, 3);
     }
 
+    public function enqueueValidationStatus($idService, array $options = array())
+    {
+        $service = $this->sslService($idService, 'SSL validation status icin servis kaydi bulunamadi.');
+        if (empty($service['success'])) {
+            return $service;
+        }
+
+        return $this->enqueueLifecycleAction($service['service'], 'ssl/validation_status', $options, 3);
+    }
+
     protected function sslService($idService, $message)
     {
         $service = NtRcServiceRepository::getService((int)$idService);
@@ -176,7 +200,7 @@ class NtRcSslManager
         return date('Y-m-d', strtotime(isset($map[$billingCycle]) ? $map[$billingCycle] : '+1 year'));
     }
 
-    protected function buildCreatePayload(Order $order, array $product, array $mapping, $idService, $domainName)
+    protected function buildCreatePayload(Order $order, array $product, array $mapping, $idService, $domainName, $providerCustomerId)
     {
         $payload = NtRcSslProductMappingManager::payloadFromMapping($mapping, array(
             'product_reference' => isset($product['product_reference']) ? $product['product_reference'] : '',
@@ -185,6 +209,8 @@ class NtRcSslManager
 
         $payload['id_order'] = (int)$order->id;
         $payload['id_customer'] = (int)$order->id_customer;
+        $payload['customer-id'] = $providerCustomerId;
+        $payload['provider_customer_id'] = $providerCustomerId;
         $payload['id_service'] = (int)$idService;
         $payload['id_product'] = isset($product['id_product']) ? (int)$product['id_product'] : 0;
         $payload['domain'] = $domainName;

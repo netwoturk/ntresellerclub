@@ -56,7 +56,7 @@ class NtRcBillingOperationQueueProcessor extends NtRcSslOperationQueueProcessor
         try {
             $engine = new NtRcNotificationEngine();
             $engine->enqueueAdminNotification(
-                'queue_failed_admin',
+                'provider_credit_required',
                 array(
                     'queue_id' => (int)$idQueue,
                     'provider_code' => isset($context['provider_code']) ? $context['provider_code'] : '',

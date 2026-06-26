@@ -278,7 +278,7 @@ class NtRcNotificationQueueManager
     protected static function sanitizeArray(array $data)
     {
         foreach ($data as $key => $value) {
-            if (preg_match('/api-key|api_key|auth-code|auth_code|passwd|password|token|credential/i', (string)$key)) {
+            if (preg_match('/api-key|api_key|auth-code|auth_code|passwd|password|token|credential|csr|private_key|private-key|certificate|certificate_raw|cert_raw/i', (string)$key)) {
                 $data[$key] = '***';
                 continue;
             }
@@ -293,6 +293,6 @@ class NtRcNotificationQueueManager
 
     protected static function safeText($text)
     {
-        return preg_replace('/(api-key|api_key|auth-code|auth_code|passwd|password|token|credential)=([^&\s]+)/i', '$1=***', (string)$text);
+        return preg_replace('/(api-key|api_key|auth-code|auth_code|passwd|password|token|credential|csr|private_key|private-key|certificate|certificate_raw|cert_raw)=([^&\s]+)/i', '$1=***', (string)$text);
     }
 }

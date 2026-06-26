@@ -68,6 +68,7 @@ SSL action degerleri:
 - `ssl/cancel`
 - `ssl/details`
 - `ssl/download`
+- `ssl/validation_status`
 
 ## Hosting Product Mapping
 
@@ -98,7 +99,10 @@ PrestaShop SSL urunlerini ResellerClub SSL product mapping kayitlarina baglar. S
 | `id_product` | PrestaShop product id |
 | `provider_code` | Sabit `resellerclub` |
 | `provider_product_id` | ResellerClub SSL urun ID |
+| `ssl_product_type` | standard, premium, wildcard, ev vb. SSL urun tipi |
 | `billing_cycle` | yearly, biennial, triennial |
+| `cost_price` | Manuel maliyet; Engine 11 pricing satirina yansitilir |
+| `sale_price` | Manuel satis fiyati; Engine 11 pricing satirina yansitilir |
 | `currency` | Para birimi |
 | `active` | Aktif mapping |
 
@@ -115,7 +119,11 @@ PrestaShop SSL urunlerini ResellerClub SSL product mapping kayitlarina baglar. S
 - `ssl_active_count`
 - `ssl_failed_queue`
 - `ssl_pending_provisioning`
+- `active_ssl_count`
+- `pending_ssl_queue`
+- `failed_ssl_queue`
 - `ssl_expiring_count`
+- `ssl_provider_credit_required_count`
 
 ## Notification & Mail
 
@@ -123,7 +131,7 @@ Mail gonderimi dogrudan yapilmaz; `ntresellerclub_notification_queue` icine yazi
 
 Engine 12 hosting create/renew basarilari `hosting_created` ve `hosting_renewed` template key'leriyle notification queue'ya baglidir.
 
-Engine 14 SSL akislari `ssl_created`, `ssl_renewed`, `ssl_expired`, `ssl_reissue_required` ve `payment_required` template key'leriyle notification queue'ya baglidir.
+Engine 14/15 SSL akislari `ssl_created`, `ssl_renewed`, `ssl_expired`, `ssl_reissue_required`, `payment_required` ve `provider_credit_required` template key'leriyle notification queue'ya baglidir.
 
 ## Final Kurallar
 
