@@ -3,11 +3,7 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
-require_once __DIR__ . '/providers/NtRcProviderFactory.php';
-require_once __DIR__ . '/providers/NtRcTldRouteManager.php';
-require_once __DIR__ . '/providers/NtRcProviderRegistry.php';
-require_once __DIR__ . '/NtRcTrPriceManager.php';
-require_once __DIR__ . '/NtRcTrPriceCalculator.php';
+require_once __DIR__ . '/NtRcDomainSearchService.php';
 
 class NtRcDomainSearchEngine
 {
@@ -15,7 +11,7 @@ class NtRcDomainSearchEngine
     {
         $query = $this->cleanQuery($query);
         if (!$query) {
-            return array('success' => false, 'message' => 'Invalid query', 'items' => array());
+            return array('success' => false, 'message' => 'Invalid query', 'items' => array(), 'errors' => array());
         }
 
         if (!$tlds) {
@@ -25,6 +21,7 @@ class NtRcDomainSearchEngine
         $sld = $this->extractSld($query);
         $items = array();
         $errors = array();
+        $service = new NtRcDomainSearchService();
 
         foreach ($tlds as $tld) {
             $tld = strtolower(ltrim(trim($tld), '.'));
@@ -33,28 +30,23 @@ class NtRcDomainSearchEngine
             }
 
             $domainName = $sld . '.' . $tld;
-            $providerCode = NtRcTldRouteManager::resolve($tld);
-
-            if (!$providerCode || !NtRcProviderRegistry::isUsable($providerCode)) {
-                $errors[$domainName] = 'provider_not_available';
+            $response = $service->search($domainName);
+            $result = isset($response['results'][0]) ? $response['results'][0] : null;
+            if (!$result || !empty($result['error'])) {
+                $errors[$domainName] = $result && !empty($result['error']) ? $result['error'] : 'search_failed';
                 continue;
             }
 
-            $provider = NtRcProviderFactory::make($providerCode);
-            if (!$provider) {
-                $errors[$domainName] = 'provider_factory_failed';
-                continue;
-            }
-
-            $response = $provider->checkAvailability($sld, array($tld), 1);
-            if (!isset($response['success']) || !$response['success']) {
-                $errors[$domainName] = 'search_failed';
-                continue;
-            }
-
-            foreach ((array)$response['data'] as $domain => $row) {
-                $items[$domain] = $this->normalizeItem($domain, $providerCode, $row, $tld);
-            }
+            $items[$domainName] = array(
+                'domain' => $result['domain'],
+                'provider' => $result['provider_code'],
+                'provider_code' => $result['provider_code'],
+                'status' => $result['status'],
+                'available' => $result['available'],
+                'price' => $result['final_sale_price'],
+                'currency' => $result['currency'],
+                'final_sale_price' => $result['final_sale_price'],
+            );
         }
 
         return array('success' => count($items) > 0, 'query' => $query, 'sld' => $sld, 'items' => $items, 'errors' => $errors);
@@ -63,7 +55,11 @@ class NtRcDomainSearchEngine
     protected function cleanQuery($query)
     {
         $query = strtolower(trim((string)$query));
-        $query = str_replace(array('http://', 'https://', 'www.'), '', $query);
+        $query = preg_replace('#^[a-z][a-z0-9+\-.]*://#i', '', $query);
+        $query = preg_replace('#^www\.#i', '', $query);
+        $query = preg_replace('/\s+/', '', $query);
+        $query = preg_replace('/[\/?#].*$/', '', $query);
+
         $allowed = 'abcdefghijklmnopqrstuvwxyz0123456789-.';
         $clean = '';
         for ($i = 0; $i < strlen($query); $i++) {
@@ -83,45 +79,5 @@ class NtRcDomainSearchEngine
     protected function defaultTlds()
     {
         return array('com', 'net', 'org', 'info', 'biz', 'tr', 'com.tr', 'net.tr', 'org.tr', 'av.tr', 'gen.tr', 'web.tr');
-    }
-
-    protected function normalizeItem($domain, $providerCode, $row, $tld)
-    {
-        $status = 'unknown';
-        if (is_array($row) && isset($row['status'])) {
-            $status = strtolower($row['status']);
-        } elseif (is_string($row)) {
-            $status = strtolower($row);
-        }
-
-        $item = array(
-            'domain' => $domain,
-            'provider' => $providerCode,
-            'status' => $status,
-            'available' => in_array($status, array('available', 'avail')),
-            'raw' => $row
-        );
-
-        if ($providerCode === 'domainnameapi' && NtRcTrPriceManager::isAllowedTld($tld)) {
-            $price = $this->getTrRegisterPrice($tld);
-            if ($price && !empty($price['success'])) {
-                $item['price'] = $price['sale_price'];
-                $item['currency'] = $price['target_currency'];
-                $item['cost_converted'] = $price['cost_converted'];
-            }
-        }
-
-        return $item;
-    }
-
-    protected function getTrRegisterPrice($tld)
-    {
-        $rows = NtRcTrPriceManager::getByTld($tld);
-        foreach ((array)$rows as $row) {
-            if ($row['code'] === $tld . ':register') {
-                return NtRcTrPriceCalculator::calculate($row);
-            }
-        }
-        return null;
     }
 }
