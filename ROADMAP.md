@@ -23,6 +23,7 @@ This root roadmap is the repository-level continuation file for Codex engine wor
 | 16 | Provider Sandbox & Production Readiness | Completed in `codex/engine-16-provider-sandbox-production-readiness` |
 | 17 | PrestaShop Admin Framework | Completed in `codex/engine-17-admin-framework` |
 | 18 | Admin Dashboard Data Binding | Completed in `codex/v1-admin-dashboard-data-binding` |
+| Task 01 | API Settings & Connection Test | Completed in `codex/task-01-api-settings-connection-test` |
 
 ## Engine 12 - Hosting Provisioning
 
@@ -48,8 +49,9 @@ This root roadmap is the repository-level continuation file for Codex engine wor
 
 | Engine | Name | Notes |
 |---|---|---|
-| 19 | Queue & Monitoring Admin Screens | Operations UI using the admin framework |
-| 20 | SSL Renew + Secure CSR Flow | Verify renew contract and design transient/encrypted CSR handling |
-| 21 | Webhook | Provider webhook ingestion |
-| 22 | Customer Dashboard | Customer service panel expansion |
-| 23 | Security | Deeper hardening and sensitive-data review |
+| Task 02 | Queue & Monitoring Admin Screens | Operations UI using the admin framework |
+| Task 03 | Billing & Notification Admin Screens | Billing events and notification queue visibility |
+| 19 | SSL Renew + Secure CSR Flow | Verify renew contract and design transient/encrypted CSR handling |
+| 20 | Webhook | Provider webhook ingestion |
+| 21 | Customer Dashboard | Customer service panel expansion |
+| 22 | Security | Deeper hardening and sensitive-data review |
