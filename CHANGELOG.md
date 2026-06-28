@@ -1,5 +1,36 @@
 # Changelog
 
+## 2026-06-28 - Task 01 API Settings & Connection Test
+
+Branch: `codex/task-01-api-settings-connection-test`
+
+### Added
+
+- Added working API settings UI to `AdminNtRcSettingsController`.
+- Added ResellerClub settings for enabled state, sandbox/live mode, auth user id, API key, optional reseller id, and language.
+- Added DomainNameAPI settings for enabled state, sandbox/live mode, username, and password/API credential.
+- Added explicit ResellerClub and DomainNameAPI connection test buttons.
+- Added connection test result rendering with success/failed, sanitized last error, and checked timestamp.
+- Added `docs/devbook/ADMIN_SCREEN_MAP.md`.
+
+### Changed
+
+- Settings save now writes provider API settings through PrestaShop `Configuration`.
+- Connection tests write provider health snapshots to `ntresellerclub_provider_health` when possible.
+- Legacy module configuration form no longer renders stored API key/password values into password input values.
+
+### Security
+
+- API key and password fields are blank on render with masked placeholders.
+- Empty or masked secret submissions keep the existing stored Configuration value.
+- Provider credentials are not logged or displayed in connection test errors.
+- Provider API calls are limited to explicit connection test submissions; dashboard opening remains DB/snapshot-only.
+
+### Performance
+
+- Settings page render performs local Configuration and latest provider health reads only.
+- Connection tests use existing provider/client classes and execute only one read-only provider check per button submit.
+
 ## 2026-06-28 - V1 Admin Dashboard Data Binding
 
 Branch: `codex/v1-admin-dashboard-data-binding`
