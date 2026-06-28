@@ -222,7 +222,7 @@ class NtRcDomainManager
             'id_order' => (int)$order->id,
             'id_product' => (int)$idProduct,
             'provider_code' => pSQL($providerCode),
-            'service_type' => pSQL('domain'),
+            'service_type' => pSQL($providerCode === 'domainnameapi' ? 'tr_domain' : 'domain'),
             'domain_name' => pSQL($domainName),
             'provider_service_id' => null,
             'provider_order_id' => null,
