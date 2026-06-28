@@ -14,15 +14,17 @@ class NtRcDomainSearchService
 
     protected static $runtimeCache = array();
 
-    public function search($query)
+    public function search($query, $years = 1)
     {
+        $years = max(1, (int)$years);
         $normalized = $this->normalizeDomain($query);
         if (!$normalized['success']) {
             return $this->response(false, $query, null, array($this->emptyResult($normalized['domain'], null, null, $normalized['error'])));
         }
 
         $domain = $normalized['domain'];
-        $cached = $this->readCache($domain);
+        $cacheKey = $domain . '|' . $years;
+        $cached = $this->readCache($cacheKey);
         if ($cached !== null) {
             return $cached;
         }
@@ -30,24 +32,24 @@ class NtRcDomainSearchService
         $parts = $this->splitDomain($domain);
         if (!$parts) {
             $result = $this->emptyResult($domain, null, null, 'Domain uzantisi okunamadi.');
-            return $this->writeCache($domain, $this->response(false, $query, $domain, array($result)));
+            return $this->writeCache($cacheKey, $this->response(false, $query, $domain, array($result)));
         }
 
         $providerCode = $this->resolveProvider($parts['tld']);
         if (!$providerCode) {
             $result = $this->emptyResult($domain, $parts['tld'], null, 'Bu uzanti icin aktif provider route bulunamadi.');
-            return $this->writeCache($domain, $this->response(false, $query, $domain, array($result)));
+            return $this->writeCache($cacheKey, $this->response(false, $query, $domain, array($result)));
         }
 
         if (!$this->isProviderEnabled($providerCode)) {
             $result = $this->emptyResult($domain, $parts['tld'], $providerCode, 'Provider ayarlari pasif veya eksik.');
-            return $this->writeCache($domain, $this->response(false, $query, $domain, array($result)));
+            return $this->writeCache($cacheKey, $this->response(false, $query, $domain, array($result)));
         }
 
         $provider = NtRcProviderFactory::make($providerCode, false);
         if (!$provider) {
             $result = $this->emptyResult($domain, $parts['tld'], $providerCode, 'Provider aktif degil veya kullanilabilir degil.');
-            return $this->writeCache($domain, $this->response(false, $query, $domain, array($result)));
+            return $this->writeCache($cacheKey, $this->response(false, $query, $domain, array($result)));
         }
 
         try {
@@ -56,8 +58,8 @@ class NtRcDomainSearchService
             $availability = array('success' => false, 'error' => $this->safeText($e->getMessage()));
         }
 
-        $result = $this->buildResult($domain, $parts['tld'], $providerCode, $availability);
-        return $this->writeCache($domain, $this->response(empty($result['error']), $query, $domain, array($result)));
+        $result = $this->buildResult($domain, $parts['tld'], $providerCode, $availability, $years);
+        return $this->writeCache($cacheKey, $this->response(empty($result['error']), $query, $domain, array($result)));
     }
 
     protected function normalizeDomain($query)
@@ -132,19 +134,21 @@ class NtRcDomainSearchService
         return 'resellerclub';
     }
 
-    protected function buildResult($domain, $tld, $providerCode, array $availability)
+    protected function buildResult($domain, $tld, $providerCode, array $availability, $years = 1)
     {
         $price = $this->priceFor($providerCode, $tld);
         $result = array(
             'domain' => $domain,
             'tld' => $tld,
             'provider_code' => $providerCode,
+            'service_type' => $providerCode === 'domainnameapi' ? 'tr_domain' : 'domain',
             'available' => null,
             'status' => 'unknown',
             'price' => $price['price'],
             'currency' => $price['currency'],
             'final_sale_price' => $price['final_sale_price'],
             'error' => null,
+            'add_to_cart' => null,
         );
 
         if (empty($availability['success'])) {
@@ -171,7 +175,35 @@ class NtRcDomainSearchService
             $result['currency'] = strtoupper($row['currency']);
         }
 
+        if ($result['available']) {
+            $result['add_to_cart'] = $this->cartMetadata($result, $years);
+        }
+
         return $result;
+    }
+
+    public function cartToken($domain, $providerCode, $years, $finalSalePrice)
+    {
+        $payload = strtolower(trim((string)$domain)) . '|' . strtolower(trim((string)$providerCode)) . '|' . max(1, (int)$years) . '|' . (string)$finalSalePrice;
+        $secret = defined('_COOKIE_KEY_') ? _COOKIE_KEY_ : (string)Configuration::get('NTRC_CRON_TOKEN');
+        if ($secret === '') {
+            $secret = 'ntresellerclub';
+        }
+        return hash_hmac('sha256', $payload, $secret);
+    }
+
+    protected function cartMetadata(array $result, $years)
+    {
+        $years = max(1, (int)$years);
+        return array(
+            'domain' => $result['domain'],
+            'tld' => $result['tld'],
+            'provider_code' => $result['provider_code'],
+            'service_type' => $result['service_type'],
+            'years' => $years,
+            'final_sale_price' => $result['final_sale_price'],
+            'cart_token' => $this->cartToken($result['domain'], $result['provider_code'], $years, $result['final_sale_price']),
+        );
     }
 
     protected function availabilityRow(array $availability, $domain)
@@ -236,12 +268,14 @@ class NtRcDomainSearchService
             'domain' => $domain,
             'tld' => $tld,
             'provider_code' => $providerCode,
+            'service_type' => $providerCode === 'domainnameapi' ? 'tr_domain' : 'domain',
             'available' => null,
             'status' => 'error',
             'price' => null,
             'currency' => null,
             'final_sale_price' => null,
             'error' => $this->safeText($error),
+            'add_to_cart' => null,
         );
     }
 
