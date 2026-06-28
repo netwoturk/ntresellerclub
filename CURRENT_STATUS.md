@@ -4,11 +4,11 @@ Date: 2026-06-28
 
 ## Last Work
 
-Task 01 - API Settings & Connection Test
+Task 02 - Domain Search API Flow
 
 ## Last Branch
 
-`codex/task-01-api-settings-connection-test`
+`codex/task-02-domain-search-api-flow`
 
 ## Completed
 
@@ -27,12 +27,22 @@ Task 01 - API Settings & Connection Test
 - Settings admin screen now manages ResellerClub and DomainNameAPI API settings.
 - ResellerClub and DomainNameAPI connection test buttons call provider APIs only on explicit submit.
 - Connection test results are stored in `ntresellerclub_provider_health` when available and rendered as success/failed with sanitized last error and checked time.
+- Domain search now runs through `NtRcDomainSearchService`.
+- Domain inputs are normalized by removing protocol, `www`, path/query, spaces, and trailing dots.
+- IDN domains are converted with PHP intl when available; otherwise search fails safely before provider calls.
+- TR routed domains use DomainNameAPI and global domains use ResellerClub route/default behavior.
+- Domain search results return a standard JSON shape with domain, tld, provider_code, available, status, price, currency, final_sale_price, and sanitized error fields.
+- DomainNameAPI TR sale price and ResellerClub global manual/mapping price are read from Engine 11 pricing rows.
+- `NtRcDomainSearchEngine` now delegates to the service to keep one search flow.
+- Added a read-only `domainsearch` front controller returning JSON.
 
 ## Database Changes
 
 No module table was added in this work.
 
 The dashboard and settings test status read existing service, operation queue, provider health, runtime health, billing event, and notification queue tables.
+
+Domain search reads Engine 11 pricing rows and uses a short runtime cache only; no new table was added.
 
 ## Security
 
@@ -45,6 +55,8 @@ The dashboard and settings test status read existing service, operation queue, p
 - Settings screens do not render API key/password values; secret inputs are blank with masked placeholders.
 - Empty or masked secret submit values keep the existing stored Configuration value.
 - Connection test errors are sanitized before flash, render, or provider health storage.
+- Domain search does not log or render provider credentials, raw provider payloads, API keys, passwords, tokens, or auth codes.
+- Provider technical errors in search responses are sanitized before JSON output.
 
 ## Performance
 
@@ -53,9 +65,13 @@ The dashboard and settings test status read existing service, operation queue, p
 - No heavy processing runs from admin page load.
 - Failed operations are capped at the latest 10 records.
 - Provider API calls are limited to explicit connection test button submissions.
+- Domain search provider calls run only from the explicit read-only search endpoint/service invocation.
+- Search uses one availability call for the requested domain and a single pricing row lookup.
+- Search responses are runtime-cached for 60 seconds per normalized domain inside the request process.
 
 ## TODO
 
+- Build customer-facing search UI and add-to-cart flow on top of the read-only JSON endpoint.
 - Bind Queue and Monitoring sections to dedicated data providers in the next admin screen task.
 - Add richer PrestaShop permission profiles if role-specific operations are introduced.
 - Run real PrestaShop 1.7, 8, and 9 install/upgrade smoke tests.
@@ -68,6 +84,8 @@ The dashboard and settings test status read existing service, operation queue, p
 - Dashboard data freshness depends on cron/monitoring snapshots for provider and runtime health.
 - Real connection tests require valid provider credentials and network access from the PrestaShop server.
 - DomainNameAPI test depends on the bundled/installed DomainNameAPI SDK being present.
+- Real search requires provider credentials, provider Configuration enabled state, and network access from the PrestaShop server.
+- ResellerClub availability depends on the existing `NtRcApiClient::domainAvailability()` endpoint path already present in the module; official endpoint notes remain documented in `docs/resellerclub-api-analysis.md`.
 
 ## Last Test
 
@@ -77,6 +95,9 @@ The dashboard and settings test status read existing service, operation queue, p
 - Static check verified dashboard provider does not render operation payload/response fields.
 - Static check verified dashboard/settings credential-like values are masked in displayed error text.
 - Static check verified dashboard aggregate queries use existing local tables only.
+- Static check verified dashboard files still do not call provider availability or API clients.
+- Static check verified domain search provider calls are isolated in `NtRcDomainSearchService`.
+- Static check verified search JSON does not include raw provider response fields.
 - PHP lint could not be run because PHP CLI is not available in this workspace.
 
 ## Last Documentation Update
@@ -86,3 +107,4 @@ The dashboard and settings test status read existing service, operation queue, p
 - `ROADMAP.md`
 - `docs/devbook/ADMIN_DASHBOARD_DETAILED_SPEC.md`
 - `docs/devbook/ADMIN_SCREEN_MAP.md`
+- `docs/devbook/DOMAIN_SEARCH_API_FLOW.md`
