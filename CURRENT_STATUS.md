@@ -4,11 +4,11 @@ Date: 2026-06-28
 
 ## Last Work
 
-Task 02 - Domain Search API Flow
+Task 03 - Domain Search Result To Cart Flow
 
 ## Last Branch
 
-`codex/task-02-domain-search-api-flow`
+`codex/task-03-domain-search-cart-flow`
 
 ## Completed
 
@@ -35,6 +35,14 @@ Task 02 - Domain Search API Flow
 - DomainNameAPI TR sale price and ResellerClub global manual/mapping price are read from Engine 11 pricing rows.
 - `NtRcDomainSearchEngine` now delegates to the service to keep one search flow.
 - Added a read-only `domainsearch` front controller returning JSON.
+- Domain search JSON results now include safe `add_to_cart` metadata.
+- Added `/module/ntresellerclub/domaincart?action=add` JSON endpoint.
+- Domain cart add flow rechecks availability before adding any product to the cart.
+- `NtRcDomainCartBuilder` now adds the mapped PrestaShop domain product to the cart and writes domain metadata.
+- `ntresellerclub_cart_domain` now stores id_product, domain_name, tld, provider_code, service_type, years, price_snapshot, currency, options_json, and timestamps.
+- Duplicate domain additions to the same cart are blocked before product quantity is changed.
+- Order orchestration keeps reading cart domain rows and now preserves `tr_domain` service type for DomainNameAPI cart domains.
+- Legacy module configuration now stores default global and TR domain product IDs.
 
 ## Database Changes
 
@@ -42,7 +50,9 @@ No module table was added in this work.
 
 The dashboard and settings test status read existing service, operation queue, provider health, runtime health, billing event, and notification queue tables.
 
-Domain search reads Engine 11 pricing rows and uses a short runtime cache only; no new table was added.
+Domain search reads Engine 11 pricing rows and uses a short runtime cache only.
+
+The existing `ntresellerclub_cart_domain` table was extended for cart-to-order metadata transfer.
 
 ## Security
 
@@ -57,6 +67,8 @@ Domain search reads Engine 11 pricing rows and uses a short runtime cache only; 
 - Connection test errors are sanitized before flash, render, or provider health storage.
 - Domain search does not log or render provider credentials, raw provider payloads, API keys, passwords, tokens, or auth codes.
 - Provider technical errors in search responses are sanitized before JSON output.
+- Domain cart JSON does not return raw provider responses, credentials, API keys, passwords, auth codes, or provider payloads.
+- Cart add trusts neither client price nor client availability; availability and price snapshot are recalculated server-side.
 
 ## Performance
 
@@ -68,10 +80,13 @@ Domain search reads Engine 11 pricing rows and uses a short runtime cache only; 
 - Domain search provider calls run only from the explicit read-only search endpoint/service invocation.
 - Search uses one availability call for the requested domain and a single pricing row lookup.
 - Search responses are runtime-cached for 60 seconds per normalized domain inside the request process.
+- Cart add performs one explicit availability recheck and one product/cart metadata insert.
+- Duplicate cart checks use the cart id and normalized domain before mutating cart quantity.
 
 ## TODO
 
-- Build customer-facing search UI and add-to-cart flow on top of the read-only JSON endpoint.
+- Build customer-facing search UI that calls `domainsearch` and `domaincart`.
+- Add checkout/order validation UI for missing domain product mappings and TR contact requirements.
 - Bind Queue and Monitoring sections to dedicated data providers in the next admin screen task.
 - Add richer PrestaShop permission profiles if role-specific operations are introduced.
 - Run real PrestaShop 1.7, 8, and 9 install/upgrade smoke tests.
@@ -86,6 +101,8 @@ Domain search reads Engine 11 pricing rows and uses a short runtime cache only; 
 - DomainNameAPI test depends on the bundled/installed DomainNameAPI SDK being present.
 - Real search requires provider credentials, provider Configuration enabled state, and network access from the PrestaShop server.
 - ResellerClub availability depends on the existing `NtRcApiClient::domainAvailability()` endpoint path already present in the module; official endpoint notes remain documented in `docs/resellerclub-api-analysis.md`.
+- Cart add requires `NTRC_DOMAIN_PRODUCT_ID` or `NTRC_TR_DOMAIN_PRODUCT_ID`, or an explicit valid `id_product` in the request.
+- Product price in PrestaShop cart still depends on the mapped product configuration; `price_snapshot` is stored for downstream domain metadata and audit.
 
 ## Last Test
 
@@ -98,6 +115,8 @@ Domain search reads Engine 11 pricing rows and uses a short runtime cache only; 
 - Static check verified dashboard files still do not call provider availability or API clients.
 - Static check verified domain search provider calls are isolated in `NtRcDomainSearchService`.
 - Static check verified search JSON does not include raw provider response fields.
+- Static check verified domain cart endpoint calls the cart builder and does not call register/transfer/renew actions.
+- Static check verified order orchestrator reads `NtRcCartDomain::getDomainsByCart()` for cart domain metadata.
 - PHP lint could not be run because PHP CLI is not available in this workspace.
 
 ## Last Documentation Update
