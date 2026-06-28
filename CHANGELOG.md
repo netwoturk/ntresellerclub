@@ -1,5 +1,34 @@
 # Changelog
 
+## 2026-06-28 - Task 03 Domain Search Result To Cart Flow
+
+Branch: `codex/task-03-domain-search-cart-flow`
+
+### Added
+
+- Added safe `add_to_cart` metadata to domain search JSON results.
+- Added `/module/ntresellerclub/domaincart?action=add` JSON endpoint.
+- Added default Configuration keys for global and TR domain product IDs.
+
+### Changed
+
+- `NtRcDomainCartBuilder` now rechecks availability before adding a domain product to the cart.
+- Domain cart metadata now stores product, tld, provider, service type, years, price snapshot, and currency.
+- Duplicate domain additions to the same cart are rejected before cart quantity changes.
+- DomainNameAPI cart domains now keep `tr_domain` service type when order provisioning creates the service record.
+- `ntresellerclub_cart_domain` install/upgrade schema was extended for checkout metadata transfer.
+
+### Security
+
+- Cart add does not trust client-side availability or price fields.
+- Cart JSON responses do not return credentials, raw provider payloads, API keys, passwords, tokens, or auth codes.
+- Register, transfer, and renew remain outside this task.
+
+### Performance
+
+- Cart add performs one explicit availability recheck and a lightweight duplicate lookup.
+- No heavy cache or queue processing is introduced in the cart endpoint.
+
 ## 2026-06-28 - Task 02 Domain Search API Flow
 
 Branch: `codex/task-02-domain-search-api-flow`
