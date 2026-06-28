@@ -2,35 +2,37 @@
 
 Branch: `codex/v1-admin-dashboard-data-binding`
 
-## Scope
+## Goal
 
-The V1 admin dashboard binds the Engine 17 framework to existing backend snapshots. It does not introduce new business logic, new tables, or provider API calls.
+The admin dashboard is the first real data-bound screen on top of the Engine 17 PrestaShop admin framework. It reads existing backend state only. It does not introduce a new engine, a new data architecture, or any provider API call.
 
-## Data Source
+## Data Provider
 
-`NtRcAdminDashboardDataProvider`
+`NtRcAdminDashboardDataProvider` is the dashboard data source.
 
-Allowed sources:
+It returns:
 
-- `ntresellerclub_service`
-- `ntresellerclub_operation_queue`
-- `ntresellerclub_provider_health`
-- `ntresellerclub_runtime_health`
-- `ntresellerclub_notification_queue`
-- existing `NtRcStatisticsEngine`
-- existing billing/SSL/hosting monitoring summaries
+- `kpis`
+- `provider_health`
+- `queue`
+- `runtime`
+- `service_overview`
+- `failed_operations`
+- `notifications`
+- `quick_actions`
 
-Disallowed sources:
+The provider may read existing DB tables and existing summary classes, including:
 
-- ResellerClub API
-- DomainNameAPI API
-- provider adapters
-- cron processors
-- raw credential/payload output
+- `NtRcStatisticsEngine`
+- `NtRcBillingMonitoring`
+- `NtRcSslMonitoring`
+- `NtRcRuntimeGuard`
+- monitoring tables written by `NtRcMonitoringEngine`
+- notification queue tables written by `NtRcNotificationQueueManager`
 
-## KPI Cards
+## KPI Metrics
 
-The dashboard exposes:
+Dashboard KPIs:
 
 - `active_domain_count`
 - `active_tr_domain_count`
@@ -45,18 +47,24 @@ The dashboard exposes:
 
 ## Provider Health
 
-Provider health reads the latest local snapshot for:
+Provider health cards read the latest local monitoring snapshot for:
 
-- ResellerClub status
-- DomainNameAPI status
-- last error
-- checked at
+- ResellerClub
+- DomainNameAPI
 
-Last error text is sanitized before rendering.
+Displayed fields:
+
+- status
+- last_error
+- checked_at
+
+Provider health checks stay cron/monitoring-owned. Opening the dashboard must not call ResellerClub or DomainNameAPI.
 
 ## Queue Summary
 
-The queue summary includes:
+Queue summary reads the existing operation queue table.
+
+Displayed fields:
 
 - pending
 - processing
@@ -66,7 +74,9 @@ The queue summary includes:
 
 ## Runtime Summary
 
-Runtime summary includes:
+Runtime summary reads current runtime values plus the latest stored runtime snapshot.
+
+Displayed fields:
 
 - memory limit
 - current memory
@@ -76,28 +86,88 @@ Runtime summary includes:
 
 ## Service Overview
 
-Service overview groups local services by:
+Service overview groups existing `ntresellerclub_service` rows for:
 
 - domain
 - tr_domain
 - hosting
 - ssl
 
-Each row shows total count and status-count summary.
+The table summarizes status counts with lightweight aggregate queries.
 
 ## Failed Operations
 
-The dashboard lists the latest 10 failed or provider-credit-required operation queue rows.
+Failed operations lists the latest 10 local operation queue records with status:
 
-Rendered fields are sanitized and do not expose request payloads.
+- `failed`
+- `provider_credit_required`
+
+Displayed fields are limited to safe operational metadata:
+
+- queue id
+- provider
+- service type
+- action
+- status
+- retry count
+- sanitized last error
+- updated at
+
+Payload and response JSON must not be displayed.
+
+## Notification Summary
+
+Notification summary reads the existing notification queue.
+
+Displayed fields:
+
+- pending
+- sent today
+- failed
+- sanitized last_error
 
 ## Quick Actions
 
-The dashboard links to:
+Dashboard quick actions link to existing admin sections:
 
 - Queue
 - Monitoring
 - Pricing
 - Settings
 
-Links use PrestaShop admin link generation.
+Links are generated through PrestaShop admin link helpers.
+
+## Security Rules
+
+The dashboard must not display:
+
+- credential
+- api-key
+- token
+- password
+- auth-code
+- private key
+- CSR
+- raw certificate
+- provider payload JSON
+- provider response JSON
+
+Displayed error strings must be sanitized and then escaped by shared admin helpers.
+
+## Performance Rules
+
+- No provider API call on dashboard open.
+- No queue processing on dashboard open.
+- No notification sending on dashboard open.
+- No large SQL scans or joins.
+- Aggregate reads must stay grouped by indexed/status columns where possible.
+- Failed operations are capped at 10 rows.
+
+## Compatibility
+
+The dashboard remains compatible with PrestaShop 1.7, 8, and 9 conventions by keeping:
+
+- `ModuleAdminController`
+- `Context::link->getAdminLink()`
+- `Tools::safeOutput()`
+- existing module installer-owned schema guards
