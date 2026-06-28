@@ -133,14 +133,21 @@ CREATE TABLE IF NOT EXISTS `PREFIX_ntresellerclub_service` (
 CREATE TABLE IF NOT EXISTS `PREFIX_ntresellerclub_cart_domain` (
   `id_ntresellerclub_cart_domain` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `id_cart` INT UNSIGNED NOT NULL,
+  `id_product` INT UNSIGNED DEFAULT 0,
   `domain_name` VARCHAR(255) NOT NULL,
+  `tld` VARCHAR(64) DEFAULT NULL,
   `provider_code` VARCHAR(64) DEFAULT NULL,
+  `service_type` VARCHAR(50) DEFAULT NULL,
   `years` INT UNSIGNED DEFAULT 1,
   `options_json` MEDIUMTEXT DEFAULT NULL,
+  `price_snapshot` DECIMAL(20,6) DEFAULT NULL,
+  `currency` VARCHAR(10) DEFAULT NULL,
   `created_at` DATETIME NOT NULL,
   `updated_at` DATETIME DEFAULT NULL,
   PRIMARY KEY (`id_ntresellerclub_cart_domain`),
   KEY `idx_id_cart` (`id_cart`),
+  KEY `idx_cart_domain` (`id_cart`, `domain_name`),
+  KEY `idx_cart_product` (`id_product`),
   KEY `idx_cart_provider` (`provider_code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
