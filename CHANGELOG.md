@@ -1,5 +1,35 @@
 # Changelog
 
+## 2026-06-28 - Task 02 Domain Search API Flow
+
+Branch: `codex/task-02-domain-search-api-flow`
+
+### Added
+
+- Added `NtRcDomainSearchService` as the shared read-only domain search flow.
+- Added front JSON controller `domainsearch` for explicit domain availability requests.
+- Added `docs/devbook/DOMAIN_SEARCH_API_FLOW.md`.
+
+### Changed
+
+- `NtRcDomainSearchEngine` now delegates to the shared service to avoid duplicate provider-routing and pricing logic.
+- Domain search normalizes protocol, `www`, path/query, spaces, trailing dots, and safely handles IDN via PHP intl when available.
+- TR TLDs route to DomainNameAPI; global domains use configured TLD routes and fall back to ResellerClub.
+- Search results now use a standard result shape with domain, tld, provider_code, available, status, price, currency, final_sale_price, and sanitized error.
+- DomainNameAPI TR and ResellerClub global domain pricing are read from Engine 11 pricing rows.
+
+### Security
+
+- Domain search does not render credentials, raw provider payloads, API keys, passwords, tokens, or auth codes.
+- Provider errors are sanitized before being returned in JSON.
+- Dashboard and admin page opening remain provider-API free.
+
+### Performance
+
+- Search performs one provider availability call for the requested domain.
+- Pricing uses a single Engine 11 row lookup for the register price.
+- A short 60-second runtime cache is used per normalized domain without adding a heavy cache layer.
+
 ## 2026-06-28 - Task 01 API Settings & Connection Test
 
 Branch: `codex/task-01-api-settings-connection-test`
