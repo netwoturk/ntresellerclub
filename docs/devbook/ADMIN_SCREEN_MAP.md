@@ -1,6 +1,6 @@
 # Admin Screen Map
 
-Branch: `codex/task-01-api-settings-connection-test`
+Branch: `codex/task-02-domain-search-api-flow`
 
 ## Dashboard
 
@@ -90,6 +90,29 @@ Storage:
 
 - `ntresellerclub_provider_health`
 
+## Domain Search JSON Endpoint
+
+Front controller:
+
+- `NtresellerclubDomainsearchModuleFrontController`
+
+Service:
+
+- `NtRcDomainSearchService`
+
+Purpose:
+
+- Accept explicit read-only domain search requests through `domain` or `q`.
+- Normalize the submitted domain.
+- Route global domains to ResellerClub and TR domains to DomainNameAPI.
+- Return standard JSON result fields for frontend/admin consumers.
+
+Provider calls:
+
+- ResellerClub availability uses the existing provider/client `checkAvailability()` path.
+- DomainNameAPI TR availability uses the existing SDK-backed provider `checkAvailability()` path.
+- No register, transfer, renew, customer, hosting, SSL, or dashboard provider call is made by this endpoint.
+
 ## Security Rules
 
 - API key and password inputs render empty with masked placeholders.
@@ -97,6 +120,7 @@ Storage:
 - Provider credentials must not be logged.
 - Provider credentials must not be rendered in HTML values.
 - Provider API calls must run only after explicit connection test submission.
+- Domain search provider API calls must run only after explicit search submission.
 - Dashboard opening must remain provider-API free.
 
 ## Compatibility
