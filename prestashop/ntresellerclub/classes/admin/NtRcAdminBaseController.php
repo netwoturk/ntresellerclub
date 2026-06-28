@@ -62,116 +62,109 @@ abstract class NtRcAdminBaseController extends ModuleAdminController
     {
         $provider = new NtRcAdminDashboardDataProvider();
         $summary = $provider->getSummary();
+        $readiness = isset($summary['readiness']) ? $summary['readiness'] : array('success' => false, 'check_count' => 0, 'failed_count' => 0);
         $kpis = isset($summary['kpis']) ? $summary['kpis'] : array();
 
         $html = '<section class="' . NtRcAdminThemeHelper::panelClass() . '">';
         $html .= '<h3>Dashboard</h3>';
         $html .= NtRcAdminWidget::alert('info', 'Dashboard reads existing backend summaries only. No provider API call is executed.');
         $html .= '<div class="ntrc-widget-grid">';
-        $html .= NtRcAdminWidget::kpiCard('Active Domains', $this->dashboardValue($kpis, 'active_domain_count'), 'active', 'Global domain');
-        $html .= NtRcAdminWidget::kpiCard('Active TR Domains', $this->dashboardValue($kpis, 'active_tr_domain_count'), 'active', 'TR domain');
-        $html .= NtRcAdminWidget::kpiCard('Active Hosting', $this->dashboardValue($kpis, 'active_hosting_count'), 'active', 'Hosting services');
-        $html .= NtRcAdminWidget::kpiCard('Active SSL', $this->dashboardValue($kpis, 'active_ssl_count'), 'active', 'SSL services');
-        $html .= NtRcAdminWidget::kpiCard('Pending Queue', $this->dashboardValue($kpis, 'pending_queue_count'), 'pending', 'Operation queue');
-        $html .= NtRcAdminWidget::kpiCard('Failed Queue', $this->dashboardValue($kpis, 'failed_queue_count'), 'failed', 'Needs attention');
-        $html .= NtRcAdminWidget::kpiCard('Payment Required', $this->dashboardValue($kpis, 'payment_required_count'), 'warning', 'Billing');
-        $html .= NtRcAdminWidget::kpiCard('Provider Credit', $this->dashboardValue($kpis, 'provider_credit_required_count'), 'warning', 'Provider balance');
-        $html .= NtRcAdminWidget::kpiCard('Notification Pending', $this->dashboardValue($kpis, 'notification_pending_count'), 'pending', 'Mail queue');
-        $html .= NtRcAdminWidget::kpiCard('Notification Failed', $this->dashboardValue($kpis, 'notification_failed_count'), 'failed', 'Mail queue');
+        $html .= NtRcAdminWidget::kpiCard('Readiness', !empty($readiness['success']) ? 'Ready' : 'Check', !empty($readiness['success']) ? 'success' : 'warning', (int)$readiness['check_count'] . ' checks');
+        $html .= $this->renderKpiCard($kpis, 'Active Domains', 'active_domain_count', 'active', 'domain services');
+        $html .= $this->renderKpiCard($kpis, 'Active TR Domains', 'active_tr_domain_count', 'active', 'tr_domain services');
+        $html .= $this->renderKpiCard($kpis, 'Active Hosting', 'active_hosting_count', 'active', 'hosting services');
+        $html .= $this->renderKpiCard($kpis, 'Active SSL', 'active_ssl_count', 'active', 'ssl services');
+        $html .= $this->renderKpiCard($kpis, 'Queue Pending', 'pending_queue_count', 'pending', 'operation queue');
+        $html .= $this->renderKpiCard($kpis, 'Queue Failed', 'failed_queue_count', 'failed', 'operation queue');
+        $html .= $this->renderKpiCard($kpis, 'Payment Required', 'payment_required_count', 'warning', 'service status');
+        $html .= $this->renderKpiCard($kpis, 'Provider Credit', 'provider_credit_required_count', 'provider_credit_required', 'service and queue');
+        $html .= $this->renderKpiCard($kpis, 'Notifications Pending', 'notification_pending_count', 'pending', 'mail queue');
+        $html .= $this->renderKpiCard($kpis, 'Notifications Failed', 'notification_failed_count', 'failed', 'mail queue');
         $html .= '</div>';
-        $html .= $this->renderDashboardDetails($summary);
+        $html .= $this->renderQuickActions(isset($summary['quick_actions']) ? $summary['quick_actions'] : array());
         $html .= '</section>';
-        return $html;
-    }
 
-    protected function renderDashboardDetails(array $summary)
-    {
-        $html = '<div class="ntrc-dashboard-grid">';
         $html .= $this->renderProviderHealth(isset($summary['provider_health']) ? $summary['provider_health'] : array());
         $html .= $this->renderQueueSummary(isset($summary['queue']) ? $summary['queue'] : array());
         $html .= $this->renderRuntimeSummary(isset($summary['runtime']) ? $summary['runtime'] : array());
-        $html .= $this->renderNotificationSummary(isset($summary['notifications']) ? $summary['notifications'] : array());
-        $html .= '</div>';
         $html .= $this->renderServiceOverview(isset($summary['service_overview']) ? $summary['service_overview'] : array());
         $html .= $this->renderFailedOperations(isset($summary['failed_operations']) ? $summary['failed_operations'] : array());
-        $html .= $this->renderQuickActions(isset($summary['quick_actions']) ? $summary['quick_actions'] : array());
+        $html .= $this->renderNotificationSummary(isset($summary['notifications']) ? $summary['notifications'] : array());
+
         return $html;
     }
 
-    protected function renderProviderHealth(array $health)
+    protected function renderKpiCard(array $kpis, $title, $key, $status, $description)
+    {
+        return NtRcAdminWidget::kpiCard($title, isset($kpis[$key]) ? (int)$kpis[$key] : 0, $status, $description);
+    }
+
+    protected function renderProviderHealth(array $providers)
     {
         $rows = array();
-        foreach (array('resellerclub', 'domainnameapi') as $providerCode) {
-            $row = isset($health[$providerCode]) ? $health[$providerCode] : array();
+        foreach ($providers as $provider) {
             $rows[] = array(
-                strtoupper($providerCode),
-                isset($row['status']) ? $row['status'] : 'not_checked',
-                isset($row['last_error']) ? $row['last_error'] : '',
-                isset($row['checked_at']) ? $row['checked_at'] : '',
+                isset($provider['label']) ? $provider['label'] : '',
+                isset($provider['status']) ? $provider['status'] : 'unknown',
+                isset($provider['last_error']) && $provider['last_error'] !== '' ? $provider['last_error'] : '-',
+                isset($provider['checked_at']) && $provider['checked_at'] !== '' ? $provider['checked_at'] : '-',
             );
         }
 
-        return '<section class="ntrc-widget"><h4>Provider Health</h4>'
-            . NtRcAdminWidget::table(array('Provider', 'Status', 'Last Error', 'Checked At'), $rows)
-            . '</section>';
+        return $this->renderDashboardPanel('Provider Health', NtRcAdminWidget::table(
+            array('Provider', 'Status', 'Last error', 'Checked at'),
+            $rows,
+            'No provider health snapshot found.'
+        ));
     }
 
     protected function renderQueueSummary(array $queue)
     {
         $rows = array(
-            array('Pending', $this->dashboardValue($queue, 'pending')),
-            array('Processing', $this->dashboardValue($queue, 'processing')),
-            array('Done Today', $this->dashboardValue($queue, 'done_today')),
-            array('Failed', $this->dashboardValue($queue, 'failed')),
-            array('Retry Count', $this->dashboardValue($queue, 'retry_count')),
+            array('Pending', isset($queue['pending']) ? (int)$queue['pending'] : 0),
+            array('Processing', isset($queue['processing']) ? (int)$queue['processing'] : 0),
+            array('Done today', isset($queue['done_today']) ? (int)$queue['done_today'] : 0),
+            array('Failed', isset($queue['failed']) ? (int)$queue['failed'] : 0),
+            array('Retry count', isset($queue['retry_count']) ? (int)$queue['retry_count'] : 0),
         );
 
-        return '<section class="ntrc-widget"><h4>Queue Summary</h4>'
-            . NtRcAdminWidget::table(array('Metric', 'Value'), $rows)
-            . '</section>';
+        return $this->renderDashboardPanel('Queue Summary', NtRcAdminWidget::table(array('Metric', 'Value'), $rows));
     }
 
     protected function renderRuntimeSummary(array $runtime)
     {
         $rows = array(
-            array('Memory Limit', $this->dashboardValue($runtime, 'memory_limit')),
-            array('Current Memory', $this->formatBytes($this->dashboardValue($runtime, 'current_memory'))),
-            array('Peak Memory', $this->formatBytes($this->dashboardValue($runtime, 'peak_memory'))),
-            array('Cron Last Run', $this->dashboardValue($runtime, 'last_cron_at')),
-            array('Batch Limit', $this->dashboardValue($runtime, 'batch_limit')),
+            array('Memory limit', isset($runtime['memory_limit']) ? $runtime['memory_limit'] : ''),
+            array('Current memory', isset($runtime['current_memory']) ? $runtime['current_memory'] : ''),
+            array('Peak memory', isset($runtime['peak_memory']) ? $runtime['peak_memory'] : ''),
+            array('Cron last run', !empty($runtime['cron_last_run']) ? $runtime['cron_last_run'] : '-'),
+            array('Batch limit', isset($runtime['batch_limit']) ? (int)$runtime['batch_limit'] : 0),
         );
 
-        return '<section class="ntrc-widget"><h4>Runtime Summary</h4>'
-            . NtRcAdminWidget::table(array('Metric', 'Value'), $rows)
-            . '</section>';
-    }
-
-    protected function renderNotificationSummary(array $notifications)
-    {
-        $rows = array(
-            array('Pending', $this->dashboardValue($notifications, 'pending')),
-            array('Processing', $this->dashboardValue($notifications, 'processing')),
-            array('Sent', $this->dashboardValue($notifications, 'sent')),
-            array('Failed', $this->dashboardValue($notifications, 'failed')),
-            array('Retry', $this->dashboardValue($notifications, 'retry')),
-        );
-
-        return '<section class="ntrc-widget"><h4>Notification Summary</h4>'
-            . NtRcAdminWidget::table(array('Metric', 'Value'), $rows)
-            . '</section>';
+        return $this->renderDashboardPanel('Runtime Summary', NtRcAdminWidget::table(array('Metric', 'Value'), $rows));
     }
 
     protected function renderServiceOverview(array $overview)
     {
         $rows = array();
-        foreach (array('domain', 'tr_domain', 'hosting', 'ssl') as $serviceType) {
-            $row = isset($overview[$serviceType]) ? $overview[$serviceType] : array('total' => 0, 'statuses' => array());
-            $rows[] = array($serviceType, isset($row['total']) ? (int)$row['total'] : 0, $this->statusSummary(isset($row['statuses']) ? $row['statuses'] : array()));
+        foreach ($overview as $row) {
+            $rows[] = array(
+                isset($row['service_type']) ? $row['service_type'] : '',
+                isset($row['active']) ? (int)$row['active'] : 0,
+                isset($row['pending']) ? (int)$row['pending'] : 0,
+                isset($row['provisioning']) ? (int)$row['provisioning'] : 0,
+                isset($row['payment_required']) ? (int)$row['payment_required'] : 0,
+                isset($row['provider_credit_required']) ? (int)$row['provider_credit_required'] : 0,
+                isset($row['failed']) ? (int)$row['failed'] : 0,
+                isset($row['total']) ? (int)$row['total'] : 0,
+            );
         }
 
-        return '<section class="ntrc-widget ntrc-dashboard-wide"><h4>Service Overview</h4>'
-            . NtRcAdminWidget::table(array('Service Type', 'Total', 'Statuses'), $rows)
-            . '</section>';
+        return $this->renderDashboardPanel('Service Overview', NtRcAdminWidget::table(
+            array('Type', 'Active', 'Pending', 'Provisioning', 'Payment', 'Credit', 'Failed', 'Total'),
+            $rows,
+            'No service records found.'
+        ));
     }
 
     protected function renderFailedOperations(array $operations)
@@ -180,8 +173,8 @@ abstract class NtRcAdminBaseController extends ModuleAdminController
         foreach ($operations as $operation) {
             $rows[] = array(
                 isset($operation['id']) ? (int)$operation['id'] : 0,
-                isset($operation['provider_code']) ? $operation['provider_code'] : '',
-                isset($operation['service_type']) ? $operation['service_type'] : '',
+                isset($operation['provider']) ? $operation['provider'] : '',
+                isset($operation['service']) ? $operation['service'] : '',
                 isset($operation['action']) ? $operation['action'] : '',
                 isset($operation['status']) ? $operation['status'] : '',
                 isset($operation['retry_count']) ? (int)$operation['retry_count'] : 0,
@@ -190,53 +183,41 @@ abstract class NtRcAdminBaseController extends ModuleAdminController
             );
         }
 
-        return '<section class="ntrc-widget ntrc-dashboard-wide"><h4>Failed Operations</h4>'
-            . NtRcAdminWidget::table(array('ID', 'Provider', 'Service', 'Action', 'Status', 'Retry', 'Last Error', 'Updated'), $rows, 'No failed operations.')
-            . '</section>';
+        return $this->renderDashboardPanel('Failed Operations', NtRcAdminWidget::table(
+            array('ID', 'Provider', 'Service', 'Action', 'Status', 'Retry', 'Last error', 'Updated at'),
+            $rows,
+            'No failed operations found.'
+        ));
+    }
+
+    protected function renderNotificationSummary(array $notifications)
+    {
+        $rows = array(
+            array('Pending', isset($notifications['pending']) ? (int)$notifications['pending'] : 0),
+            array('Sent today', isset($notifications['sent_today']) ? (int)$notifications['sent_today'] : 0),
+            array('Failed', isset($notifications['failed']) ? (int)$notifications['failed'] : 0),
+            array('Last error', !empty($notifications['last_error']) ? $notifications['last_error'] : '-'),
+        );
+
+        return $this->renderDashboardPanel('Notification Summary', NtRcAdminWidget::table(array('Metric', 'Value'), $rows));
     }
 
     protected function renderQuickActions(array $actions)
     {
-        $html = '<section class="ntrc-widget ntrc-dashboard-wide"><h4>Quick Actions</h4><div class="ntrc-quick-actions">';
+        $html = '<div class="ntrc-quick-actions">';
         foreach ($actions as $action) {
-            $controller = isset($action['controller']) ? $action['controller'] : '';
-            $label = isset($action['label']) ? $action['label'] : $controller;
-            if ($controller === '') {
+            if (empty($action['class_name']) || empty($action['label'])) {
                 continue;
             }
-            $url = $this->context->link->getAdminLink($controller);
-            $html .= '<a class="btn btn-default" href="' . NtRcAdminThemeHelper::esc($url) . '">' . NtRcAdminThemeHelper::esc($label) . '</a> ';
+            $url = $this->context->link->getAdminLink($action['class_name']);
+            $html .= '<a class="btn btn-default" href="' . NtRcAdminThemeHelper::esc($url) . '">' . NtRcAdminThemeHelper::esc($action['label']) . '</a>';
         }
-        return $html . '</div></section>';
+        return $html . '</div>';
     }
 
-    protected function dashboardValue(array $row, $key)
+    protected function renderDashboardPanel($title, $content)
     {
-        return isset($row[$key]) ? $row[$key] : 0;
-    }
-
-    protected function statusSummary(array $statuses)
-    {
-        $parts = array();
-        foreach ($statuses as $status => $count) {
-            $parts[] = $status . ': ' . (int)$count;
-        }
-        return implode(', ', $parts);
-    }
-
-    protected function formatBytes($bytes)
-    {
-        $bytes = (float)$bytes;
-        if ($bytes <= 0) {
-            return '0 B';
-        }
-        $units = array('B', 'KB', 'MB', 'GB');
-        $index = 0;
-        while ($bytes >= 1024 && $index < count($units) - 1) {
-            $bytes = $bytes / 1024;
-            $index++;
-        }
-        return round($bytes, 2) . ' ' . $units[$index];
+        return '<section class="' . NtRcAdminThemeHelper::panelClass() . '"><h3>' . NtRcAdminThemeHelper::esc($title) . '</h3>' . $content . '</section>';
     }
 
     protected function hasPermission($action = 'view')
