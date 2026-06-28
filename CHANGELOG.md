@@ -1,26 +1,32 @@
 # Changelog
 
-## 2026-06-26 - V1 Admin Dashboard Data Binding
+## 2026-06-28 - V1 Admin Dashboard Data Binding
 
 Branch: `codex/v1-admin-dashboard-data-binding`
 
 ### Added
 
-- Bound admin Dashboard to real local backend data through `NtRcAdminDashboardDataProvider`.
-- Added KPI cards for active services, queue state, billing action-required state, and notification queue state.
-- Added provider health, queue summary, runtime summary, service overview, failed operations, notification summary, and quick action sections.
+- Bound `AdminNtRcDashboardController` output to real `NtRcAdminDashboardDataProvider` data.
+- Added dashboard KPIs for active domains, active TR domains, active hosting, active SSL, pending/failed queue, payment required, provider credit required, and notification pending/failed counts.
+- Added provider health output for ResellerClub and DomainNameAPI from latest monitoring snapshots.
+- Added queue, runtime, service overview, failed operations, notification summary, and quick action dashboard sections.
 - Added `docs/devbook/ADMIN_DASHBOARD_DETAILED_SPEC.md`.
 
 ### Changed
 
-- `NtRcAdminBaseController::renderDashboardSkeleton()` now renders the real V1 dashboard instead of a foundation-only placeholder.
-- Admin dashboard CSS now includes dashboard grid and quick action layout helpers.
+- `NtRcAdminDashboardDataProvider` now returns a full dashboard data model from existing DB, monitoring, queue, billing, pricing-adjacent service, and notification snapshots.
+- `NtRcAdminBaseController` now renders dashboard cards and tables instead of the Engine 17 foundation-only skeleton.
 
 ### Security
 
-- Dashboard reads no provider API endpoint during page load.
-- Failed operation output excludes payload JSON and sanitizes error text.
-- Credential-like values are masked before render.
+- Dashboard rendering does not expose credentials, api keys, tokens, passwords, auth codes, payloads, raw responses, CSR/private-key, or raw certificate data.
+- Displayed error text is sanitized before output and still escaped by the shared admin widget/theme helpers.
+
+### Performance
+
+- Dashboard opening performs only local lightweight aggregate reads and latest-record lookups.
+- Provider health is read from stored monitoring snapshots; no provider API check is executed on page load.
+- Failed operation output is capped to the latest 10 records.
 
 ## 2026-06-26 - Engine 17 PrestaShop Admin Framework
 
