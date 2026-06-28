@@ -288,7 +288,12 @@ class NtRcInstaller
     public static function ensureCartDomainSchema()
     {
         $columns = array(
+            'id_product' => 'INT UNSIGNED DEFAULT 0 AFTER `id_cart`',
+            'tld' => 'VARCHAR(64) DEFAULT NULL AFTER `domain_name`',
+            'service_type' => 'VARCHAR(50) DEFAULT NULL AFTER `provider_code`',
             'options_json' => 'MEDIUMTEXT DEFAULT NULL AFTER `years`',
+            'price_snapshot' => 'DECIMAL(20,6) DEFAULT NULL AFTER `options_json`',
+            'currency' => 'VARCHAR(10) DEFAULT NULL AFTER `price_snapshot`',
             'updated_at' => 'DATETIME DEFAULT NULL AFTER `created_at`',
         );
 
