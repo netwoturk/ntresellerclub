@@ -17,9 +17,14 @@ class NtRcCartDomain
 
         $data = array(
             'id_cart' => (int)$idCart,
+            'id_product' => !empty($options['id_product']) ? (int)$options['id_product'] : 0,
             'domain_name' => pSQL($domainName),
+            'tld' => !empty($options['tld']) ? pSQL($options['tld']) : null,
             'provider_code' => $providerCode ? pSQL($providerCode) : null,
+            'service_type' => !empty($options['service_type']) ? pSQL($options['service_type']) : null,
             'years' => (int)$years,
+            'price_snapshot' => isset($options['price_snapshot']) ? (float)$options['price_snapshot'] : null,
+            'currency' => !empty($options['currency']) ? pSQL($options['currency']) : null,
             'options_json' => !empty($options) ? pSQL(json_encode($options)) : null,
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s'),
