@@ -27,7 +27,7 @@ class NtresellerclubDomainsearchModuleFrontController extends ModuleFrontControl
             }
 
             $service = new NtRcDomainSearchService();
-            die(json_encode($service->search($query)));
+            die(json_encode($service->search($query, (int)Tools::getValue('years', 1))));
         } catch (Exception $e) {
             die(json_encode(array(
                 'success' => false,
