@@ -78,13 +78,18 @@ class NtRcOrderOrchestrator
 
     protected function processCartDomain(Order $order, array $cartDomain, NtRcDomainManager $domainManager)
     {
+        $validation = $this->validateCartDomainMetadata($cartDomain);
+        if (empty($validation['success'])) {
+            return $this->cartMetadataInvalid($order, $cartDomain, $validation['missing']);
+        }
+
         $domainName = !empty($cartDomain['domain_name']) ? strtolower(trim((string)$cartDomain['domain_name'])) : '';
         if ($domainName === '') {
             return array('success' => false, 'message' => 'Sepet domain bilgisi bulunamadi.');
         }
 
-        $providerCode = !empty($cartDomain['provider_code']) ? strtolower($cartDomain['provider_code']) : NtRcTldRouteManager::resolveDomain($domainName);
-        $serviceType = $providerCode === 'domainnameapi' ? 'tr_domain' : 'domain';
+        $providerCode = strtolower($cartDomain['provider_code']);
+        $serviceType = strtolower($cartDomain['service_type']);
         $idProduct = !empty($cartDomain['id_product']) ? (int)$cartDomain['id_product'] : 0;
 
         if ($this->serviceExists((int)$order->id, $idProduct, $serviceType, $domainName, $providerCode)) {
@@ -99,6 +104,64 @@ class NtRcOrderOrchestrator
 
         $result = $domainManager->provisionCartDomain($order, $cartDomain, $providerCustomer);
         return $this->recordProvisionResult($order, $result, $idProduct, $serviceType, $domainName, $providerCode);
+    }
+
+    protected function validateCartDomainMetadata(array $cartDomain)
+    {
+        $required = array('domain_name', 'tld', 'provider_code', 'service_type', 'years', 'id_product', 'price_snapshot', 'currency');
+        $missing = array();
+
+        foreach ($required as $field) {
+            if (!array_key_exists($field, $cartDomain) || $cartDomain[$field] === null || $cartDomain[$field] === '') {
+                $missing[] = $field;
+            }
+        }
+
+        if (!empty($cartDomain['id_product']) && (int)$cartDomain['id_product'] <= 0) {
+            $missing[] = 'id_product';
+        }
+        if (!empty($cartDomain['years']) && (int)$cartDomain['years'] <= 0) {
+            $missing[] = 'years';
+        }
+        if (!empty($cartDomain['domain_name']) && !preg_match('/^([a-z0-9-]+\.)+[a-z0-9-]{2,}$/i', (string)$cartDomain['domain_name'])) {
+            $missing[] = 'domain_name';
+        }
+        if (!empty($cartDomain['provider_code']) && !in_array(strtolower((string)$cartDomain['provider_code']), array('resellerclub', 'domainnameapi'), true)) {
+            $missing[] = 'provider_code';
+        }
+        if (!empty($cartDomain['service_type']) && !in_array(strtolower((string)$cartDomain['service_type']), array('domain', 'tr_domain'), true)) {
+            $missing[] = 'service_type';
+        }
+
+        $missing = array_values(array_unique($missing));
+        return array('success' => empty($missing), 'missing' => $missing);
+    }
+
+    protected function cartMetadataInvalid(Order $order, array $cartDomain, array $missing)
+    {
+        $context = $this->itemContext(
+            $order,
+            !empty($cartDomain['id_product']) ? (int)$cartDomain['id_product'] : 0,
+            !empty($cartDomain['service_type']) ? (string)$cartDomain['service_type'] : 'domain',
+            !empty($cartDomain['domain_name']) ? (string)$cartDomain['domain_name'] : '',
+            !empty($cartDomain['provider_code']) ? (string)$cartDomain['provider_code'] : ''
+        );
+
+        NtRcBillingEventManager::record(
+            'cart_metadata_invalid',
+            'failed',
+            $context,
+            'Sepet domain metadata eksik veya gecersiz.',
+            array('missing' => $missing)
+        );
+        $this->notifyAdmin('cart_metadata_invalid', $context, 'Cart domain metadata invalid: ' . implode(',', $missing));
+
+        return array(
+            'success' => false,
+            'skipped' => true,
+            'code' => 'cart_metadata_invalid',
+            'message' => 'Sepet domain metadata gecersiz.',
+        );
     }
 
     protected function processDomainProduct(Order $order, array $product, array $classified, NtRcDomainManager $domainManager)
