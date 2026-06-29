@@ -1,6 +1,10 @@
 # Domain Search API Flow
 
-Branch: `codex/task-03-domain-search-cart-flow`
+Branch: `codex/task-06-1-branch-alignment-v1`
+
+Task 06.1 note:
+
+This document still describes the Task 03 API/cart flow available in the current branch chain. The expected Task 04/05 frontend page, template, JavaScript add-to-cart UI, customer services page, upgrade script, and hook repair changes were not found in GitHub or the local workspace during the Task 06.1 audit. See `docs/devbook/BRANCH_ALIGNMENT_LOST_CHANGES_CHECK.md` before continuing feature work.
 
 ## Scope
 
