@@ -1,14 +1,23 @@
 # Current Status
 
-Date: 2026-06-29
+Date: 2026-06-30
 
 ## Last Work
 
-Task 06 - Simple Admin UX Redesign V1
+Task 06.1 - Branch Alignment & Lost Changes Check
 
 ## Last Branch
 
-`codex/task-06-simple-admin-ux-redesign-v1`
+`codex/task-06-1-branch-alignment-v1`
+
+## Branch Alignment Status
+
+- Task 06 was confirmed to have been created from `codex/task-03-domain-search-cart-flow` because `codex/task-05-runtime-smoke-test-preparation` was not available.
+- GitHub branch list and local workspace packages were checked for Task 04/05 source material.
+- No branch or local package containing the expected Task 04.1 through Task 04.6 and Task 05 V1 flow was found.
+- No code merge was performed because the correct V1 base is not available in this workspace.
+- `docs/devbook/BRANCH_ALIGNMENT_LOST_CHANGES_CHECK.md` records the 14-point lost changes audit.
+- No install-ready ZIP was produced from the incomplete branch chain.
 
 ## Completed
 
@@ -117,6 +126,8 @@ The existing `ntresellerclub_cart_domain` table was extended for cart-to-order m
 - Product price in PrestaShop cart still depends on the mapped product configuration; `price_snapshot` is stored for downstream domain metadata and audit.
 - Requested base branch `codex/task-05-runtime-smoke-test-preparation` was not available on GitHub in this workspace; Task 06 branch was created from the latest reachable task branch.
 - Visual validation was limited to static review because a real PrestaShop back office runtime was not available in this workspace.
+- Task 04/05 changes listed in the Task 06.1 audit are not recoverable from the currently available GitHub branches or local files.
+- A correct latest V1 zip, extracted working copy, or branch is required before replaying Task 06 admin UX safely.
 
 ## Last Test
 
@@ -135,12 +146,14 @@ The existing `ntresellerclub_cart_domain` table was extended for cart-to-order m
 - Static check verified secret fields render empty values with masked placeholders.
 - Static check verified the redesigned settings labels do not contain legacy mojibake fragments.
 - PHP lint could not be run because PHP CLI is not available in this workspace.
+- Static branch alignment audit checked GitHub branches, local packages, and the 14 requested Task 04/05 feature markers.
 
 ## Last Documentation Update
 
 - `CHANGELOG.md`
 - `CURRENT_STATUS.md`
 - `ROADMAP.md`
+- `docs/devbook/BRANCH_ALIGNMENT_LOST_CHANGES_CHECK.md`
 - `docs/devbook/ADMIN_DASHBOARD_DETAILED_SPEC.md`
 - `docs/devbook/ADMIN_SCREEN_MAP.md`
 - `docs/devbook/DOMAIN_SEARCH_API_FLOW.md`
