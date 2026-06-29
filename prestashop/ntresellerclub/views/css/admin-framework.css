@@ -102,6 +102,138 @@
     margin-top: 4px;
 }
 
+.ntrc-settings-v1 {
+    display: block;
+}
+
+.ntrc-settings-block {
+    margin-bottom: 14px;
+}
+
+.ntrc-block-head {
+    border-bottom: 1px solid #dfe3e8;
+    margin: -4px 0 14px;
+    padding-bottom: 10px;
+}
+
+.ntrc-block-head h3 {
+    margin: 0 0 4px;
+}
+
+.ntrc-block-head p,
+.ntrc-muted-line,
+.ntrc-provider-result small,
+.ntrc-form-row small,
+.ntrc-admin-card small {
+    color: #667085;
+}
+
+.ntrc-card-grid {
+    display: grid;
+    gap: 12px;
+}
+
+.ntrc-two-col {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.ntrc-three-col {
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+}
+
+.ntrc-admin-card {
+    border: 1px solid #dfe3e8;
+    border-radius: 6px;
+    padding: 12px;
+}
+
+.ntrc-admin-card h4 {
+    margin: 0 0 10px;
+}
+
+.ntrc-status-list {
+    display: grid;
+    gap: 8px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.ntrc-status-row {
+    align-items: flex-start;
+    border: 1px solid #dfe3e8;
+    border-radius: 6px;
+    display: grid;
+    gap: 3px;
+    grid-template-columns: auto 1fr;
+    padding: 10px;
+}
+
+.ntrc-status-row small {
+    color: #667085;
+    grid-column: 2;
+}
+
+.ntrc-form-row {
+    margin-bottom: 12px;
+}
+
+.ntrc-form-row label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.ntrc-segmented {
+    display: flex;
+    gap: 10px;
+}
+
+.ntrc-segmented label {
+    font-weight: 400;
+    margin: 0;
+}
+
+.ntrc-inline-fields {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.ntrc-inline-fields label {
+    margin: 0;
+}
+
+.ntrc-inline-fields input {
+    max-width: 150px;
+}
+
+.ntrc-provider-result {
+    border-top: 1px solid #dfe3e8;
+    display: grid;
+    gap: 4px;
+    margin-top: 12px;
+    padding-top: 10px;
+}
+
+.ntrc-copy-row {
+    align-items: center;
+    display: grid;
+    gap: 8px;
+    grid-template-columns: 90px minmax(220px, 1fr) auto;
+    margin-top: 12px;
+}
+
+.ntrc-save-footer {
+    margin-top: 14px;
+    text-align: right;
+}
+
+.ntrc-simple-price-table input,
+.ntrc-simple-price-table select {
+    min-width: 80px;
+}
+
 @media (prefers-color-scheme: dark) {
     .ntrc-admin-shell {
         --ntrc-admin-bg: #111827;
@@ -113,7 +245,9 @@
     .ntrc-admin-header,
     .ntrc-admin-footer,
     .ntrc-admin-sidebar,
-    .ntrc-widget {
+    .ntrc-widget,
+    .ntrc-admin-card,
+    .ntrc-status-row {
         background: #1f2937;
         border-color: #374151;
     }
@@ -121,13 +255,30 @@
     .ntrc-admin-sidebar a,
     .ntrc-widget-title,
     .ntrc-widget-desc,
-    .ntrc-stat-tile small {
+    .ntrc-stat-tile small,
+    .ntrc-block-head p,
+    .ntrc-muted-line,
+    .ntrc-provider-result small,
+    .ntrc-form-row small,
+    .ntrc-admin-card small,
+    .ntrc-status-row small {
         color: #d1d5db;
+    }
+
+    .ntrc-block-head,
+    .ntrc-provider-result {
+        border-color: #374151;
     }
 
     .ntrc-admin-sidebar li.active a,
     .ntrc-admin-sidebar a:hover {
         background: #243b64;
         color: #ffffff;
+    }
+}
+
+@media (max-width: 768px) {
+    .ntrc-copy-row {
+        grid-template-columns: 1fr;
     }
 }
