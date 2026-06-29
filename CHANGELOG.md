@@ -1,5 +1,24 @@
 # Changelog
 
+## 2026-06-30 - Task 06.1 Branch Alignment & Lost Changes Check
+
+Branch: `codex/task-06-1-branch-alignment-v1`
+
+### Added
+
+- Added `docs/devbook/BRANCH_ALIGNMENT_LOST_CHANGES_CHECK.md` with the requested 14-point Task 04/05 lost changes audit.
+- Documented that `codex/task-05-runtime-smoke-test-preparation` is not available in GitHub or the local workspace.
+
+### Changed
+
+- Marked Task 06.1 as an audit/alignment branch only.
+- Documented that no code merge or new feature work was performed because the correct V1 base is missing.
+
+### Notes
+
+- No install-ready ZIP was produced from this branch because the available branch chain is missing expected Task 04/05 files.
+- The next safe step is to provide the latest V1 zip, extracted working copy, or branch containing Task 04/05 changes before replaying Task 06 admin UX.
+
 ## 2026-06-29 - Task 06 Simple Admin UX Redesign V1
 
 Branch: `codex/task-06-simple-admin-ux-redesign-v1`
@@ -320,7 +339,7 @@ Branch: `codex/engine-12-hosting-provisioning`
 ### Fixed
 
 - DomainNameAPI remains blocked for hosting through contract guard.
-- Hosting renew does not create provider API queue before payment confirmation.
+- Hosting renew does not call provider API before payment confirmation.
 - ResellerClub hosting adapter sanitizes token/credential-like fields.
 
 ### TODO
