@@ -26,6 +26,7 @@ This root roadmap is the repository-level continuation file for Codex engine wor
 | Task 01 | API Settings & Connection Test | Completed in `codex/task-01-api-settings-connection-test` |
 | Task 02 | Domain Search API Flow | Completed in `codex/task-02-domain-search-api-flow` |
 | Task 03 | Domain Search Result To Cart Flow | Completed in `codex/task-03-domain-search-cart-flow` |
+| Task 06 | Simple Admin UX Redesign V1 | Completed in `codex/task-06-simple-admin-ux-redesign-v1` |
 
 ## Engine 12 - Hosting Provisioning
 
@@ -51,9 +52,9 @@ This root roadmap is the repository-level continuation file for Codex engine wor
 
 | Engine | Name | Notes |
 |---|---|---|
-| Task 04 | Customer Domain Search UI | Build frontend UI on top of the read-only search and cart JSON endpoints |
-| Task 05 | Queue & Monitoring Admin Screens | Operations UI using the admin framework |
-| Task 06 | Billing & Notification Admin Screens | Billing events and notification queue visibility |
+| Task 07 | Customer Domain Search UI | Build frontend UI on top of the read-only search and cart JSON endpoints |
+| Task 08 | Queue & Monitoring Admin Screens | Operations UI using the admin framework |
+| Task 09 | Billing & Notification Admin Screens | Billing events and notification queue visibility |
 | 19 | SSL Renew + Secure CSR Flow | Verify renew contract and design transient/encrypted CSR handling |
 | 20 | Webhook | Provider webhook ingestion |
 | 21 | Customer Dashboard | Customer service panel expansion |
