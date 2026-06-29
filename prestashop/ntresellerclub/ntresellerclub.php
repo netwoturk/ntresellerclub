@@ -314,7 +314,7 @@ class Ntresellerclub extends Module
     protected function downloadBtkCsv($type)
     {
         if (!NtRcFeature::isBtkCsvReportingActive()) {
-            return $this->displayWarning($this->l('BTK CSV Reporting premium ÃƒÂ¶zelliÃ„Å¸i aktif deÃ„Å¸il. CSV indirme kapalÃ„Â±.'));
+            return $this->displayWarning($this->l('BTK CSV Reporting premium özelliği aktif değil. CSV indirme kapalı.'));
         }
 
         $engine = new NtRcBtkCsvExportEngine();
@@ -325,7 +325,7 @@ class Ntresellerclub extends Module
             $csv = $engine->exportRegisteredOnlyDomainsCsv();
             $filename = 'btk-tescil-edilen-alan-adlari-' . date('Ymd') . '.csv';
         } else {
-            return $this->displayError($this->l('GeÃƒÂ§ersiz BTK CSV rapor tipi.'));
+            return $this->displayError($this->l('Geçersiz BTK CSV rapor tipi.'));
         }
 
         header('Content-Type: text/csv; charset=UTF-8');
@@ -339,18 +339,18 @@ class Ntresellerclub extends Module
     {
         $html = '<div class="panel"><h3>' . $this->l('BTK CSV Reporting') . '</h3>';
         if (!NtRcFeature::isBtkCsvReportingActive()) {
-            return $html . $this->displayWarning($this->l('BTK CSV Reporting premium ÃƒÂ¶zelliÃ„Å¸i aktif deÃ„Å¸il.')) . '</div>';
+            return $html . $this->displayWarning($this->l('BTK CSV Reporting premium özelliği aktif değil.')) . '</div>';
         }
 
         $action = AdminController::$currentIndex . '&configure=' . $this->name . '&token=' . Tools::getAdminTokenLite('AdminModules');
-        $html .= '<p>' . $this->l('BTK formatÃ„Â±nda baÃ…Å¸lÃ„Â±ksÃ„Â±z, 6 kolonlu CSV ÃƒÂ§Ã„Â±ktÃ„Â±larÃ„Â±.') . '</p>';
+        $html .= '<p>' . $this->l('BTK formatında başlıksız, 6 kolonlu CSV çıktıları.') . '</p>';
         $html .= '<form method="post" action="' . Tools::safeOutput($action) . '" style="display:inline-block;margin-right:10px;">';
         $html .= '<input type="hidden" name="nt_btk_csv_type" value="' . NtRcBtkCsvExportEngine::TYPE_HOSTED . '">';
-        $html .= '<button type="submit" name="submitNtRcBtkCsvExport" class="btn btn-default">' . $this->l('BarÃ„Â±ndÃ„Â±rÃ„Â±lan Alan AdlarÃ„Â± CSV') . '</button>';
+        $html .= '<button type="submit" name="submitNtRcBtkCsvExport" class="btn btn-default">' . $this->l('Barındırılan Alan Adları CSV') . '</button>';
         $html .= '</form>';
         $html .= '<form method="post" action="' . Tools::safeOutput($action) . '" style="display:inline-block;">';
         $html .= '<input type="hidden" name="nt_btk_csv_type" value="' . NtRcBtkCsvExportEngine::TYPE_REGISTERED_ONLY . '">';
-        $html .= '<button type="submit" name="submitNtRcBtkCsvExport" class="btn btn-default">' . $this->l('Tescil Edilen Alan AdlarÃ„Â± CSV') . '</button>';
+        $html .= '<button type="submit" name="submitNtRcBtkCsvExport" class="btn btn-default">' . $this->l('Tescil Edilen Alan Adları CSV') . '</button>';
         $html .= '</form>';
 
         return $html . '</div>';
@@ -360,9 +360,9 @@ class Ntresellerclub extends Module
     {
         $cronUrl = $this->context->link->getModuleLink($this->name, 'cron', array('token' => Configuration::get(self::CFG_CRON_TOKEN)));
         $fields = array('form' => array(
-            'legend' => array('title' => $this->l('Multi Provider API ve Lisans AyarlarÃ„Â±')),
+            'legend' => array('title' => $this->l('Multi Provider API ve Lisans Ayarları')),
             'input' => array(
-                array('type' => 'text', 'label' => $this->l('YÃ„Â±llÃ„Â±k Lisans AnahtarÃ„Â±'), 'name' => self::CFG_LICENSE_KEY),
+                array('type' => 'text', 'label' => $this->l('Yıllık Lisans Anahtarı'), 'name' => self::CFG_LICENSE_KEY),
                 array('type' => 'switch', 'label' => $this->l('Core Lisans Aktif'), 'name' => self::CFG_FEATURE_CORE, 'is_bool' => true, 'values' => $this->switchValues()),
                 array('type' => 'switch', 'label' => $this->l('ResellerClub Provider'), 'name' => self::CFG_FEATURE_RESELLERCLUB, 'is_bool' => true, 'values' => $this->switchValues()),
                 array('type' => 'switch', 'label' => $this->l('DomainNameAPI Provider'), 'name' => self::CFG_FEATURE_DOMAINNAMEAPI, 'is_bool' => true, 'values' => $this->switchValues()),
@@ -372,8 +372,8 @@ class Ntresellerclub extends Module
                 array('type' => 'text', 'label' => $this->l('ResellerClub Reseller ID'), 'name' => self::CFG_RESELLER_ID),
                 array('type' => 'password', 'label' => $this->l('ResellerClub API Key'), 'name' => self::CFG_API_KEY),
                 array('type' => 'text', 'label' => $this->l('ResellerClub Dil'), 'name' => self::CFG_LANG_PREF),
-                array('type' => 'text', 'label' => $this->l('DomainNameAPI KullanÃ„Â±cÃ„Â± AdÃ„Â±'), 'name' => self::CFG_DNA_USERNAME),
-                array('type' => 'password', 'label' => $this->l('DomainNameAPI Ã…Âifre'), 'name' => self::CFG_DNA_PASSWORD),
+                array('type' => 'text', 'label' => $this->l('DomainNameAPI Kullanıcı Adı'), 'name' => self::CFG_DNA_USERNAME),
+                array('type' => 'password', 'label' => $this->l('DomainNameAPI Şifre'), 'name' => self::CFG_DNA_PASSWORD),
                 array('type' => 'switch', 'label' => $this->l('DomainNameAPI Test Modu'), 'name' => self::CFG_DNA_TEST_MODE, 'is_bool' => true, 'values' => $this->switchValues()),
                 array('type' => 'text', 'label' => $this->l('Global Domain Product ID'), 'name' => self::CFG_DOMAIN_PRODUCT_ID),
                 array('type' => 'text', 'label' => $this->l('TR Domain Product ID'), 'name' => self::CFG_TR_DOMAIN_PRODUCT_ID),
