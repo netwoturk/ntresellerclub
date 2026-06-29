@@ -33,6 +33,7 @@ class NtRcDomainCartBuilder
         if (!$result || empty($result['available'])) {
             return array(
                 'success' => false,
+                'code' => 'unavailable',
                 'message' => 'Domain musait degil veya availability dogrulanamadi.',
                 'domain' => $domainName,
                 'provider_code' => $result && isset($result['provider_code']) ? $result['provider_code'] : null,
@@ -52,7 +53,13 @@ class NtRcDomainCartBuilder
         $idProduct = $this->resolveProductId($providerCode, $serviceType, $options);
 
         if ($idProduct <= 0 || !$this->productIsUsable($idProduct)) {
-            return array('success' => false, 'message' => 'Domain icin PrestaShop urun mapping bulunamadi.', 'domain' => $domainName, 'provider_code' => $providerCode);
+            return array(
+                'success' => false,
+                'code' => 'product_mapping_missing',
+                'message' => 'Ürün eşleştirmesi yapılmamış.',
+                'domain' => $domainName,
+                'provider_code' => $providerCode,
+            );
         }
 
         $exists = Db::getInstance()->getRow(
@@ -63,6 +70,7 @@ class NtRcDomainCartBuilder
         if ($exists) {
             return array(
                 'success' => false,
+                'code' => 'duplicate',
                 'message' => 'Bu domain zaten sepette.',
                 'cart_id' => (int)$idCart,
                 'domain' => $domainName,
