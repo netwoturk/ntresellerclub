@@ -46,7 +46,7 @@ class Ntresellerclub extends Module
     {
         $this->name = 'ntresellerclub';
         $this->tab = 'administration';
-        $this->version = '0.1.0';
+        $this->version = '0.1.1';
         $this->author = 'NetwoTurk';
         $this->need_instance = 0;
         $this->bootstrap = true;
@@ -83,7 +83,9 @@ class Ntresellerclub extends Module
             && NtRcPricingManager::seedResellerClubMappings('USD')
             && NtRcInstaller::installAdminTabs()
             && $this->registerHook('actionValidateOrder')
+            && $this->registerHook('actionOrderStatusPostUpdate')
             && $this->registerHook('displayCustomerAccount')
+            && $this->registerHook('displayHeader')
             && $this->registerHook('displayBackOfficeHeader');
     }
 
@@ -434,10 +436,35 @@ class Ntresellerclub extends Module
         $engine->processOrder((int)$params['order']->id);
     }
 
+    public function hookActionOrderStatusPostUpdate($params)
+    {
+        if (empty($params['id_order'])) {
+            return;
+        }
+        if (!NtRcLicense::isActive()) {
+            return;
+        }
+
+        require_once __DIR__ . '/classes/NtRcOrderOrchestrator.php';
+        $orchestrator = new NtRcOrderOrchestrator($this);
+        $orchestrator->processOrder((int)$params['id_order']);
+    }
+
     public function hookDisplayCustomerAccount($params)
     {
-        $url = $this->context->link->getModuleLink($this->name, 'services');
+        $url = $this->context->link->getModuleLink($this->name, 'myservices');
         return '<a class="col-lg-4 col-md-6 col-sm-6 col-xs-12" href="' . $url . '"><span class="link-item"><i class="material-icons">dns</i>' . $this->l('Hizmetlerim') . '</span></a>';
+    }
+
+    public function hookDisplayHeader($params)
+    {
+        $controller = Tools::getValue('controller');
+        if ($controller !== 'domainsearchpage') {
+            return;
+        }
+
+        $this->context->controller->addCSS($this->_path . 'views/css/domain-search.css');
+        $this->context->controller->addJS($this->_path . 'views/js/domain-search.js');
     }
 
     public function hookDisplayBackOfficeHeader($params)
