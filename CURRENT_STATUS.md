@@ -1,14 +1,14 @@
 # Current Status
 
-Date: 2026-06-28
+Date: 2026-06-29
 
 ## Last Work
 
-Task 03 - Domain Search Result To Cart Flow
+Task 06 - Simple Admin UX Redesign V1
 
 ## Last Branch
 
-`codex/task-03-domain-search-cart-flow`
+`codex/task-06-simple-admin-ux-redesign-v1`
 
 ## Completed
 
@@ -43,6 +43,12 @@ Task 03 - Domain Search Result To Cart Flow
 - Duplicate domain additions to the same cart are blocked before product quantity is changed.
 - Order orchestration keeps reading cart domain rows and now preserves `tr_domain` service type for DomainNameAPI cart domains.
 - Legacy module configuration now stores default global and TR domain product IDs.
+- Settings admin screen was redesigned into five simple workflow blocks: setup status, API connections, domain sales settings, price/currency, and system.
+- Settings screen now surfaces license/provider/product/cron readiness in a plain setup checklist.
+- Settings screen now includes global/TR domain product mapping status as Ayarlı/Eksik/Pasif.
+- Settings screen now manages USD to TRY manual rate, TR price rows, runtime limits, and cron URL in the same guided flow.
+- SSL mapping and BTK CSV are kept in a small advanced section so the main sales setup remains focused.
+- Mojibake labels from the old form were removed from the new settings controller output.
 
 ## Database Changes
 
@@ -69,6 +75,8 @@ The existing `ntresellerclub_cart_domain` table was extended for cart-to-order m
 - Provider technical errors in search responses are sanitized before JSON output.
 - Domain cart JSON does not return raw provider responses, credentials, API keys, passwords, auth codes, or provider payloads.
 - Cart add trusts neither client price nor client availability; availability and price snapshot are recalculated server-side.
+- Redesigned settings screen keeps secret inputs empty with masked placeholders and preserves stored credentials on blank submit.
+- Settings page render reads local Configuration/DB snapshots only; provider API calls remain limited to explicit test buttons.
 
 ## Performance
 
@@ -82,10 +90,14 @@ The existing `ntresellerclub_cart_domain` table was extended for cart-to-order m
 - Search responses are runtime-cached for 60 seconds per normalized domain inside the request process.
 - Cart add performs one explicit availability recheck and one product/cart metadata insert.
 - Duplicate cart checks use the cart id and normalized domain before mutating cart quantity.
+- Settings UX uses local Configuration, product, price, runtime, and provider health reads only on page load.
+- TR price and runtime updates are saved only on explicit submit.
 
 ## TODO
 
 - Build customer-facing search UI that calls `domainsearch` and `domaincart`.
+- Smoke test the redesigned settings screen in real PrestaShop 1.7, 8, and 9 back offices.
+- Add a customer-facing search UI that calls `domainsearch` and `domaincart`.
 - Add checkout/order validation UI for missing domain product mappings and TR contact requirements.
 - Bind Queue and Monitoring sections to dedicated data providers in the next admin screen task.
 - Add richer PrestaShop permission profiles if role-specific operations are introduced.
@@ -103,6 +115,8 @@ The existing `ntresellerclub_cart_domain` table was extended for cart-to-order m
 - ResellerClub availability depends on the existing `NtRcApiClient::domainAvailability()` endpoint path already present in the module; official endpoint notes remain documented in `docs/resellerclub-api-analysis.md`.
 - Cart add requires `NTRC_DOMAIN_PRODUCT_ID` or `NTRC_TR_DOMAIN_PRODUCT_ID`, or an explicit valid `id_product` in the request.
 - Product price in PrestaShop cart still depends on the mapped product configuration; `price_snapshot` is stored for downstream domain metadata and audit.
+- Requested base branch `codex/task-05-runtime-smoke-test-preparation` was not available on GitHub in this workspace; Task 06 branch was created from the latest reachable task branch.
+- Visual validation was limited to static review because a real PrestaShop back office runtime was not available in this workspace.
 
 ## Last Test
 
@@ -117,6 +131,9 @@ The existing `ntresellerclub_cart_domain` table was extended for cart-to-order m
 - Static check verified search JSON does not include raw provider response fields.
 - Static check verified domain cart endpoint calls the cart builder and does not call register/transfer/renew actions.
 - Static check verified order orchestrator reads `NtRcCartDomain::getDomainsByCart()` for cart domain metadata.
+- Static check verified the redesigned settings controller calls provider APIs only inside explicit connection test handlers.
+- Static check verified secret fields render empty values with masked placeholders.
+- Static check verified the redesigned settings labels do not contain legacy mojibake fragments.
 - PHP lint could not be run because PHP CLI is not available in this workspace.
 
 ## Last Documentation Update
