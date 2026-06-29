@@ -1,6 +1,6 @@
 # Admin Screen Map
 
-Branch: `codex/task-02-domain-search-api-flow`
+Branch: `codex/task-06-simple-admin-ux-redesign-v1`
 
 ## Dashboard
 
@@ -26,8 +26,30 @@ Controller:
 
 Purpose:
 
-- Manage provider API settings.
+- Provide a simple setup-first admin experience for non-developer store managers.
+- Manage provider API settings, domain product mappings, TR pricing, runtime limits, and cron URL from one guided screen.
 - Run explicit provider connection tests.
+
+Layout:
+
+- Kurulum Durumu
+- API Bağlantıları
+- Domain Satış Ayarları
+- Fiyat ve Kur
+- Sistem
+- Gelişmiş Ayarlar
+
+## Kurulum Durumu
+
+Shows:
+
+- License key readiness.
+- ResellerClub enabled state.
+- DomainNameAPI enabled state.
+- Global domain product mapping state.
+- TR domain product mapping state.
+- Cron URL readiness.
+- Last cron run when available.
 
 ## ResellerClub Settings
 
@@ -42,12 +64,11 @@ Configuration keys:
 
 Screen fields:
 
-- enabled
-- mode: sandbox/live
-- auth_userid
-- api_key
-- reseller_id if available
-- language
+- Aktif/Pasif
+- Test/Canlı mod
+- Reseller ID
+- Auth User ID
+- API Key masked placeholder
 
 Connection test:
 
@@ -66,10 +87,10 @@ Configuration keys:
 
 Screen fields:
 
-- enabled
-- mode: sandbox/live
-- username
-- password / API credential
+- Aktif/Pasif
+- Test/Canlı mod
+- Kullanıcı adı
+- Şifre / API credential masked placeholder
 
 Connection test:
 
@@ -89,6 +110,59 @@ Rendered fields:
 Storage:
 
 - `ntresellerclub_provider_health`
+
+## Domain Sales Settings
+
+Configuration keys:
+
+- `NTRC_DOMAIN_PRODUCT_ID`
+- `NTRC_TR_DOMAIN_PRODUCT_ID`
+
+Rendered fields:
+
+- Global Domain PrestaShop Product ID
+- TR Domain PrestaShop Product ID
+- Product status: Ayarlı / Eksik / Pasif
+- Domain search page link
+- Customer services page link
+
+## Price And Currency
+
+Data sources:
+
+- `NtRcManualExchangeRate`
+- `NtRcTrPriceManager`
+- `NtRcTrPriceCalculator`
+
+Rendered fields/actions:
+
+- USD -> TRY manual rate.
+- DomainNameAPI TR price row creation button.
+- Simplified TR price table.
+- Sale price, margin mode, percent margin, and fixed margin fields.
+
+## System
+
+Configuration keys:
+
+- `NTRC_MEMORY_LIMIT`
+- `NTRC_TIME_LIMIT`
+- `NTRC_CRON_BATCH_LIMIT`
+- `NTRC_CRON_TOKEN`
+
+Rendered fields/actions:
+
+- Memory limit.
+- Time limit.
+- Cron batch limit.
+- Cron URL.
+- Cron URL copy button.
+- Ayarları kaydet button.
+
+## Advanced Settings
+
+- SSL mapping is linked as a secondary action so it does not interrupt the main setup flow.
+- BTK CSV is shown as a premium feature when inactive.
 
 ## Domain Search JSON Endpoint
 
@@ -122,6 +196,9 @@ Provider calls:
 - Provider API calls must run only after explicit connection test submission.
 - Domain search provider API calls must run only after explicit search submission.
 - Dashboard opening must remain provider-API free.
+- Settings page opening must remain provider-API free.
+- Blank secret submissions must preserve existing stored Configuration values.
+- Credential-like values must be sanitized before rendering connection test errors.
 
 ## Compatibility
 
