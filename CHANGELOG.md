@@ -1,5 +1,35 @@
 # Changelog
 
+## 2026-06-29 - Task 06 Simple Admin UX Redesign V1
+
+Branch: `codex/task-06-simple-admin-ux-redesign-v1`
+
+### Added
+
+- Added a five-block settings experience in `AdminNtRcSettingsController`: Kurulum Durumu, API Bağlantıları, Domain Satış Ayarları, Fiyat ve Kur, and Sistem.
+- Added setup readiness checks for license, provider enabled state, domain product mappings, cron URL, and last cron run.
+- Added product mapping status labels for global and TR domain products.
+- Added guided controls for USD to TRY manual rate, TR price rows, runtime limits, and cron URL copy.
+- Added a small advanced section for SSL mapping and BTK CSV premium state.
+
+### Changed
+
+- Replaced the old long technical API form with workflow-oriented cards for non-developer store managers.
+- Moved credential inputs to masked placeholder-only fields and kept blank submit behavior.
+- Kept provider connection tests as explicit button actions only.
+- Extended admin framework CSS with scoped settings card/layout styles.
+- Fixed visible Turkish label mojibake in the redesigned settings screen.
+
+### Security
+
+- Settings page render does not call ResellerClub or DomainNameAPI.
+- Provider API calls remain limited to explicit connection test button submissions.
+- API keys and passwords are not rendered as input values.
+
+### Notes
+
+- Requested base branch `codex/task-05-runtime-smoke-test-preparation` was not available on GitHub; this branch was created from the latest reachable task branch.
+
 ## 2026-06-28 - Task 03 Domain Search Result To Cart Flow
 
 Branch: `codex/task-03-domain-search-cart-flow`
