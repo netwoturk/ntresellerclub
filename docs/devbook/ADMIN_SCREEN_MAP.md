@@ -1,6 +1,10 @@
 # Admin Screen Map
 
-Branch: `codex/task-06-simple-admin-ux-redesign-v1`
+Branch: `codex/task-06-1-branch-alignment-v1`
+
+Task 06.1 note:
+
+This branch is an alignment/audit branch. Task 06 admin settings UX is present, but the expected Task 04/05 V1 frontend/service/admin-list changes were not found in the available GitHub branches or local workspace. See `docs/devbook/BRANCH_ALIGNMENT_LOST_CHANGES_CHECK.md`.
 
 ## Dashboard
 
