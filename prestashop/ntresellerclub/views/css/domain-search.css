@@ -1,0 +1,76 @@
+.ntrc-domain-search {
+  max-width: 960px;
+  margin: 0 auto 32px;
+}
+
+.ntrc-domain-search__header {
+  margin-bottom: 18px;
+}
+
+.ntrc-domain-search__header h1 {
+  margin-bottom: 6px;
+}
+
+.ntrc-domain-search__form {
+  margin-bottom: 16px;
+}
+
+.ntrc-domain-search__input-row {
+  display: flex;
+  gap: 10px;
+}
+
+.ntrc-domain-search__input-row input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.ntrc-domain-search__message {
+  min-height: 24px;
+  margin: 10px 0;
+}
+
+.ntrc-domain-search__message.is-error {
+  color: #b00020;
+}
+
+.ntrc-domain-search__message.is-success {
+  color: #237804;
+}
+
+.ntrc-domain-result {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.ntrc-domain-result strong,
+.ntrc-domain-result span {
+  display: block;
+}
+
+.ntrc-domain-result span {
+  color: #666;
+  font-size: 13px;
+}
+
+.ntrc-domain-result__status,
+.ntrc-domain-result__price {
+  white-space: nowrap;
+}
+
+@media (max-width: 700px) {
+  .ntrc-domain-search__input-row,
+  .ntrc-domain-result {
+    display: block;
+  }
+
+  .ntrc-domain-search__input-row .btn,
+  .ntrc-domain-result .btn {
+    margin-top: 10px;
+    width: 100%;
+  }
+}
