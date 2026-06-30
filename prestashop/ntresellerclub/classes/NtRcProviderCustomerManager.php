@@ -177,7 +177,7 @@ class NtRcProviderCustomerManager
     {
         NtRcInstaller::ensureProviderCustomerSchema();
         self::addColumnIfMissing('provider_username', 'VARCHAR(255) DEFAULT NULL AFTER `provider_customer_id`');
-        self::addColumnIfMissing('raw_data', 'MEDIUMTEXT DEFAULT NULL AFTER `status`');
+        self::addColumnIfMissing('raw_data', 'MEDIUMTEXT NULL AFTER `status`');
     }
 
     protected static function addColumnIfMissing($column, $definition)
