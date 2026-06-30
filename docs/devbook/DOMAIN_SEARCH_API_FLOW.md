@@ -1,78 +1,43 @@
 # Domain Search API Flow
 
-Branch: `codex/task-03-domain-search-cart-flow`
+Branch: `codex/v1-recovery-task04-05-admin-ux`
 
 ## Scope
 
-`NtRcDomainSearchService` is the single read-only domain search flow for this task. It uses existing provider, route, and Engine 11 pricing classes.
+`NtRcDomainSearchService` remains the single read-only domain search flow. The recovered customer UI calls the existing search endpoint and the existing cart endpoint only.
 
-No register, transfer, renew, customer, hosting, SSL, queue write, or dashboard provider call is added here. Task 03 adds cart metadata and product add flow only.
+No register, transfer, renew, hosting, SSL, queue processor, or dashboard provider API call is added to the UI or hooks.
 
-## Input Normalization
+## Customer Page
 
-- Removes `http://`, `https://`, `www.`, path/query fragments, spaces, and trailing dots.
-- Converts to lowercase.
-- Converts IDN to punycode when PHP intl `idn_to_ascii()` is available.
-- Fails safely before provider calls when IDN conversion is unavailable or invalid.
+Page:
 
-## Routing
+`/module/ntresellerclub/domainsearchpage`
 
-- `.tr`, `.com.tr`, `.net.tr`, `.org.tr`, `.av.tr`, `.gen.tr`, and `.web.tr` route to DomainNameAPI.
-- Other TLDs use `NtRcTldRouteManager`.
-- If no non-TR route exists, the service falls back to ResellerClub for global domains.
+Files:
 
-## Provider Calls
+- `controllers/front/domainsearchpage.php`
+- `views/templates/front/domain_search.tpl`
+- `views/js/domain-search.js`
+- `views/css/domain-search.css`
 
-- ResellerClub availability calls the existing `NtRcResellerClubProvider::checkAvailability()` path.
-- DomainNameAPI TR availability calls the existing `NtRcDomainNameApiProvider::checkAvailability()` path.
-- The ResellerClub domain availability endpoint is not redefined in this task; it uses the module's existing `NtRcApiClient::domainAvailability()` implementation. Keep endpoint verification notes in `docs/resellerclub-api-analysis.md` current before changing that client.
+AJAX endpoints:
 
-## Pricing
+- Search: `/module/ntresellerclub/domainsearch`
+- Add to cart: `/module/ntresellerclub/domaincart?action=add`
 
-- DomainNameAPI TR register price reads Engine 11 rows: `provider_code=domainnameapi`, `product_type=tr_domain`, `code=<tld>:register`.
-- ResellerClub global register price reads Engine 11 rows: `provider_code=resellerclub`, `product_type=domain`, `code=<tld>:register`.
-- `NtRcPricingManager::calculateRow()` produces `final_sale_price`.
-- Missing pricing returns `null` price fields and does not block availability.
+## Add To Cart
 
-## JSON Shape
+Available domains show `Sepete Ekle`. The button posts safe metadata to `domaincart?action=add` and shows friendly messages for:
 
-```json
-{
-  "success": true,
-  "query": "https://www.example.com",
-  "normalized_domain": "example.com",
-  "results": [
-    {
-      "domain": "example.com",
-      "tld": "com",
-      "provider_code": "resellerclub",
-      "available": true,
-      "status": "available",
-      "price": 8.5,
-      "currency": "TRY",
-      "final_sale_price": 399.9,
-      "error": null,
-      "add_to_cart": {
-        "domain": "example.com",
-        "tld": "com",
-        "provider_code": "resellerclub",
-        "service_type": "domain",
-        "years": 1,
-        "final_sale_price": 399.9,
-        "cart_token": "safe-hash"
-      }
-    }
-  ],
-  "cached": false,
-  "checked_at": "2026-06-28 12:00:00"
-}
-```
+- `product_mapping_missing`: `Ürün eşleştirmesi yapılmamış.`
+- `unavailable`: domain is no longer available.
+- `duplicate`: domain already exists in the cart.
+- `failed`: generic safe failure.
+
+Success shows `Domain sepete eklendi` and a `Sepete Git` link.
 
 ## Cart Endpoint
-
-Endpoint:
-
-`/module/ntresellerclub/domaincart?action=add`
 
 Accepted inputs:
 
@@ -85,13 +50,16 @@ Flow:
 
 - Creates or reuses the current PrestaShop cart.
 - Re-runs `NtRcDomainSearchService::search()` for availability.
-- Rejects the add if the domain is no longer available.
-- Resolves a domain product from explicit `id_product`, `NTRC_DOMAIN_PRODUCT_ID`, or `NTRC_TR_DOMAIN_PRODUCT_ID`.
-- Adds one product quantity to the cart.
-- Inserts one `ntresellerclub_cart_domain` row.
-- Rejects duplicates for the same `id_cart` and `domain_name`.
+- Rejects unavailable domains.
+- Resolves product mapping from explicit `id_product`, `NTRC_DOMAIN_PRODUCT_ID`, or `NTRC_TR_DOMAIN_PRODUCT_ID`.
+- Rejects inactive/missing product mappings with `product_mapping_missing`.
+- Adds one mapped product to the cart.
+- Inserts one `ntresellerclub_cart_domain` metadata row.
+- Rejects duplicate domains in the same cart.
 
-Cart metadata fields:
+## Cart Metadata
+
+`ntresellerclub_cart_domain` stores:
 
 - `id_cart`
 - `id_product`
@@ -106,38 +74,42 @@ Cart metadata fields:
 - `created_at`
 - `updated_at`
 
-Cart JSON response:
-
-```json
-{
-  "success": true,
-  "message": "Domain sepete eklendi.",
-  "cart_id": 123,
-  "id_product": 45,
-  "domain": "example.com",
-  "provider_code": "resellerclub",
-  "service_type": "domain",
-  "years": 1,
-  "final_sale_price": 399.9,
-  "currency": "TRY"
-}
-```
-
 ## Order Handoff
 
-`NtRcOrderOrchestrator` already reads `NtRcCartDomain::getDomainsByCart($order->id_cart)` before processing product lines. The extended cart domain row carries `id_product`, `provider_code`, `service_type`, and price snapshot for downstream provisioning/audit. DomainNameAPI cart domains are preserved as `tr_domain` service records.
+`NtRcCartDomain::getDomainsByCart()` returns normalized rows for `NtRcOrderOrchestrator`.
+
+`NtRcOrderOrchestrator` validates:
+
+- `domain_name`
+- `tld`
+- `provider_code`
+- `service_type`
+- `years`
+- `id_product`
+- `price_snapshot`
+- `currency`
+
+Invalid metadata records `cart_metadata_invalid`, creates an admin notification, and skips service/queue creation.
+
+## Paid Order Flow
+
+- `actionValidateOrder` remains the direct paid-order entry point.
+- `actionOrderStatusPostUpdate` re-runs orchestration when payment is accepted later.
+- Paid/accepted states create local service and queue rows.
+- Unpaid/cancelled/refunded/error/failed states do not create queue rows.
+- Hooks do not call provider APIs.
+
+## Customer Services
+
+Page:
+
+`/module/ntresellerclub/myservices`
+
+The page lists only the logged-in customer's `domain` and `tr_domain` services with provider, service status, latest queue status, expiry date, and created time. Provider technical errors are not shown to customers.
 
 ## Security
 
 - Raw provider payloads are not returned.
-- Credential-like values are removed from provider errors before JSON output.
-- The endpoint does not log credentials.
-- Dashboard opening remains provider-API free.
-- Cart add does not trust client-side price or availability.
-- Cart add does not execute register, transfer, or renew.
-
-## Performance
-
-- One availability call per explicit search request.
-- One pricing row lookup per result.
-- A 60-second runtime cache avoids repeated calls for the same normalized domain inside the process.
+- Credential-like values are sanitized before JSON/admin rendering.
+- Cart add does not trust client-side availability or price.
+- Register, transfer, and renew are not executed by search, cart, or hooks.
