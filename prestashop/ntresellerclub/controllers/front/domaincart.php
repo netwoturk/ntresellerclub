@@ -21,12 +21,12 @@ class NtresellerclubDomaincartModuleFrontController extends ModuleFrontControlle
         try {
             $action = strtolower(trim((string)Tools::getValue('action', 'add')));
             if ($action !== 'add') {
-                die(json_encode(array('success' => false, 'message' => 'Gecersiz domain cart action.')));
+                die(json_encode(array('success' => false, 'code' => 'failed', 'message' => 'Gecersiz domain cart action.')));
             }
 
             $cart = $this->ensureCart();
             if (!$cart || !(int)$cart->id) {
-                die(json_encode(array('success' => false, 'message' => 'Sepet olusturulamadi.')));
+                die(json_encode(array('success' => false, 'code' => 'failed', 'message' => 'Sepet olusturulamadi.')));
             }
 
             require_once _PS_MODULE_DIR_ . 'ntresellerclub/classes/NtRcDomainCartBuilder.php';
@@ -44,7 +44,7 @@ class NtresellerclubDomaincartModuleFrontController extends ModuleFrontControlle
 
             die(json_encode($this->safeResponse($result)));
         } catch (Exception $e) {
-            die(json_encode(array('success' => false, 'message' => 'Islem sirasinda hata olustu.', 'error' => $this->safeText($e->getMessage()))));
+            die(json_encode(array('success' => false, 'code' => 'failed', 'message' => 'Islem sirasinda hata olustu.', 'error' => $this->safeText($e->getMessage()))));
         }
     }
 
