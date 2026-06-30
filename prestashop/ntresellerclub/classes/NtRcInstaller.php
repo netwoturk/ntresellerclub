@@ -328,7 +328,7 @@ class NtRcInstaller
             'id_product' => 'INT UNSIGNED DEFAULT 0 AFTER `id_cart`',
             'tld' => 'VARCHAR(64) DEFAULT NULL AFTER `domain_name`',
             'service_type' => 'VARCHAR(50) DEFAULT NULL AFTER `provider_code`',
-            'options_json' => 'MEDIUMTEXT DEFAULT NULL AFTER `years`',
+            'options_json' => 'MEDIUMTEXT NULL AFTER `years`',
             'price_snapshot' => 'DECIMAL(20,6) DEFAULT NULL AFTER `options_json`',
             'currency' => 'VARCHAR(10) DEFAULT NULL AFTER `price_snapshot`',
             'updated_at' => 'DATETIME DEFAULT NULL AFTER `created_at`',
@@ -374,7 +374,7 @@ class NtRcInstaller
                 . '`is_licensed` TINYINT(1) DEFAULT 0,'
                 . '`queue_pending` INT UNSIGNED DEFAULT 0,'
                 . '`queue_failed` INT UNSIGNED DEFAULT 0,'
-                . '`last_error` TEXT DEFAULT NULL,'
+                . '`last_error` TEXT NULL,'
                 . '`response_time_ms` INT UNSIGNED DEFAULT 0,'
                 . '`checked_at` DATETIME NOT NULL,'
                 . '`created_at` DATETIME NOT NULL,'
@@ -446,8 +446,8 @@ class NtRcInstaller
             . '`service_type` VARCHAR(50) DEFAULT NULL,'
             . '`event_type` VARCHAR(100) NOT NULL,'
             . '`event_status` VARCHAR(50) NOT NULL,'
-            . '`message` TEXT DEFAULT NULL,'
-            . '`metadata_json` MEDIUMTEXT DEFAULT NULL,'
+            . '`message` TEXT NULL,'
+            . '`metadata_json` MEDIUMTEXT NULL,'
             . '`created_at` DATETIME NOT NULL,'
             . 'PRIMARY KEY (`id_ntresellerclub_billing_event`),'
             . 'KEY `idx_billing_event_order` (`id_order`),'
@@ -470,8 +470,8 @@ class NtRcInstaller
                 . '`lang_iso` VARCHAR(5) NOT NULL,'
                 . '`recipient_type` VARCHAR(32) NOT NULL DEFAULT "customer",'
                 . '`subject` VARCHAR(255) NOT NULL,'
-                . '`body_html` MEDIUMTEXT DEFAULT NULL,'
-                . '`body_text` MEDIUMTEXT DEFAULT NULL,'
+                . '`body_html` MEDIUMTEXT NULL,'
+                . '`body_text` MEDIUMTEXT NULL,'
                 . '`is_active` TINYINT(1) DEFAULT 1,'
                 . '`created_at` DATETIME NOT NULL,'
                 . '`updated_at` DATETIME DEFAULT NULL,'
@@ -490,15 +490,15 @@ class NtRcInstaller
                 . '`to_email` VARCHAR(255) NOT NULL,'
                 . '`to_name` VARCHAR(255) DEFAULT NULL,'
                 . '`subject` VARCHAR(255) NOT NULL,'
-                . '`body_html` MEDIUMTEXT DEFAULT NULL,'
-                . '`body_text` MEDIUMTEXT DEFAULT NULL,'
-                . '`variables_json` MEDIUMTEXT DEFAULT NULL,'
+                . '`body_html` MEDIUMTEXT NULL,'
+                . '`body_text` MEDIUMTEXT NULL,'
+                . '`variables_json` MEDIUMTEXT NULL,'
                 . '`dedupe_key` VARCHAR(191) DEFAULT NULL,'
                 . '`priority` INT UNSIGNED NOT NULL DEFAULT 3,'
                 . '`status` VARCHAR(32) NOT NULL DEFAULT "pending",'
                 . '`retry_count` INT UNSIGNED NOT NULL DEFAULT 0,'
                 . '`max_retries` INT UNSIGNED NOT NULL DEFAULT 3,'
-                . '`last_error` TEXT DEFAULT NULL,'
+                . '`last_error` TEXT NULL,'
                 . '`lock_token` VARCHAR(128) DEFAULT NULL,'
                 . '`locked_at` DATETIME DEFAULT NULL,'
                 . '`available_at` DATETIME DEFAULT NULL,'
@@ -519,7 +519,7 @@ class NtRcInstaller
                 . '`recipient_type` VARCHAR(32) DEFAULT NULL,'
                 . '`to_email` VARCHAR(255) DEFAULT NULL,'
                 . '`status` VARCHAR(32) NOT NULL,'
-                . '`message` TEXT DEFAULT NULL,'
+                . '`message` TEXT NULL,'
                 . '`created_at` DATETIME NOT NULL,'
                 . 'PRIMARY KEY (`id_ntresellerclub_notification_log`),'
                 . 'KEY `idx_notification_log_queue` (`id_notification_queue`),'
@@ -549,7 +549,7 @@ class NtRcInstaller
             . '`tax_number` VARCHAR(64) DEFAULT NULL,'
             . '`tax_office` VARCHAR(128) DEFAULT NULL,'
             . '`tc_number` VARCHAR(64) DEFAULT NULL,'
-            . '`address` TEXT DEFAULT NULL,'
+            . '`address` TEXT NULL,'
             . '`city` VARCHAR(128) DEFAULT NULL,'
             . '`state` VARCHAR(128) DEFAULT NULL,'
             . '`country_iso` VARCHAR(5) DEFAULT NULL,'
@@ -576,7 +576,7 @@ class NtRcInstaller
             'tax_number' => 'VARCHAR(64) DEFAULT NULL AFTER `last_name`',
             'tax_office' => 'VARCHAR(128) DEFAULT NULL AFTER `tax_number`',
             'tc_number' => 'VARCHAR(64) DEFAULT NULL AFTER `tax_office`',
-            'address' => 'TEXT DEFAULT NULL AFTER `tc_number`',
+            'address' => 'TEXT NULL AFTER `tc_number`',
             'city' => 'VARCHAR(128) DEFAULT NULL AFTER `address`',
             'state' => 'VARCHAR(128) DEFAULT NULL AFTER `city`',
             'country_iso' => 'VARCHAR(5) DEFAULT NULL AFTER `state`',
