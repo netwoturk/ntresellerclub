@@ -1,68 +1,58 @@
 # Runtime Smoke Test Checklist
 
-Branch: `codex/v1-recovery-task04-05-admin-ux`
+Branch: `codex/task-09-v1-install-runtime-fix`
+
+## Package
+
+- ZIP root is `ntresellerclub/`.
+- ZIP contains `ntresellerclub/ntresellerclub.php`.
+- ZIP entries use forward slash paths only.
 
 ## Install / Upgrade
 
 - Install module from `ntresellerclub.zip`.
 - Verify module version is `0.1.1`.
-- On upgrade, verify existing API credentials remain unchanged.
-- On upgrade, verify existing `NTRC_DOMAIN_PRODUCT_ID` and `NTRC_TR_DOMAIN_PRODUCT_ID` values remain unchanged.
-- Verify hooks are registered: `actionValidateOrder`, `actionOrderStatusPostUpdate`, `displayCustomerAccount`, `displayHeader`, `displayBackOfficeHeader`.
-- Verify admin tabs are present under NetwoTurk Hosting.
-- Verify schema repair completes without destructive changes.
+- Verify `install()` completes without PHP fatal error.
+- Verify `uninstall()` completes without PHP fatal error.
+- Verify `upgrade/install-0.1.1.php` completes without PHP fatal error.
+- Verify no SQLSTATE appears during install/upgrade.
+- Verify existing API credentials and product mappings are not overwritten during upgrade.
 
-## Admin Settings
+## Hooks
 
-- Open Settings page.
-- Verify no provider API call is made on page load.
-- Verify API key/password inputs are masked and empty.
-- Verify Global Domain Product ID and TR Domain Product ID status labels show `Ayarlı`, `Eksik`, or `Ürün Pasif`.
-- Save settings with blank secret fields and verify stored secrets remain valid.
+- Verify registered hooks:
+  - `actionValidateOrder`
+  - `actionOrderStatusPostUpdate`
+  - `displayCustomerAccount`
+  - `displayHeader`
+  - `displayBackOfficeHeader`
 
-## Domain Search
+## Admin Screens
+
+- Open Dashboard.
+- Open Settings.
+- Open Domains.
+- Open TR Domains.
+- Confirm no provider API call happens on admin page load.
+- Confirm credential-like values are not rendered.
+
+## Front Screens
 
 - Open `/module/ntresellerclub/domainsearchpage`.
-- Search a global domain.
-- Search a TR domain.
-- Verify only `domainsearch` endpoint is called for search.
-- Verify available domains show `Sepete Ekle`.
-- Verify unavailable domains cannot be added.
-
-## Add To Cart
-
-- Add an available global domain.
-- Add an available TR domain.
-- Verify `ntresellerclub_cart_domain` row is created.
-- Verify duplicate domain add returns `duplicate`.
-- Remove product mapping and verify `product_mapping_missing`.
-- Verify no register, transfer, or renew provider call happens during cart add.
-
-## Order Flow
-
-- Place an unpaid order and verify no service or queue is created.
-- Change order status to payment accepted and verify orchestrator creates service and queue.
-- Place a paid order directly and verify `actionValidateOrder` creates service and queue.
-- Verify invalid cart metadata records `cart_metadata_invalid`.
-- Verify invalid cart metadata does not create service or queue.
-
-## Customer Services
-
+- Open `/module/ntresellerclub/domainsearch`.
+- Open `/module/ntresellerclub/domaincart?action=add`.
 - Open `/module/ntresellerclub/myservices`.
-- Verify customer sees only own domain and TR domain services.
-- Verify provider technical errors are not shown.
-- Verify queue status appears when a queue exists.
+- Confirm CSS/JS assets load on the domain search page.
+- Confirm provider technical errors are not shown to customers.
 
-## Admin Visibility
+## SQL Checks
 
-- Open Admin Domains.
-- Open Admin TR Domains.
-- Verify latest 100 rows are listed.
-- Verify credential-like text in last errors is masked.
-- Verify no provider API call is made on page load.
+- Confirm no `SHOW COLUMNS ... LIMIT 1` query is used.
+- Confirm no `TEXT DEFAULT NULL`, `MEDIUMTEXT DEFAULT NULL`, or `LONGTEXT DEFAULT NULL` remains.
+- Confirm schema repair is non-destructive.
 
 ## Compatibility
 
-- Repeat smoke test on PrestaShop 1.7.
-- Repeat smoke test on PrestaShop 8.
-- Repeat smoke test on PrestaShop 9.
+- Repeat on PrestaShop 8 first.
+- Repeat on PrestaShop 1.7.
+- Repeat on PrestaShop 9.
