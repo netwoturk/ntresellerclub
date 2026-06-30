@@ -4,54 +4,38 @@ Date: 2026-06-30
 
 ## Last Work
 
-Task 08 - V1 Domain Flow Recovery
+Task 09 - V1 Install & Runtime Fix
 
 ## Last Branch
 
-`codex/v1-recovery-task04-05-admin-ux`
+`codex/task-09-v1-install-runtime-fix`
 
 ## Completed
 
-- Recovered the customer domain search page at `/module/ntresellerclub/domainsearchpage`.
-- Added frontend domain search template, JavaScript, and CSS that call the existing `domainsearch` and `domaincart` endpoints.
-- Restored add-to-cart UI for available domains with user-friendly messages and a `Sepete Git` link.
-- Preserved and strengthened `NTRC_DOMAIN_PRODUCT_ID` and `NTRC_TR_DOMAIN_PRODUCT_ID` product mapping readiness.
-- Domain cart responses now include stable error codes: `product_mapping_missing`, `unavailable`, `duplicate`, and `failed`.
-- `NtRcCartDomain::getDomainsByCart()` now returns normalized order-orchestrator metadata.
-- `NtRcOrderOrchestrator` validates `domain_name`, `tld`, `provider_code`, `service_type`, `years`, `id_product`, `price_snapshot`, and `currency` before service/queue creation.
-- Invalid cart metadata records a `cart_metadata_invalid` billing event and admin notification without creating service/queue rows.
-- `actionValidateOrder` remains active and `actionOrderStatusPostUpdate` now re-runs orchestration when payment is accepted later.
-- Paid/accepted orders create local service and queue records only; hooks do not call provider APIs.
-- Added `/module/ntresellerclub/myservices` for customer-owned domain and TR domain service visibility.
-- Admin Domains and Admin TR Domains now show read-only latest 100 service/queue rows.
-- Module version is now `0.1.1` with `upgrade/install-0.1.1.php` repairing hooks, tabs, schema, and configuration defaults.
-- Task 06 simple admin UX remains the base and is preserved.
+- Task 08 V1 domain flow recovery remains intact.
+- Module version remains `0.1.1`.
+- Installer SQL definitions were hardened for clean PrestaShop 8 installs by removing explicit `DEFAULT NULL` from `TEXT` and `MEDIUMTEXT` columns.
+- Runtime schema guards now use `TEXT NULL` / `MEDIUMTEXT NULL` for text columns repaired during install or upgrade.
+- Hook coverage was statically verified for `actionValidateOrder`, `actionOrderStatusPostUpdate`, `displayCustomerAccount`, `displayHeader`, and `displayBackOfficeHeader`.
+- Static require-path check found no missing static module `require_once` target.
+- Static class scan found no duplicate PHP class declarations.
 
 ## Security
 
-- No register, transfer, or renew provider API calls were added to hooks or frontend controllers.
-- Provider API calls remain limited to explicit domain search availability checks and existing connection-test actions.
-- Domain cart add rechecks availability server-side and does not trust client price or availability.
-- Customer pages do not expose raw provider errors or credentials.
-- Admin last-error output is sanitized for credential-like values.
-- Upgrade/default repair does not overwrite existing API credentials or product mapping values.
-
-## Performance
-
-- Customer services reads only the current customer's domain/tr_domain rows and latest queue status.
-- Admin domain visibility is capped to the latest 100 rows.
-- Cart add performs one availability recheck and lightweight duplicate lookup.
-- Dashboard/settings page loads remain provider-API free.
+- No provider register, transfer, or renew API call was added.
+- No provider API call was added to hooks.
+- Existing credential masking and sanitized error handling remain in place.
 
 ## Last Test
 
-- Static file presence check covered recovered front controllers, templates, assets, metadata classes, orchestrator, upgrade script, and settings controller.
-- Static scan verified no register/transfer/renew provider API call was added to hooks or frontend controllers.
-- Static scan verified version `0.1.1`, `actionOrderStatusPostUpdate`, `displayHeader`, `ensureConfigurationDefaults`, `product_mapping_missing`, and `cart_metadata_invalid` are present.
-- PHP lint could not be run because PHP CLI is not installed in this workspace.
+- ZIP structure will be verified with root `ntresellerclub/` and forward slash paths only.
+- Static scan verified no `SHOW COLUMNS ... LIMIT 1` query remains.
+- Static scan verified no `TEXT DEFAULT NULL`, `MEDIUMTEXT DEFAULT NULL`, or `LONGTEXT DEFAULT NULL` definitions remain.
+- Static scan verified required Task 08 front/admin/runtime files are still present.
+- PHP lint and real PrestaShop runtime tests could not be run because PHP CLI and a live PrestaShop instance are not available in this workspace.
 
 ## Known Risks
 
-- Real PrestaShop 1.7/8/9 install and upgrade smoke tests still need to be run.
-- Real provider availability tests require valid credentials and server network access.
-- Cart pricing in the visible PrestaShop cart still depends on mapped product configuration; `price_snapshot` is stored for domain metadata/audit.
+- Real PrestaShop 8 install/uninstall/upgrade smoke testing still needs to be run in a live shop.
+- Real PrestaShop 1.7 and 9 compatibility smoke testing still needs to be run.
+- Provider availability tests require valid credentials and network access from the PrestaShop server.
