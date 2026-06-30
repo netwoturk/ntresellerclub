@@ -28,6 +28,43 @@ class NtRcInstaller
             && self::ensureNotificationSchema();
     }
 
+    public static function ensureConfigurationDefaults()
+    {
+        $defaults = array(
+            'NTRC_LIVE_MODE' => 1,
+            'NTRC_RESELLER_ID' => '',
+            'NTRC_API_KEY' => '',
+            'NTRC_LANG_PREF' => 'en',
+            'NTRC_LICENSE_KEY' => '',
+            'NTRC_DNA_USERNAME' => '',
+            'NTRC_DNA_PASSWORD' => '',
+            'NTRC_DNA_TEST_MODE' => 1,
+            'NTRC_FEATURE_CORE' => 1,
+            'NTRC_FEATURE_RESELLERCLUB' => 1,
+            'NTRC_FEATURE_DOMAINNAMEAPI' => 0,
+            'NTRC_FEATURE_HOSTING' => 1,
+            'NTRC_FEATURE_BTK_CSV_REPORTING' => 0,
+            'NTRC_MEMORY_LIMIT' => '512M',
+            'NTRC_TIME_LIMIT' => 120,
+            'NTRC_CRON_BATCH_LIMIT' => 10,
+            'NTRC_DOMAIN_PRODUCT_ID' => 0,
+            'NTRC_TR_DOMAIN_PRODUCT_ID' => 0,
+        );
+
+        foreach ($defaults as $key => $value) {
+            $existing = Configuration::get($key);
+            if ($existing === false || $existing === null) {
+                Configuration::updateValue($key, $value);
+            }
+        }
+
+        if (!Configuration::get('NTRC_CRON_TOKEN')) {
+            Configuration::updateValue('NTRC_CRON_TOKEN', Tools::passwdGen(32));
+        }
+
+        return true;
+    }
+
     public static function installAdminTabs()
     {
         if (!class_exists('Tab')) {
